@@ -1,1 +1,0 @@
-import{_ as t,o as r,c as s,a as e,b as a,F as n,r as c}from"./index-I2rM58wh.js";const _={},l=e("header",null,"header",-1),d={class:"base-wrap flex-1"},f=e("footer",null,"footer",-1);function i(u,m){const o=c("router-view");return r(),s(n,null,[l,e("div",d,[a(o)]),f],64)}const h=t(_,[["render",i]]);export{h as default};
