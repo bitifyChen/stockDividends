@@ -1,12 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   box-sizing: border-box;
 }
 body {
   padding: 0;
   margin: 0;
+  background-color: rgb(60, 60, 60)
 }
 #app {
-  max-width: 1280px;
+  max-width: 920px;
   margin: 0 auto;
   font-weight: normal;
+  background-color: var(--main-bg-color);
+}
+
+:root{
+  --main-primary-color:#4F726C;
+  --main-bg-color:#4F726C;
 }

@@ -1,12 +1,12 @@
 <script setup></script>
 
-<template>Stock Your Stock</template>
+<template>庫存</template>
 
 <style scoped lang="scss"></style>
 
 <route>
 {
-  name: "IndexPage",
+  name: "StockPage",
   meta: {
     requiresAuth: true
   }

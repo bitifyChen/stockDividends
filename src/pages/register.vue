@@ -1,6 +1,7 @@
 <script setup>
 import { postUser } from '@/api/user.js'
 import TwoDynamicForm from '@/components/Two/TwoDynamicForm.vue'
+import router from '@/router'
 const fields = computed(() => [
   {
     name: 'name',
@@ -11,14 +12,14 @@ const fields = computed(() => [
   },
   {
     name: 'username',
-    label: '帐号',
+    label: '帳號',
     type: 'text',
     cssStyle: true,
     rules: [{ required: true, message: '帐号为必填项' }]
   },
   {
     name: 'password',
-    label: '密码',
+    label: '密碼',
     type: 'password',
     cssStyle: true,
     rules: [{ required: true, message: '密码为必填项' }]
@@ -33,22 +34,43 @@ const fields = computed(() => [
 ])
 const parentForm = ref({})
 const loginMethod = () => {
+  if (parentForm.value.password !== parentForm.value.rePassword) {
+    ElMessage({
+      message: '兩次輸入的密碼不相同',
+      type: 'error',
+      plain: true
+    })
+  }
   postUser(parentForm.value).then((res) => {
+    console.log(res)
     if (res.status === 200) {
-      console.log('註冊成功', res.data.token)
+      ElMessage({
+        message: '註冊成功',
+        type: 'success',
+        plain: true
+      })
+      router.push({ path: '/login' })
     }
   })
 }
 </script>
 
 <template>
-  <TwoDynamicForm
-    :fields="fields"
-    :parentForm="parentForm"
-    submitText="註冊"
-    @submitFn="loginMethod"
-    class="form"
-  />
+  <div class="p-[20px] w-full">
+    <div class="font-black text-[48px] text-white">
+      <div class="text-center">Stock!</div>
+    </div>
+    <TwoDynamicForm
+      :fields="fields"
+      :parentForm="parentForm"
+      submitText="註冊"
+      @submitFn="loginMethod"
+      class="form"
+    />
+    <div class="flex justify-end">
+      <router-link to="/login" class="text-white">有帳號嗎，前往登入</router-link>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss"></style>

@@ -1,12 +1,21 @@
 <script setup></script>
 
 <template>
-  <header>header</header>
-  <div class="base-wrap flex-1">
-    <router-view />
+  <div class="main">
+    <NavBar />
+    <div class="flex-1">
+      <router-view />
+    </div>
+    <Footer />
   </div>
 </template>
 
-<style>
-
+<style scoped lang="scss">
+.main {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
 </style>

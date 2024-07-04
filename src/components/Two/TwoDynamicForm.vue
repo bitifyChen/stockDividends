@@ -109,13 +109,13 @@ defineExpose({
     :model="form"
     :rules="props.rules"
     @submit.enter.prevent="submitForm"
-    class="setting-base-form-use mx-[-10px] grid grid-cols-12 md:px-[20px] xl:px-[15px]"
+    class="setting-base-form-use grid grid-cols-12"
     :hide-required-asterisk="props.isHideAsterisk"
   >
     <div
       v-for="field in props.fields"
       :key="field.name"
-      class="px-[10px] max-xl:!col-span-12"
+      class="max-xl:!col-span-12"
       :class="[field.col ? `col-span-${field.col}` : 'col-span-12']"
     >
       <el-form-item
@@ -137,7 +137,7 @@ defineExpose({
           :show-password="field.type === 'password'"
           :class="[field.readonly ? 'is-readonly' : '']"
           :readonly="field.readonly"
-          class="form-input-setting-unit-use h-[48px] flex-1"
+          class="h-[48px] flex-1"
         >
           <template #append v-if="field.unit">
             <div class="show-unit">
@@ -236,7 +236,6 @@ defineExpose({
     <slot name="bottom"></slot>
     <div class="submit col-span-12 flex pb-[20px]" v-if="!props.submitHide">
       <el-button
-        color="#2969FF"
         @click="submitForm(ruleFormRef)"
         class="ml-auto mr-auto !h-[48px] w-auto !rounded-[7px] text-[16px]"
         :class="props.submitText ? 'btn-submit' : ''"
@@ -250,27 +249,13 @@ defineExpose({
 
 <style lang="scss">
 .setting-base-form-use {
-  .el-input__inner {
-    font-size: 16px;
-  }
-
   .el-form-item__content {
     width: 100%;
   }
 
-  .el-form-item__content {
-    .el-button {
-      border: 0;
-      border-top: 1px solid rgba(17, 17, 19, 0.2);
-      border-bottom: 1px solid rgba(17, 17, 19, 0.2);
-      border-right: 1px solid rgba(17, 17, 19, 0.2);
-    }
-  }
-
   .el-form-item__label {
     color: #000;
-    padding-left: 12px;
-    padding-right: 12px;
+    font-weight: 900;
     font-size: 16px;
   }
 
@@ -278,7 +263,6 @@ defineExpose({
     border: 1px solid rgba(17, 17, 19, 0.2);
     border-radius: 4px;
     box-shadow: none;
-
     &.is-focus {
       position: relative;
       border: 1px solid #111113;
@@ -307,7 +291,7 @@ defineExpose({
       cursor: default !important;
     }
     .el-input__wrapper {
-      background: rgba(0, 0, 0, 0.02);
+      font-weight: 700;
       &:hover {
         box-shadow: none;
       }
@@ -343,83 +327,14 @@ defineExpose({
 
   .el-button {
     color: #fff;
+    background-color: var(--main-primary-color);
+    width: 100%;
     &.btn-submit {
       padding: 9px 30px;
       font-size: 20px;
       line-height: 24px;
       margin-top: 20px;
     }
-  }
-
-  .form-has-check,
-  .form-has-allIn,
-  .form-has-count {
-    .el-input__wrapper {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      // border-right: 0;
-      box-shadow: none;
-    }
-
-    .el-button {
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-      background-color: #1599f2;
-    }
-
-    &.is-error {
-      .el-input__wrapper,
-      .el-button {
-        border-color: var(--el-color-danger);
-      }
-    }
-  }
-}
-
-.login-wrapper {
-  .btn-submit {
-    background: #1599f2;
-    min-width: 230px;
-    border: 0;
-    box-shadow: none;
-  }
-}
-.form-input-setting-unit-use {
-  .el-input-group__append {
-    position: absolute;
-    right: 0;
-    box-shadow: none;
-    background-color: transparent;
-    z-index: 2;
-  }
-  :deep(.el-input__inner) {
-    border: 1px solid #000;
-  }
-}
-.countdown-btn {
-  background-color: #e6a23c;
-  color: white;
-  cursor: pointer;
-  margin: 0px -20px;
-  padding: 0px 20px;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 0px 4px 4px 0px;
-  border: 1px solid rgba(17, 17, 19, 0.2);
-  &:hover {
-    background-color: #f5c97b;
-  }
-  &.is-disabled {
-    background-color: #fdf6ec;
-    color: #e6a23c;
-    cursor: not-allowed;
-  }
-}
-@for $i from 1 through 12 {
-  .col-span-#{$i} {
-    grid-column: span #{$i} / span #{$i};
   }
 }
 </style>
