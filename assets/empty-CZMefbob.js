@@ -1,0 +1,1 @@
+import{_ as o,q as t,h as s,s as c,e as r}from"./index-CtV2DNCl.js";const n={},_={class:"empty"};function a(m,p){const e=t("router-view");return s(),c("div",_,[r(e)])}const d=o(n,[["render",a]]);export{d as default};
