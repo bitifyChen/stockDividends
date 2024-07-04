@@ -1,110 +1,106 @@
 <script setup>
-  import { ref, computed, defineProps, defineExpose } from 'vue'
-  import { useI18n } from 'vue-i18n'
-  import { useElMessageBox } from '@/components/Two/TwoElMessageBox.js'
-  import { Check, Close } from '@element-plus/icons-vue'
+import { ref, computed, defineProps, defineExpose } from 'vue'
+import { useElMessageBox } from '@/components/Two/TwoElMessageBox.js'
 
-  const { t } = useI18n()
-
-  const props = defineProps({
-    fields: {
-      type: Array,
-      required: true
-    },
-    parentForm: {
-      type: Object,
-      required: true
-    },
-    rules: {
-      type: Object,
-      default: () => {}
-    },
-    submitHide: {
-      type: Boolean,
-      default: false
-    },
-    submitting: {
-      type: Boolean,
-      default: false
-    },
-    submitAlert: {
-      type: String,
-      required: false
-    },
-    submitText: {
-      type: String,
-      default: ''
-    },
-    isHideAsterisk: {
-      //米字號位置隱藏，預設隱藏
-      type: Boolean,
-      default: true
-    }
-  })
-
-  const emit = defineEmits(['submitFn'])
-
-  const ruleFormRef = ref(null)
-  const form = computed(() => props.parentForm)
-
-  //倒數功能
-  const countdown = ref(0)
-  const countdownTime = 100
-  const countdownLoading = ref(false)
-  const countdownText = computed(() => {
-    return countdown.value ? countdown.value : t('COMMON_GET_VERIFY_CODE')
-  })
-  const countdownMethod = (callback = () => {}) => {
-    if (countdown.value === 0 && !countdownLoading.value) {
-      countdownLoading.value = true
-      callback().then(() => {
-        countdown.value = countdownTime
-        countdownLoading.value = false
-        const _countdown = setInterval(() => {
-          if (countdown.value === 0) {
-            clearInterval(_countdown)
-          } else {
-            countdown.value--
-          }
-        }, 1000)
-      })
-    }
+const props = defineProps({
+  fields: {
+    type: Array,
+    required: true
+  },
+  parentForm: {
+    type: Object,
+    required: true
+  },
+  rules: {
+    type: Object,
+    default: () => {}
+  },
+  submitHide: {
+    type: Boolean,
+    default: false
+  },
+  submitting: {
+    type: Boolean,
+    default: false
+  },
+  submitAlert: {
+    type: String,
+    required: false
+  },
+  submitText: {
+    type: String,
+    default: ''
+  },
+  isHideAsterisk: {
+    //米字號位置隱藏，預設隱藏
+    type: Boolean,
+    default: true
   }
-  const submitForm = (formEl) => {
-    if (!formEl) return
-    formEl.validate((valid) => {
-      if (valid) {
-        if (props.submitAlert) {
-          useElMessageBox(props.submitAlert, () => emit('submitFn'))
+})
+
+const emit = defineEmits(['submitFn'])
+
+const ruleFormRef = ref(null)
+const form = computed(() => props.parentForm)
+
+//倒數功能
+const countdown = ref(0)
+const countdownTime = 100
+const countdownLoading = ref(false)
+const countdownText = computed(() => {
+  return countdown.value ? countdown.value : '取得驗證碼'
+})
+const countdownMethod = (callback = () => {}) => {
+  if (countdown.value === 0 && !countdownLoading.value) {
+    countdownLoading.value = true
+    callback().then(() => {
+      countdown.value = countdownTime
+      countdownLoading.value = false
+      const _countdown = setInterval(() => {
+        if (countdown.value === 0) {
+          clearInterval(_countdown)
         } else {
-          emit('submitFn')
+          countdown.value--
         }
+      }, 1000)
+    })
+  }
+}
+const submitForm = (formEl) => {
+  if (!formEl) return
+  formEl.validate((valid) => {
+    if (valid) {
+      if (props.submitAlert) {
+        useElMessageBox(props.submitAlert, () => emit('submitFn'))
       } else {
-        return false
+        emit('submitFn')
+      }
+    } else {
+      return false
+    }
+  })
+}
+
+const validateFormMethod = () => {
+  return new Promise((resolve, reject) => {
+    ruleFormRef.value.validate((valid) => {
+      if (valid) {
+        resolve()
+      } else {
+        reject()
       }
     })
-  }
-
-  const validateFormMethod = () => {
-    return new Promise((resolve, reject) => {
-      ruleFormRef.value.validate((valid) => {
-        if (valid) {
-          resolve()
-        } else {
-          reject()
-        }
-      })
-    })
-  }
-
-  const resetFormMethod = () => {
-    ruleFormRef.value.resetFields()
-  }
-
-  defineExpose({
-    resetFormMethod,
-    validateFormMethod
   })
+}
+
+const resetFormMethod = () => {
+  ruleFormRef.value.resetFields()
+}
+
+defineExpose({
+  resetFormMethod,
+  validateFormMethod
+})
 </script>
 
 <template>
@@ -246,184 +242,184 @@
         :class="props.submitText ? 'btn-submit' : ''"
         :loading="props.submitting"
       >
-        {{ props.submitText || t('COMMON_SUBMIT') }}
+        {{ props.submitText || '送出' }}
       </el-button>
     </div>
   </el-form>
 </template>
 
 <style lang="scss">
-  .setting-base-form-use {
-    .el-input__inner {
-      font-size: 16px;
-    }
+.setting-base-form-use {
+  .el-input__inner {
+    font-size: 16px;
+  }
 
-    .el-form-item__content {
-      width: 100%;
-    }
+  .el-form-item__content {
+    width: 100%;
+  }
 
-    .el-form-item__content {
-      .el-button {
-        border: 0;
-        border-top: 1px solid rgba(17, 17, 19, 0.2);
-        border-bottom: 1px solid rgba(17, 17, 19, 0.2);
-        border-right: 1px solid rgba(17, 17, 19, 0.2);
+  .el-form-item__content {
+    .el-button {
+      border: 0;
+      border-top: 1px solid rgba(17, 17, 19, 0.2);
+      border-bottom: 1px solid rgba(17, 17, 19, 0.2);
+      border-right: 1px solid rgba(17, 17, 19, 0.2);
+    }
+  }
+
+  .el-form-item__label {
+    color: #000;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 16px;
+  }
+
+  .el-input__wrapper {
+    border: 1px solid rgba(17, 17, 19, 0.2);
+    border-radius: 4px;
+    box-shadow: none;
+
+    &.is-focus {
+      position: relative;
+      border: 1px solid #111113;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% + 6px);
+        height: calc(100% + 6px);
+        border: solid 3px rgba(17, 17, 19, 0.2);
+        border-radius: 6px;
+        overflow: hidden;
       }
-    }
 
-    .el-form-item__label {
-      color: #000;
-      padding-left: 12px;
-      padding-right: 12px;
-      font-size: 16px;
-    }
-
-    .el-input__wrapper {
-      border: 1px solid rgba(17, 17, 19, 0.2);
-      border-radius: 4px;
-      box-shadow: none;
-
-      &.is-focus {
+      & > * {
         position: relative;
-        border: 1px solid #111113;
-
-        &::before {
-          content: '';
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          width: calc(100% + 6px);
-          height: calc(100% + 6px);
-          border: solid 3px rgba(17, 17, 19, 0.2);
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        & > * {
-          position: relative;
-        }
       }
     }
+  }
 
-    .is-readonly {
-      * {
-        cursor: default !important;
+  .is-readonly {
+    * {
+      cursor: default !important;
+    }
+    .el-input__wrapper {
+      background: rgba(0, 0, 0, 0.02);
+      &:hover {
+        box-shadow: none;
       }
+      &.is-focus {
+        border: solid 1px rgba(17, 17, 19, 0.2);
+      }
+    }
+  }
+
+  .is-error,
+  .is-readonly {
+    .el-input__wrapper.is-focus::before {
+      display: none;
+    }
+  }
+
+  .el-select {
+    height: 48px;
+    line-height: 48px;
+
+    .el-input {
+      height: 100%;
+    }
+
+    .el-tooltip__trigger {
+      height: 100%;
+
       .el-input__wrapper {
-        background: rgba(0, 0, 0, 0.02);
-        &:hover {
-          box-shadow: none;
-        }
-        &.is-focus {
-          border: solid 1px rgba(17, 17, 19, 0.2);
-        }
+        padding: 3px 11px;
       }
     }
+  }
 
-    .is-error,
-    .is-readonly {
-      .el-input__wrapper.is-focus::before {
-        display: none;
-      }
+  .el-button {
+    color: #fff;
+    &.btn-submit {
+      padding: 9px 30px;
+      font-size: 20px;
+      line-height: 24px;
+      margin-top: 20px;
     }
+  }
 
-    .el-select {
-      height: 48px;
-      line-height: 48px;
-
-      .el-input {
-        height: 100%;
-      }
-
-      .el-tooltip__trigger {
-        height: 100%;
-
-        .el-input__wrapper {
-          padding: 3px 11px;
-        }
-      }
+  .form-has-check,
+  .form-has-allIn,
+  .form-has-count {
+    .el-input__wrapper {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      // border-right: 0;
+      box-shadow: none;
     }
 
     .el-button {
-      color: #fff;
-      &.btn-submit {
-        padding: 9px 30px;
-        font-size: 20px;
-        line-height: 24px;
-        margin-top: 20px;
-      }
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      background-color: #1599f2;
     }
 
-    .form-has-check,
-    .form-has-allIn,
-    .form-has-count {
-      .el-input__wrapper {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        // border-right: 0;
-        box-shadow: none;
-      }
-
+    &.is-error {
+      .el-input__wrapper,
       .el-button {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        background-color: #1599f2;
-      }
-
-      &.is-error {
-        .el-input__wrapper,
-        .el-button {
-          border-color: var(--el-color-danger);
-        }
+        border-color: var(--el-color-danger);
       }
     }
   }
+}
 
-  .login-wrapper {
-    .btn-submit {
-      background: #1599f2;
-      min-width: 230px;
-      border: 0;
-      box-shadow: none;
-    }
+.login-wrapper {
+  .btn-submit {
+    background: #1599f2;
+    min-width: 230px;
+    border: 0;
+    box-shadow: none;
   }
-  .form-input-setting-unit-use {
-    .el-input-group__append {
-      position: absolute;
-      right: 0;
-      box-shadow: none;
-      background-color: transparent;
-      z-index: 2;
-    }
-    :deep(.el-input__inner) {
-      border: 1px solid #000;
-    }
+}
+.form-input-setting-unit-use {
+  .el-input-group__append {
+    position: absolute;
+    right: 0;
+    box-shadow: none;
+    background-color: transparent;
+    z-index: 2;
   }
-  .countdown-btn {
-    background-color: #e6a23c;
-    color: white;
-    cursor: pointer;
-    margin: 0px -20px;
-    padding: 0px 20px;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0px 4px 4px 0px;
-    border: 1px solid rgba(17, 17, 19, 0.2);
-    &:hover {
-      background-color: #f5c97b;
-    }
-    &.is-disabled {
-      background-color: #fdf6ec;
-      color: #e6a23c;
-      cursor: not-allowed;
-    }
+  :deep(.el-input__inner) {
+    border: 1px solid #000;
   }
-  @for $i from 1 through 12 {
-    .col-span-#{$i} {
-      grid-column: span #{$i} / span #{$i};
-    }
+}
+.countdown-btn {
+  background-color: #e6a23c;
+  color: white;
+  cursor: pointer;
+  margin: 0px -20px;
+  padding: 0px 20px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0px 4px 4px 0px;
+  border: 1px solid rgba(17, 17, 19, 0.2);
+  &:hover {
+    background-color: #f5c97b;
   }
+  &.is-disabled {
+    background-color: #fdf6ec;
+    color: #e6a23c;
+    cursor: not-allowed;
+  }
+}
+@for $i from 1 through 12 {
+  .col-span-#{$i} {
+    grid-column: span #{$i} / span #{$i};
+  }
+}
 </style>

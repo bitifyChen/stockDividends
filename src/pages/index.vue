@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { getUser, postUser } from '@/api/user.js'
 
 const get = async () => {

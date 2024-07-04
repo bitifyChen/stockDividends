@@ -5,7 +5,8 @@
   <div class="base-wrap flex-1">
     <router-view />
   </div>
-  <footer>footer</footer>
 </template>
 
-<style></style>
+<style>
+
+</style>

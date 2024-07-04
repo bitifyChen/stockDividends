@@ -1,8 +1,5 @@
 import { ElMessageBox } from 'element-plus'
 import { showConfirmDialog, showDialog } from 'vant'
-import { isMobile } from '@/unit/useMobile.js'
-// import i18n from '@/lang/index'
-// const { t } = i18n.global
 
 export const useElMessageBox = (
   message,
@@ -13,21 +10,6 @@ export const useElMessageBox = (
 ) => {
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line no-unused-vars
-    if (isMobile()) {
-      showConfirmDialog({
-        title: title,
-        message: message,
-        confirmButtonColor: '#f98c11',
-        confirmButtonText: confirmButtonText,
-        cancelButtonText: cancelButtonText
-      })
-        .then(() => {
-          resolve(true)
-        })
-        .catch(() => {
-          reject(false)
-        })
-    } else {
       ElMessageBox.confirm(message, title, {
         confirmButtonText: confirmButtonText,
         cancelButtonText: cancelButtonText,
@@ -36,7 +18,6 @@ export const useElMessageBox = (
       })
         .then(() => resolve(true))
         .catch(() => reject(false))
-    }
   })
 }
 

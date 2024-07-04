@@ -29,6 +29,7 @@
     "eslint-plugin-vue": "^9.23.0",
     "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
+    "sass": "^1.77.6",
     "tailwindcss": "^3.4.4",
     "unplugin-auto-import": "^0.17.6",
     "vite": "^5.3.1",

@@ -1,7 +1,16 @@
 <script setup></script>
 
 <template>
-  <router-view />
+  <div class="empty">
+    <router-view />
+  </div>
 </template>
 
-<style></style>
+<style>
+.empty {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>
