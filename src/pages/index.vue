@@ -1,25 +1,25 @@
 <script setup>
 import axios from 'axios'
+import { getUser, postUser } from '@/api/user.js'
+
 const get = async () => {
-  axios
-    .get(
-      'https://script.google.com/macros/s/AKfycbyGiWxziMDnKbryeHRfq2oh6Rx8D_VRznrK8kJPJ_xwCAwB8B7tp4NPgrGlejBZn1A_LQ/exec'
-    )
-    .then((res) => {
-      console.log(res)
-    })
+  getUser({
+    username: 'bitify',
+    password: '1227'
+  }).then((res) => {
+    if (res.status === 200) {
+      console.log('登入成功', res.data.token)
+    }
+  })
 }
 const post = async () => {
-  axios
-    .post(
-      'https://script.google.com/macros/s/AKfycbyGiWxziMDnKbryeHRfq2oh6Rx8D_VRznrK8kJPJ_xwCAwB8B7tp4NPgrGlejBZn1A_LQ/exec',
-      {
-        name: '1212'
-      }
-    )
-    .then((res) => {
-      console.log(res)
-    })
+  postUser({
+    name: '12122332',
+    username: 'asdasdasd',
+    password: 'pwpwpwpw'
+  }).then((res) => {
+    console.log(res)
+  })
 }
 </script>
 
