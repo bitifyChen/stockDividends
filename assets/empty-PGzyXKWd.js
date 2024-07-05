@@ -1,0 +1,1 @@
+import{_ as o,f as t,o as c,b as r,c as s}from"./index-D18zpCDV.js";const n={},_={class:"empty"};function a(m,p){const e=t("router-view");return c(),r("div",_,[s(e)])}const i=o(n,[["render",a]]);export{i as default};

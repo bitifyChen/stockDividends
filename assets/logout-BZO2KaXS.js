@@ -1,1 +1,0 @@
-import{y as t,z as s,v as o}from"./index-CtV2DNCl.js";const n={__name:"logout",setup(r){const e=t();return s(["token"]).remove("token"),e.push({name:"LoginPage"}),(c,a)=>null}};typeof o=="function"&&o(n);export{n as default};
