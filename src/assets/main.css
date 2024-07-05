@@ -8,7 +8,7 @@
 body {
   padding: 0;
   margin: 0;
-  background-color: rgb(60, 60, 60);
+  background-color: #1c2032;
 }
 #app {
   max-width: 920px;
@@ -18,11 +18,23 @@ body {
 }
 
 :root {
-  --main-primary-color: #577c8a;
-  --main-sub-color: rgb(94, 113, 113);
+  --main-dark-color: #4894FE;
+  --main-primary-color:#63B4FF;
+  --main-sub-color: #8696BB;
   --main-rise-color: #d75455;
   --main-fall-color: #24936e;
-  --main-bg-color: #2c4149;
+  --main-bg-color: #ffffff;
+  --main-bg-sub-color: #FAFAFA;
+  --main-bg-light-color: #676f9d;
   --van-primary-color: var(--main-primary-color) !important;
   --el-color-primary: var(--main-primary-color) !important;
+
+  --text-main-color: #0D1B34;
+  --text-secondary-color: #8696BB;
+  --text-notice-color:#FEB052;
+
+  --form-bg-color: #FAFAFA;
+  --form-text-color: #8696BB;
+  --form-btn-bg-color: var(--main-primary-color);
+  --form-btn-text-color: #FAFAFA;
 }

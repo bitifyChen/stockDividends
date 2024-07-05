@@ -56,7 +56,7 @@ const loginMethod = () => {
 
 <template>
   <div class="p-[20px] w-full">
-    <div class="font-black text-[48px] text-white">
+    <div class="font-black text-[48px] text-[var(--main-primary-color)]">
       <div class="text-center">Stock!</div>
     </div>
     <TwoDynamicForm
@@ -67,7 +67,9 @@ const loginMethod = () => {
       class="form"
     />
     <div class="flex justify-end">
-      <router-link to="/login" class="text-white">有帳號嗎，前往登入</router-link>
+      <router-link to="/login" class="text-[var(--main-primary-color)]"
+        >有帳號嗎，前往登入</router-link
+      >
     </div>
   </div>
 </template>

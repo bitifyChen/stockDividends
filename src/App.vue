@@ -1,6 +1,6 @@
 <script setup></script>
 <template>
-  <div id="bgWrap"></div>
+  <!-- <div id="bgWrap"></div> -->
   <router-view class="base-wrap" />
 </template>
 

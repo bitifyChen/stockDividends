@@ -30,12 +30,12 @@ const total = computed(() => add(totalDividend.value, totalUnrealized.value))
 </script>
 
 <template>
-  <div class="py-[4px]">
+  <div class="py-[10px] text-[var(--text-secondary-color)]">
     <div class="flex justify-between">
-      <div class="font-black text-[color:var(--main-primary-color)] text-[18px]">
-        {{ buyPrice }}
+      <div class="font-black text-[color:var(--text-main-color)] text-[18px]">
+        <span class="text-[14px]">$</span> {{ buyPrice }}
       </div>
-      <div class="font-black text-[color:var(--main-sub-color)] text-[14px]">{{ buyNum }}股</div>
+      <div class="font-black text-[color:var(--text-main-color)] text-[14px]">{{ buyNum }}股</div>
     </div>
     <div class="flex justify-between items-center">
       <div class="">購入日</div>

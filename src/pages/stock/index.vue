@@ -44,12 +44,12 @@ getStockMethod()
 
 <template>
   <Navbar> <van-icon name="plus" size="28" @click="addMethod" /> </Navbar>
-  <div class="min-h-[100vh]" v-loading="loading">
+  <div class="min-h-[50px] cell-list" v-loading="loading">
     <van-collapse v-model="activeStock" accordion>
       <van-collapse-item :name="id" v-for="id in stockIdList" :key="id">
         <template #title>
           <div class="flex justify-between">
-            <div class="font-black text-[color:var(--main-primary-color)] text-[18px]">
+            <div class="font-black text-[18px]">
               {{ id }}({{ data.filter((e) => e.stockId === id)?.length }})
             </div>
           </div>
@@ -62,7 +62,14 @@ getStockMethod()
   <stockAdd ref="stockAddHook" @finish="getStockMethod" />
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.cell-list :deep() {
+  .van-cell {
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+  }
+}
+</style>
 
 <route>
 {

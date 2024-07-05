@@ -2,7 +2,7 @@
 import { ref, computed, defineProps, defineExpose } from 'vue'
 import { useElMessageBox } from '@/components/Two/TwoElMessageBox.js'
 import TwoElDatePicker from './TwoElDatePicker.vue'
-  
+
 const props = defineProps({
   fields: {
     type: Array,
@@ -238,25 +238,17 @@ defineExpose({
   }
 
   .el-input__wrapper {
-    border: 1px solid rgba(17, 17, 19, 0.2);
     border-radius: 4px;
     box-shadow: none;
+    background-color: var(--form-bg-color);
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      transition: background-color 5000s ease-in-out 0s;
+    }
     &.is-focus {
       position: relative;
-      border: 1px solid #111113;
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: calc(100% + 6px);
-        height: calc(100% + 6px);
-        border: solid 3px rgba(17, 17, 19, 0.2);
-        border-radius: 6px;
-        overflow: hidden;
-      }
 
       & > * {
         position: relative;
@@ -304,9 +296,12 @@ defineExpose({
   }
 
   .el-button {
-    color: #fff;
-    background-color: var(--main-primary-color);
+    color: var(--form-btn-text-color);
+    background-color: var(--form-btn-bg-color);
+    border: none;
     width: 100%;
+    font-weight: 700;
+    letter-spacing: 0.2em;
     &.btn-submit {
       padding: 9px 30px;
       font-size: 20px;
