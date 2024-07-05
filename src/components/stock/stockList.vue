@@ -27,7 +27,7 @@ getPrice({ stockId: props.stockId }).then((res) => {
       <span class="text-[14px]">現價/收盤價</span>
       {{ stockPrice }}
     </div>
-    <div class="divide-y divide-[#808080] px-[16px]">
+    <div class="divide-y divide-[var(--main-sub-color)] px-[16px]">
       <van-swipe-cell v-for="item in data" :key="item.id">
         <stockListCard :item="item" :stockPrice="stockPrice" />
       </van-swipe-cell>

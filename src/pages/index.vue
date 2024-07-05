@@ -6,10 +6,10 @@ const name = computed(() => piniaUserInfo?.userInfo?.name)
 </script>
 
 <template>
-  <div class="p-[10px] h-full flex items-center">
-    <div class="text-[28px] font-black text-white">
-      <p>Hi,{{ name }}</p>
-      <p>Welcome Back</p>
+  <div class="p-[10px] pt-[40px] h-full flex">
+    <div>
+      <p class="text-[20px] text-[var(--text-secondary-color)] tracking-wide">Hello,</p>
+      <p class="font-black text-[28px] text-[var(--text-main-color)] tracking-wider">{{ name }}</p>
     </div>
   </div>
 </template>

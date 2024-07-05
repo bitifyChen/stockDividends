@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <div class="w-full fixed top-0 z-10">
+  <div class="w-full absolute top-0 z-10">
     <van-nav-bar title="庫存">
       <template #right>
         <slot />
