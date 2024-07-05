@@ -42,7 +42,6 @@ const loginMethod = () => {
     })
   }
   postUser(parentForm.value).then((res) => {
-    console.log(res)
     if (res.status === 200) {
       ElMessage({
         message: '註冊成功',

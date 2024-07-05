@@ -35,7 +35,20 @@ const loginMethod = () => {
         })
         cookies.set('token', res.data.token)
         router.push({ name: 'IndexPage' })
+      } else {
+        ElMessage({
+          message: '帳號或密碼錯誤',
+          type: 'error',
+          plain: true
+        })
       }
+    })
+    .catch((err) => {
+      ElMessage({
+        message: '網路問題，請稍後再試',
+        type: 'error',
+        plain: true
+      })
     })
     .finally(() => {
       loading.value = false

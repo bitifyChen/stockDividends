@@ -2,8 +2,7 @@
 
 <template>
   <div class="main">
-    <NavBar />
-    <div class="flex-1">
+    <div class="flex-1 w-full pb-[50px]">
       <router-view />
     </div>
     <Footer />

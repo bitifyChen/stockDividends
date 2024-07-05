@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, defineProps, defineExpose } from 'vue'
 import { useElMessageBox } from '@/components/Two/TwoElMessageBox.js'
-
+import TwoElDatePicker from './TwoElDatePicker.vue'
+  
 const props = defineProps({
   fields: {
     type: Array,
@@ -197,29 +198,6 @@ defineExpose({
           :active-icon="Check"
           :inactive-icon="Close"
         />
-        <template v-if="field.type === 'countdown'">
-          <el-input
-            v-if="field.type === 'countdown'"
-            v-model="form[field.name]"
-            :type="field.type"
-            :placeholder="field.placeholder ? field.placeholder : ''"
-            :class="[field.readonly ? 'is-readonly' : '']"
-            :readonly="field.readonly"
-            class="h-[48px] flex-1"
-          >
-            <template #append v-if="field.callback">
-              <div
-                class="countdown-btn"
-                :class="{
-                  'is-disabled': countdown
-                }"
-                @click="countdownMethod(field.callback)"
-              >
-                {{ countdownText }}
-              </div>
-            </template>
-          </el-input>
-        </template>
         <TwoElDatePicker
           v-if="field.type === 'date'"
           v-model="form[field.name]"
