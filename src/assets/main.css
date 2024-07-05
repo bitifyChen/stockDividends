@@ -8,7 +8,7 @@
 body {
   padding: 0;
   margin: 0;
-  background-color: rgb(60, 60, 60)
+  background-color: rgb(60, 60, 60);
 }
 #app {
   max-width: 920px;
@@ -17,7 +17,12 @@ body {
   background-color: var(--main-bg-color);
 }
 
-:root{
-  --main-primary-color:#4F726C;
-  --main-bg-color:#4F726C;
+:root {
+  --main-primary-color: #577c8a;
+  --main-sub-color: rgb(94, 113, 113);
+  --main-rise-color: #d75455;
+  --main-fall-color: #24936e;
+  --main-bg-color: #2c4149;
+  --van-primary-color: var(--main-primary-color) !important;
+  --el-color-primary: var(--main-primary-color) !important;
 }

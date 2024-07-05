@@ -3,6 +3,8 @@ import { getUser } from '@/api/user.js'
 import TwoDynamicForm from '@/components/Two/TwoDynamicForm.vue'
 import { useRouter } from 'vue-router'
 import { useCookies } from '@vueuse/integrations/useCookies'
+import { useUserInfoStore } from '@/stores/useUserInfo.js'
+const piniaUserInfo = useUserInfoStore()
 const router = useRouter()
 const cookies = useCookies(['token'])
 const fields = computed(() => [
@@ -33,6 +35,7 @@ const loginMethod = () => {
           type: 'success',
           plain: true
         })
+        piniaUserInfo.setUserInfo(res.data)
         cookies.set('token', res.data.token)
         router.push({ name: 'IndexPage' })
       } else {
