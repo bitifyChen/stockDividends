@@ -3,7 +3,7 @@ import { useCookies } from '@vueuse/integrations/useCookies'
 
 /* KEY */
 const apiUserKey = 'AKfycbx_86TUDpzyfYc84zcxsmI0Bq8To4agJuZDqm3rX8IY2KFO9GZLds9supM7oPTe2AK8'
-const apiStockKey = 'AKfycby3NF0MAaVQI3r7qV5_4GYIA2yvwLp3Ob0xcTD-OALN_psh5rqvQ3xCh3_XPcNLseQS'
+const apiStockKey = 'AKfycbz1lmMHULbIjs2U5EByLYBd48SBalk_B0m2bV1Ychk0OeE5JGuF9MKws_qNosP3HRoR'
 const apiStockDividendKey =
   'AKfycbzE6oGTkI0xe9ony1usM1YfycmYH1DNHOji8DkKfahE1H7JcsU-8T7qYIGafv2BKVGm'
 const apiPriceKey = 'AKfycbz25Q07jOsw9IcB681vTvzEADIOW8i6o4VgfvoTYf6igrdyKRkIL4HCxPjtn18kl0k'

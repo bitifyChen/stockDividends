@@ -33,9 +33,14 @@ const fields = computed(() => [
     rules: [{ required: true, message: '必填' }]
   }
 ])
+const formHook = ref(null)
 const parentForm = ref({})
 const submitting = ref(false)
-const submitMethod = () => {
+const keepSubmitMethod = () => {
+  formHook.value && formHook.value.validateFormMethod().then(() => submitMethod(true))
+}
+
+const submitMethod = (stay = false) => {
   submitting.value = true
   postStock(parentForm.value)
     .then((res) => {
@@ -45,8 +50,14 @@ const submitMethod = () => {
           type: 'success',
           plain: true
         })
-        active.value = false
-        emit('finish')
+        if (!stay) {
+          active.value = false
+          parentForm.value = {}
+          emit('finish')
+        } else {
+          const stockId = parentForm.value.stockId
+          parentForm.value = { stockId }
+        }
       }
     })
     .finally(() => {
@@ -69,12 +80,23 @@ defineExpose({
   >
     <div class="my-[50px] px-[10px]">
       <TwoDynamicForm
+        ref="formHook"
         :fields="fields"
         :parentForm="parentForm"
         submitText="新增"
         :submitting="submitting"
         @submitFn="submitMethod"
-      />
+      >
+        <template #bottom>
+          <el-button
+            @click="keepSubmitMethod"
+            class="ml-auto mr-auto !h-[48px] w-full !rounded-[7px] text-[16px] btn-submit !bg-[var(--main-sub-color)]"
+            :loading="submitting"
+          >
+            連續新增
+          </el-button>
+        </template>
+      </TwoDynamicForm>
     </div>
   </van-popup>
 </template>
