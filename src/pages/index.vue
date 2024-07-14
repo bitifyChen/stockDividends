@@ -1,8 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useUserInfoStore } from '@/stores/useUserInfo.js'
+import { useStockStore } from '@/stores/useStock.js'
 const piniaUserInfo = useUserInfoStore()
+const piniaStock = useStockStore()
 const name = computed(() => piniaUserInfo?.userInfo?.name)
+piniaStock.getData()
 </script>
 
 <template>

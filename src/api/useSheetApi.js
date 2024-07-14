@@ -4,8 +4,18 @@ import { useCookies } from '@vueuse/integrations/useCookies'
 /* KEY */
 const apiUserKey = 'AKfycbx_86TUDpzyfYc84zcxsmI0Bq8To4agJuZDqm3rX8IY2KFO9GZLds9supM7oPTe2AK8'
 const apiStockKey = 'AKfycby3NF0MAaVQI3r7qV5_4GYIA2yvwLp3Ob0xcTD-OALN_psh5rqvQ3xCh3_XPcNLseQS'
+const apiStockDividendKey =
+  'AKfycbzE6oGTkI0xe9ony1usM1YfycmYH1DNHOji8DkKfahE1H7JcsU-8T7qYIGafv2BKVGm'
 const apiPriceKey = 'AKfycbz25Q07jOsw9IcB681vTvzEADIOW8i6o4VgfvoTYf6igrdyKRkIL4HCxPjtn18kl0k'
 const apiUrl = (id) => `https://script.google.com/macros/s/${id}/exec`
+//API Mapping
+
+const apiMapping = {
+  user: apiUserKey,
+  stock: apiStockKey,
+  price: apiPriceKey,
+  stockDividend: apiStockDividendKey
+}
 
 // create an axios instance
 const instance = axios.create({
@@ -21,18 +31,12 @@ const request = async (method, page, data, queryParams) => {
   const cookies = useCookies(['token'])
   const _token = cookies.get('token')
   // eslint-disable-next-line no-useless-catch
+  const apiKey = apiMapping[page] || null
+  if (!apiKey) throw new Error('API KEY NOT FOUND')
   try {
     const response = await instance({
       method,
-      url: apiUrl(
-        page === 'user'
-          ? apiUserKey
-          : page === 'stock'
-            ? apiStockKey
-            : page === 'price'
-              ? apiPriceKey
-              : null
-      ),
+      url: apiUrl(apiKey),
       data: JSON.stringify({ ...data, token: _token ?? null }),
       params: queryParams
     })

@@ -1,60 +1,34 @@
 <script setup>
-import { getStock } from '@/api/stock.js'
 import { computed } from 'vue'
-import { useCookies } from '@vueuse/integrations/useCookies'
-const cookies = useCookies(['token'])
-const _token = cookies.get('token')
-
-const orgData = ref(null)
-const data = computed(() => {
-  return orgData.value
-})
-const stockIdList = computed(() => {
-  const _set = new Set()
-  if (data.value) {
-    data.value.map((e) => {
-      if (!_set.has(e.stockId)) _set.add(e.stockId)
-    })
-  }
-  return _set
-})
-
-const loading = ref(false)
-const getStockMethod = () => {
-  loading.value = true
-  getStock({ id: _token })
-    .then((res) => {
-      if (res.status === 200) {
-        orgData.value = res.data
-      }
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
-
+import { useStockStore } from '@/stores/useStock.js'
+const piniaStock = useStockStore()
+const stockHoldList = computed(() => piniaStock?.stockList)
+const loading = computed(() => piniaStock?.loading)
+//van-collapse
 const activeStock = ref('null')
 //新增
 const stockAddHook = ref(null)
 const addMethod = () => stockAddHook.value && stockAddHook.value.open()
-
-//Init
-getStockMethod()
+//更新
+const getStockMethod = () => piniaStock.getData()
 </script>
 
 <template>
   <Navbar> <van-icon name="plus" size="28" @click="addMethod" /> </Navbar>
   <div class="min-h-[50px] cell-list" v-loading="loading">
     <van-collapse v-model="activeStock" accordion>
-      <van-collapse-item :name="id" v-for="id in stockIdList" :key="id">
+      <van-collapse-item :name="key" v-for="(value, key) in stockHoldList" :key="key">
         <template #title>
           <div class="flex justify-between">
             <div class="font-black text-[18px]">
-              {{ id }}({{ data.filter((e) => e.stockId === id)?.length }})
+              {{ key }}
+            </div>
+            <div class="font-black text-[color:var(--text-main-color)] text-[14px]">
+              {{ value.data.reduce((a, b) => a + b.buyNum, 0) }}股
             </div>
           </div>
         </template>
-        <stockList :data="data.filter((e) => e.stockId === id)" :stockId="id" />
+        <stockList :data="value" :stockId="key" />
       </van-collapse-item>
     </van-collapse>
   </div>

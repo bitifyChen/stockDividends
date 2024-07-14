@@ -1,6 +1,6 @@
 <script setup>
 import dayjs from 'dayjs'
-import { add, subtract, multiply } from '@/composables/math.js'
+import { add } from '@/composables/math.js'
 import { computed } from 'vue'
 const props = defineProps({
   item: {
@@ -18,15 +18,13 @@ const buyPrice = computed(() => props.item.buyPrice ?? 0)
 const buyNum = computed(() => props.item.buyNum ?? 0)
 const buyDateShow = computed(() => dayjs(props.item.buyDate).format('YYYY-MM-DD') ?? '-')
 
-//Stock Now
-const nowPrice = computed(() => props.stockPrice ?? 0)
-
 //Show Info
-const totalDividend = computed(() => 0)
-const totalUnrealized = computed(() =>
-  multiply(subtract(nowPrice.value, buyPrice.value), buyNum.value)
+const totalDividend = computed(() => props?.item?.earnDividend ?? null)
+const totalDividendShow = computed(() =>
+  totalDividend.value !== null ? totalDividend.value : '尚未更新'
 )
-const total = computed(() => add(totalDividend.value, totalUnrealized.value))
+const totalUnrealized = computed(() => props?.item?.earnPrice ?? null)
+const total = computed(() => add(totalDividend.value ?? 0, totalUnrealized.value ?? 0))
 </script>
 
 <template>
@@ -43,7 +41,7 @@ const total = computed(() => add(totalDividend.value, totalUnrealized.value))
     </div>
     <div class="flex justify-between items-center">
       <div class="">已領股利</div>
-      <div class="font-bold">{{ totalDividend }}</div>
+      <div class="font-bold">{{ totalDividendShow }}</div>
     </div>
     <div class="flex justify-between items-center">
       <div class="">未實現價差</div>
