@@ -211,7 +211,9 @@ defineExpose({
         </div>
       </el-form-item>
     </div>
-    <slot name="bottom"></slot>
+    <div class="col-span-12">
+      <slot name="bottom"></slot>
+    </div>
     <div class="submit col-span-12 flex pb-[20px]" v-if="!props.submitHide">
       <el-button
         @click="submitForm(ruleFormRef)"
