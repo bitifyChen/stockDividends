@@ -1,26 +1,24 @@
 <script setup>
 import { getPrice } from '@/api/price.js'
+import { computed } from 'vue'
 const props = defineProps({
   data: {
-    type: Array,
-    default: () => []
+    type: Object,
+    default: () => {}
   },
   stockId: {
     type: String,
     required: true
   }
 })
-
-const stockPrice = ref(null)
-getPrice({ stockId: props.stockId }).then((res) => {
-  if (res.status === 200) {
-    stockPrice.value = res?.data?.price
-  }
-})
+//持股
+const stockHoldList = computed(() => props?.data?.data)
+//現價
+const stockPrice = computed(() => props?.data?.price ?? '未更新')
 </script>
 
 <template>
-  <div v-loading="stockPrice === null" class="mx-[-16px] mt-[-12px]">
+  <div class="mx-[-16px] mt-[-12px]">
     <div
       class="bg-[var(--main-sub-color)] px-[16px] py-[10px] text-[white] font-black text-[18px] text-right flex justify-between items-center"
     >
@@ -28,7 +26,7 @@ getPrice({ stockId: props.stockId }).then((res) => {
       {{ stockPrice }}
     </div>
     <div class="divide-y divide-[var(--main-sub-color)] px-[16px]">
-      <van-swipe-cell v-for="item in data" :key="item.id">
+      <van-swipe-cell v-for="item in stockHoldList" :key="item.id">
         <stockListCard :item="item" :stockPrice="stockPrice" />
       </van-swipe-cell>
     </div>

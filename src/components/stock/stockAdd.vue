@@ -34,18 +34,24 @@ const fields = computed(() => [
   }
 ])
 const parentForm = ref({})
+const submitting = ref(false)
 const submitMethod = () => {
-  postStock(parentForm.value).then((res) => {
-    if (res.status === 200) {
-      ElMessage({
-        message: '新增成功',
-        type: 'success',
-        plain: true
-      })
-      active.value = false
-      emit('finish')
-    }
-  })
+  submitting.value = true
+  postStock(parentForm.value)
+    .then((res) => {
+      if (res.status === 200) {
+        ElMessage({
+          message: '新增成功',
+          type: 'success',
+          plain: true
+        })
+        active.value = false
+        emit('finish')
+      }
+    })
+    .finally(() => {
+      submitting.value = false
+    })
 }
 
 defineExpose({
@@ -66,6 +72,7 @@ defineExpose({
         :fields="fields"
         :parentForm="parentForm"
         submitText="新增"
+        :submitting="submitting"
         @submitFn="submitMethod"
       />
     </div>
