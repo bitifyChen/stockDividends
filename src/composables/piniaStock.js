@@ -43,6 +43,7 @@ export const getDividendList = (state) => {
   const _stockDividendList = state.orgDividendData //所有股票股利資料
   const _totalDividendList = []
   for (const [stockId, item] of Object.entries(_stockList)) {
+    if (!_stockDividendList[stockId]) return
     const _dividendList = _stockDividendList[stockId].filter(
       (e) =>
         e.CashExDividendTradingDate >= item.inStockStart &&

@@ -24,8 +24,8 @@ export const useStockStore = defineStore('stock', {
       }
       return _set
     },
-    stockList: (state) => getStockList(state),
-    dividendList: (state) => getDividendList(state)
+    stockList: (state) => getStockList(state)
+    // dividendList: (state) => getDividendList(state)
   },
   actions: {
     async getData() {
@@ -45,8 +45,8 @@ export const useStockStore = defineStore('stock', {
           _set.forEach(async (stockId) => {
             this.orgPriceData[stockId] = await this.getPriceData(stockId)
             //如已有股利不重複拿取(因資料大)
-            if (!this.orgDividendData[stockId])
-              this.orgDividendData[stockId] = await this.getDividendData(stockId)
+            // if (!this.orgDividendData[stockId])
+            this.orgDividendData[stockId] = await this.getDividendData(stockId)
           })
         }
       })
@@ -55,11 +55,23 @@ export const useStockStore = defineStore('stock', {
     async getDividendData(stockId) {
       return getStockDividend({ id: stockId }).then((res) => {
         if (res.status === 200) {
-          return res.data.map((e) => ({
-            CashExDividendTradingDate: e.CashExDividendTradingDate, //除權息日
-            CashDividendPaymentDate: e.CashDividendPaymentDate, //付款日期
-            CashEarningsDistribution: e.CashEarningsDistribution //現金配息
-          }))
+          return res.data
+            .map((e) => {
+              if (
+                e.CashExDividendTradingDate &&
+                e.CashDividendPaymentDate &&
+                e.CashEarningsDistribution
+              )
+                return {
+                  CashExDividendTradingDate: e.CashExDividendTradingDate, //除權息日
+                  CashDividendPaymentDate: e.CashDividendPaymentDate, //付款日期
+                  CashEarningsDistribution: e.CashEarningsDistribution //現金配息
+                }
+              else {
+                return null
+              }
+            })
+            .filter(Boolean)
         } else {
           return null
         }

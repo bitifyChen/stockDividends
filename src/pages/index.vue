@@ -17,7 +17,7 @@ const dividendDataList = computed(() => piniaStock?.dividendList)
       <p class="font-black text-[28px] text-[var(--text-main-color)] tracking-wider">{{ name }}</p>
     </div>
     <div class="w-full">
-      <dividendList :data="dividendDataList" />
+      <!-- <dividendList :data="dividendDataList" /> -->
     </div>
   </div>
 </template>
