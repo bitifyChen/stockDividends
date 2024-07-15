@@ -16,6 +16,7 @@
     "axios": "^1.7.2",
     "dayjs": "^1.11.11",
     "element-plus": "^2.7.6",
+    "firebase": "^10.12.3",
     "google-spreadsheet": "^4.1.2",
     "mathjs": "^13.0.2",
     "pinia": "^2.1.7",
