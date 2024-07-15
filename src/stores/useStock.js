@@ -24,8 +24,8 @@ export const useStockStore = defineStore('stock', {
       }
       return _set
     },
-    stockList: (state) => getStockList(state)
-    // dividendList: (state) => getDividendList(state)
+    stockList: (state) => getStockList(state),
+    dividendList: (state) => getDividendList(state)
   },
   actions: {
     async getData() {
@@ -45,8 +45,8 @@ export const useStockStore = defineStore('stock', {
           _set.forEach(async (stockId) => {
             this.orgPriceData[stockId] = await this.getPriceData(stockId)
             //如已有股利不重複拿取(因資料大)
-            // if (!this.orgDividendData[stockId])
-            this.orgDividendData[stockId] = await this.getDividendData(stockId)
+            if (!this.orgDividendData[stockId] || this.orgDividendData[stockId].length === 0)
+              this.orgDividendData[stockId] = await this.getDividendData(stockId)
           })
         }
       })
