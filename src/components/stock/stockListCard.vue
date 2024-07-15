@@ -1,6 +1,6 @@
 <script setup>
 import dayjs from 'dayjs'
-import { add } from '@/composables/math.js'
+import { add } from '@/composables/useMath.js'
 import { computed } from 'vue'
 const props = defineProps({
   item: {
