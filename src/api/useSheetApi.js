@@ -20,7 +20,7 @@ const apiMapping = {
 // create an axios instance
 const instance = axios.create({
   withCredentials: false,
-  timeout: 10000
+  timeout: 100000
 })
 instance.interceptors.response.use((res) => {
   return res.data
