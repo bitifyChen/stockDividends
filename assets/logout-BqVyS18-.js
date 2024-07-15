@@ -1,1 +1,0 @@
-import{R as t,S as s,L as o}from"./index-Czz2va0T.js";const n={__name:"logout",setup(r){const e=t();return s(["token"]).remove("token"),e.push({name:"LoginPage"}),(c,a)=>null}};typeof o=="function"&&o(n);export{n as default};
