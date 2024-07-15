@@ -42,24 +42,64 @@ export const getDividendList = (state) => {
   const _stockList = state.stockList //擁有的所有股票資料
   const _stockDividendList = state.orgDividendData //所有股票股利資料
   const _totalDividendList = []
+
+  // Check if _stockList and _stockDividendList are objects
+  if (typeof _stockList !== 'object' || typeof _stockDividendList !== 'object') {
+    console.error('Invalid stock list or dividend data structure')
+    return _totalDividendList // Return empty list in case of error
+  }
+
   for (const [stockId, item] of Object.entries(_stockList)) {
-    if (!_stockDividendList[stockId]) return
-    const _dividendList = _stockDividendList[stockId].filter(
-      (e) =>
-        e.CashExDividendTradingDate >= item.inStockStart &&
-        e.CashExDividendTradingDate <= item.inStockEnd
+    if (!_stockDividendList[stockId]) {
+      console.warn(`No dividend data for stock ID: ${stockId}`)
+      continue // Skip to the next stock if no dividend data is found
+    }
+
+    // Check if item is an object and has the necessary properties
+    if (
+      typeof item !== 'object' ||
+      !item.inStockStart ||
+      !item.inStockEnd ||
+      !Array.isArray(item.data)
+    ) {
+      console.error(`Invalid stock item data for stock ID: ${stockId}`)
+      continue // Skip invalid stock items
+    }
+
+    const _dividendList = _stockDividendList[stockId]?.filter(
+      (e) => e.CashExDividendTradingDate >= item.inStockStart
     )
-    if (_dividendList.length) {
-      _dividendList.map((i) => {
+
+    if (_dividendList?.length) {
+      _dividendList.forEach((i) => {
+        // Check if the necessary properties are present in each dividend item
+        if (
+          !i.CashExDividendTradingDate ||
+          !i.CashDividendPaymentDate ||
+          !i.CashEarningsDistribution
+        ) {
+          console.error(`Invalid dividend data for stock ID: ${stockId}`)
+          return // Skip invalid dividend items
+        }
+
+        const stockNum = item.data
+          .filter((x) => x.buyDate <= i.CashExDividendTradingDate)
+          .reduce((total, stock) => {
+            if (typeof stock.buyNum !== 'number') {
+              console.error(`Invalid buyNum in stock data for stock ID: ${stockId}`)
+              return total // Skip invalid buyNum entries
+            }
+            return add(total, stock.buyNum)
+          }, 0)
+
         const _data = {
           stockId: stockId,
-          stockNum: item.data
-            .filter((x) => x.buyDate <= i.CashExDividendTradingDate)
-            .reduce((total, stock) => add(total, stock.buyNum), 0),
+          stockNum: stockNum,
           pay_date: i.CashDividendPaymentDate,
           tradingDate: i.CashExDividendTradingDate,
           earn: i.CashEarningsDistribution
         }
+
         _totalDividendList.push(_data)
       })
     }
