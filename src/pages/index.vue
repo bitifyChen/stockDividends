@@ -7,6 +7,7 @@ const piniaStock = useStockStore()
 const name = computed(() => piniaUserInfo?.userInfo?.name)
 piniaStock.getData()
 //股利清單
+const piniaStockLoading = computed(() => piniaStock?.loading)
 const dividendDataList = computed(() => piniaStock?.dividendList)
 </script>
 
@@ -16,8 +17,8 @@ const dividendDataList = computed(() => piniaStock?.dividendList)
       <p class="text-[20px] text-[var(--text-secondary-color)] tracking-wide">Hello,</p>
       <p class="font-black text-[28px] text-[var(--text-main-color)] tracking-wider">{{ name }}</p>
     </div>
-    <div class="w-full">
-      <dividendList :data="dividendDataList" />
+    <div class="w-full" v-loading="piniaStockLoading">
+      <dividendList :data="dividendDataList" v-loading="piniaStockLoading" />
     </div>
   </div>
 </template>

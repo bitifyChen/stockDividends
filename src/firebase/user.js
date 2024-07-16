@@ -3,7 +3,8 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from 'firebase/auth'
 import { getFirestore, doc } from 'firebase/firestore'
 
@@ -33,6 +34,18 @@ export const postUserLogin = ({ email, password }) => {
       .then((userCredential) => {
         const user = userCredential.user
         resolve(user)
+      })
+      .catch((error) => {
+        reject(error)
+      })
+  })
+}
+
+export const postUserLogout = () => {
+  return new Promise((resolve, reject) => {
+    signOut(auth)
+      .then(() => {
+        resolve()
       })
       .catch((error) => {
         reject(error)
