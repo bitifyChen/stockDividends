@@ -9,6 +9,14 @@ const props = defineProps({
   stockId: {
     type: String,
     required: true
+  },
+  patchMethod: {
+    type: Function,
+    default: () => {}
+  },
+  deleteMethod: {
+    type: Function,
+    default: () => {}
   }
 })
 //持股
@@ -52,12 +60,35 @@ const earnTotal = computed(() => add(earnDividend.value, earnPrice.value))
         >
       </div>
     </div>
-    <div class="divide-y divide-[var(--main-sub-color)] px-[16px]">
+    <div class="divide-y divide-[var(--main-sub-color)]">
       <van-swipe-cell v-for="item in stockHoldList" :key="item.id">
+        <template #left>
+          <van-button square type="primary" text="詳情" class="swipe-cell-button" />
+        </template>
         <stockListCard :item="item" :stockPrice="stockPrice" />
+        <template #right>
+          <van-button
+            square
+            type="warning"
+            text="修改"
+            class="swipe-cell-button"
+            @click="props.patchMethod(item)"
+          />
+          <van-button
+            square
+            type="danger"
+            text="刪除"
+            class="swipe-cell-button"
+            @click="props.deleteMethod(item)"
+          />
+        </template>
       </van-swipe-cell>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.swipe-cell-button {
+  height: 100%;
+}
+</style>

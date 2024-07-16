@@ -2,11 +2,8 @@
 import { postUserLogin } from '@/firebase/user.js'
 import TwoDynamicForm from '@/components/Two/TwoDynamicForm.vue'
 import { useRouter } from 'vue-router'
-import { useCookies } from '@vueuse/integrations/useCookies'
-import { useUserInfoStore } from '@/stores/useUserInfo.js'
-const piniaUserInfo = useUserInfoStore()
+
 const router = useRouter()
-const cookies = useCookies(['token'])
 const fields = computed(() => [
   {
     name: 'email',
@@ -29,14 +26,11 @@ const loginMethod = () => {
   loading.value = true
   postUserLogin(parentForm.value)
     .then((res) => {
-      console.log(res)
       ElMessage({
         message: '登入成功',
         type: 'success',
         plain: true
       })
-      piniaUserInfo.setUserInfo(res)
-      cookies.set('token', res.uid)
       router.push({ name: 'IndexPage' })
     })
     .catch((err) => {

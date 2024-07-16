@@ -28,7 +28,7 @@ const total = computed(() => add(totalDividend.value ?? 0, totalUnrealized.value
 </script>
 
 <template>
-  <div class="py-[10px] text-[var(--text-secondary-color)]">
+  <div class="py-[10px] px-[16px] text-[var(--text-secondary-color)]">
     <div class="flex justify-between">
       <div class="font-black text-[color:var(--text-main-color)] text-[18px]">
         <span class="text-[14px]">$</span> {{ buyPrice }}
@@ -59,9 +59,6 @@ const total = computed(() => add(totalDividend.value ?? 0, totalUnrealized.value
       {{ total }}
     </div>
   </div>
-  <!-- <template #right>
-        <van-button square text="售出" type="danger" class="delete-button" />
-      </template> -->
 </template>
 
 <style scoped></style>

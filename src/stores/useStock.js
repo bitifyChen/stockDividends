@@ -1,10 +1,8 @@
 import { defineStore } from 'pinia'
-import { useCookies } from '@vueuse/integrations/useCookies'
-import { getStock } from '@/api/stock.js'
 import { getStockDividend } from '@/api/stock.js'
 import { getPrice } from '@/api/price.js'
 import { getStockList, getDividendList } from '@/composables/piniaStock.js'
-const cookies = useCookies(['token'])
+import { getStock } from '@/firebase/stock.js'
 
 export const useStockStore = defineStore('stock', {
   persist: true,
@@ -30,8 +28,7 @@ export const useStockStore = defineStore('stock', {
   actions: {
     async getData() {
       this.loading = true
-      const _token = cookies.get('token')
-      await getStock({ id: _token }).then((res) => {
+      await getStock().then((res) => {
         if (res.status === 200) {
           this.orgData = res.data
           //取得股票清單
@@ -45,8 +42,8 @@ export const useStockStore = defineStore('stock', {
           _set.forEach(async (stockId) => {
             this.orgPriceData[stockId] = await this.getPriceData(stockId)
             //如已有股利不重複拿取(因資料大)
-            if (!this.orgDividendData[stockId] || this.orgDividendData[stockId].length === 0)
-              this.orgDividendData[stockId] = await this.getDividendData(stockId)
+            // if (!this.orgDividendData[stockId] || this.orgDividendData[stockId].length === 0)
+            //   this.orgDividendData[stockId] = await this.getDividendData(stockId)
           })
         }
       })

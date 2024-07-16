@@ -1,7 +1,12 @@
 import app from './index.js'
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
-import { getFirestore, doc, setDoc } from 'firebase/firestore'
-// Get a reference to the authentication service
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged
+} from 'firebase/auth'
+import { getFirestore, doc } from 'firebase/firestore'
+
 const auth = getAuth(app)
 const db = getFirestore(app)
 
@@ -32,5 +37,17 @@ export const postUserLogin = ({ email, password }) => {
       .catch((error) => {
         reject(error)
       })
+  })
+}
+
+export const checkUser = () => {
+  return new Promise((resolve, reject) => {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        resolve(user)
+      } else {
+        reject(user)
+      }
+    })
   })
 }
