@@ -11,11 +11,13 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@vant/touch-emulator": "^1.4.0",
     "@vueuse/core": "^10.11.0",
     "@vueuse/integrations": "^10.11.0",
     "axios": "^1.7.2",
     "dayjs": "^1.11.11",
     "element-plus": "^2.7.6",
+    "firebase": "^10.12.3",
     "google-spreadsheet": "^4.1.2",
     "mathjs": "^13.0.2",
     "pinia": "^2.1.7",

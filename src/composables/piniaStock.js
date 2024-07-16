@@ -85,10 +85,6 @@ export const getDividendList = (state) => {
         const stockNum = item.data
           .filter((x) => x.buyDate <= i.CashExDividendTradingDate)
           .reduce((total, stock) => {
-            if (typeof stock.buyNum !== 'number') {
-              console.error(`Invalid buyNum in stock data for stock ID: ${stockId}`)
-              return total // Skip invalid buyNum entries
-            }
             return add(total, stock.buyNum)
           }, 0)
 

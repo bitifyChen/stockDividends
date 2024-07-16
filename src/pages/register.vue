@@ -1,18 +1,11 @@
 <script setup>
-import { postUser } from '@/api/user.js'
+import { postUser } from '@/firebase/user.js'
 import TwoDynamicForm from '@/components/Two/TwoDynamicForm.vue'
 import router from '@/router'
 const fields = computed(() => [
   {
-    name: 'name',
-    label: '姓名',
-    type: 'text',
-    cssStyle: true,
-    rules: [{ required: true, message: '姓名为必填项' }]
-  },
-  {
-    name: 'username',
-    label: '帳號',
+    name: 'email',
+    label: '帳號(電子信箱)',
     type: 'text',
     cssStyle: true,
     rules: [{ required: true, message: '帐号为必填项' }]
@@ -33,24 +26,35 @@ const fields = computed(() => [
   }
 ])
 const parentForm = ref({})
+const submitting = ref(false)
 const loginMethod = () => {
   if (parentForm.value.password !== parentForm.value.rePassword) {
-    ElMessage({
+    return ElMessage({
       message: '兩次輸入的密碼不相同',
       type: 'error',
       plain: true
     })
   }
-  postUser(parentForm.value).then((res) => {
-    if (res.status === 200) {
+  submitting.value = true
+  postUser(parentForm.value)
+    .then((res) => {
       ElMessage({
         message: '註冊成功',
         type: 'success',
         plain: true
       })
       router.push({ path: '/login' })
-    }
-  })
+    })
+    .catch((err) => {
+      ElMessage({
+        message: err.message,
+        type: 'error',
+        plain: true
+      })
+    })
+    .finally(() => {
+      submitting.value = false
+    })
 }
 </script>
 
@@ -62,6 +66,7 @@ const loginMethod = () => {
     <TwoDynamicForm
       :fields="fields"
       :parentForm="parentForm"
+      :submitting="submitting"
       submitText="註冊"
       @submitFn="loginMethod"
       class="form"
