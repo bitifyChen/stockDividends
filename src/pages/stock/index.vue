@@ -1,4 +1,5 @@
 <script setup>
+import { deleteStock } from '@/firebase/stock.js'
 import { computed } from 'vue'
 import { useStockStore } from '@/stores/useStock.js'
 const piniaStock = useStockStore()
@@ -10,6 +11,32 @@ const activeStock = ref('null')
 const stockAddHook = ref(null)
 const addMethod = () => stockAddHook.value && stockAddHook.value.open()
 //更新
+const patchMethod = (item) => stockAddHook.value && stockAddHook.value.open(item)
+//刪除
+const deleteMethod = (item) => {
+  showConfirmDialog({
+    title: '刪除',
+    message: `您將刪除股號${item.stockId}股票，共計${item.buyNum}股，是否確定?`
+  }).then(() => {
+    deleteStock(item.id)
+      .then(() => {
+        ElMessage({
+          message: '操作成功',
+          type: 'success',
+          plain: true
+        })
+        getStockMethod()
+      })
+      .catch(() => {
+        ElMessage({
+          message: '操作失敗，請稍後再試',
+          type: 'error',
+          plain: true
+        })
+      })
+  })
+}
+//刷新資料
 const getStockMethod = () => piniaStock.getData()
 </script>
 
@@ -23,12 +50,15 @@ const getStockMethod = () => piniaStock.getData()
             <div class="font-black text-[18px]">
               {{ key }}
             </div>
-            <div class="font-black text-[color:var(--text-main-color)] text-[14px]">
-              {{ value.data.reduce((a, b) => a + b.buyNum, 0) }}股
-            </div>
           </div>
         </template>
-        <stockList :data="value" :stockId="key" />
+        <stockList
+          :data="value"
+          :stockId="key"
+          :patchMethod="patchMethod"
+          :deleteMethod="deleteMethod"
+          @finish="getStockMethod"
+        />
       </van-collapse-item>
     </van-collapse>
   </div>
