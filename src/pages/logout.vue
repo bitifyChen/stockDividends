@@ -1,10 +1,16 @@
 <script setup>
+import { postUserLogout } from '@/firebase/user.js'
 import { useRouter } from 'vue-router'
 import { useCookies } from '@vueuse/integrations/useCookies'
+import { useStockStore } from '@/stores/useStock.js'
 const router = useRouter()
 const cookies = useCookies(['token'])
+const piniaStock = useStockStore()
 cookies.remove('token')
-router.push({ name: 'LoginPage' })
+piniaStock.clear()
+postUserLogout().finally(() => {
+  router.push({ name: 'LoginPage' })
+})
 </script>
 
 <template></template>

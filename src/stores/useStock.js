@@ -27,23 +27,37 @@ export const useStockStore = defineStore('stock', {
   actions: {
     async getData() {
       this.loading = true
-      await getStock().then((res) => {
+
+      try {
+        const res = await getStock()
         if (res.status === 200) {
           this.orgData = res.data
-          //取得股票清單
+          // 取得股票清單
           const _set = new Set()
           if (res.data) {
-            res.data.map((e) => {
+            res.data.forEach((e) => {
               if (!_set.has(e.stockId)) _set.add(e.stockId)
             })
           }
-          //批次取得股票股利與價格
-          _set.forEach(async (stockId) => {
-            this.orgPriceData[stockId] = await this.getPriceData(stockId)
-            this.orgDividendData[stockId] = await this.getDividendData(stockId)
+          // 批次取得股票股利與價格
+          const promises = []
+          _set.forEach((stockId) => {
+            const pricePromise = this.getPriceData(stockId).then((data) => {
+              this.orgPriceData[stockId] = data
+            })
+            const dividendPromise = this.getDividendData(stockId).then((data) => {
+              this.orgDividendData[stockId] = data
+            })
+
+            promises.push(pricePromise, dividendPromise)
           })
+          // 等待所有的 promises 完成
+          await Promise.all(promises)
         }
-      })
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }
+
       this.loading = false
     },
     async getDividendData(stockId) {
@@ -77,6 +91,11 @@ export const useStockStore = defineStore('stock', {
           return res?.data?.price !== '' ? res?.data?.price : null
         }
       })
+    },
+    clear() { 
+      this.orgData = []
+      this.orgPriceData = {}
+      this.orgDividendData = {}
     }
   }
 })
