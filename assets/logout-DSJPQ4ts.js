@@ -1,1 +1,0 @@
-import{$ as t,a0 as s,R as o}from"./index-EqKq1-V7.js";const n={__name:"logout",setup(r){const e=t();return s(["token"]).remove("token"),e.push({name:"LoginPage"}),(a,c)=>null}};typeof o=="function"&&o(n);export{n as default};

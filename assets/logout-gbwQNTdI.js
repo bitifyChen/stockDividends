@@ -1,0 +1,1 @@
+import{$ as a,a0 as n,Q as r,a1 as c,R as o}from"./index-DsJNXUix.js";const u={__name:"logout",setup(i){const e=a(),t=n(["token"]),s=r();return t.remove("token"),s.clear(),c().finally(()=>{e.push({name:"LoginPage"})}),(p,l)=>null}};typeof o=="function"&&o(u);export{u as default};
