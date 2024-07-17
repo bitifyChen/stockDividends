@@ -7,7 +7,7 @@ const piniaUserInfo = useUserInfoStore()
 const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
 const name = computed(() => piniaUserInfo?.userInfo?.name)
-// piniaStock.getData()
+piniaStock.getData()
 //股利清單
 const piniaStockLoading = computed(() => piniaStock?.loading)
 const dividendDataList = computed(() => piniaStock?.dividendList)
