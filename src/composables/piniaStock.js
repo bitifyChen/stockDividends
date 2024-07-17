@@ -84,6 +84,8 @@ export const getDividendList = (state) => {
           }, 0)
 
         const _data = {
+          year: new Date(i.CashDividendPaymentDate).getFullYear(),
+          month: new Date(i.CashDividendPaymentDate).getMonth() + 1,
           stockId: stockId,
           stockNum: stockNum,
           pay_date: i.CashDividendPaymentDate,
