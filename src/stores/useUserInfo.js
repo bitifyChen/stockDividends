@@ -8,6 +8,9 @@ export const useUserInfoStore = defineStore('userInfo', {
   actions: {
     setUserInfo(e) {
       this.userInfo = e
+    },
+    clear() {
+      this.userInfo = {}
     }
   }
 })
