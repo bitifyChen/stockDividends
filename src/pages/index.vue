@@ -7,7 +7,7 @@ const piniaUserInfo = useUserInfoStore()
 const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
 const name = computed(() => piniaUserInfo?.userInfo?.name)
-piniaStock.getData()
+// piniaStock.getData()
 //股利清單
 const piniaStockLoading = computed(() => piniaStock?.loading)
 const dividendDataList = computed(() => piniaStock?.dividendList)
@@ -25,7 +25,14 @@ const openFull = ref(false)
       <div class="text-[24px] mb-[10px] text-center">Stock!</div>
       <div class="card bg-[white] rounded-xl text-[24px] text-[var(--main-primary-color)] p-[10px]">
         <div class="flex justify-end">
-          <van-icon name="expand" class="text-[#3E56D5]" @click="openFull = !openFull" />
+          <font-awesome-icon
+            :icon="[
+              'fas',
+              openFull ? 'down-left-and-up-right-to-center' : 'up-right-and-down-left-from-center'
+            ]"
+            class="text-[var(--main-primary-color)] text-[16px]"
+            @click="openFull = !openFull"
+          />
         </div>
         <div class="flex justify-between"><span>累積股息</span><span>$200</span></div>
         <div class="h-[200px] bg-[#141c45a2] rounded-xl" v-show="openFull"></div>

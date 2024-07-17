@@ -8,7 +8,7 @@
 body {
   padding: 0;
   margin: 0;
-  background-color: #1c2032;
+  background-color: #3e56d5;
 }
 #app {
   max-width: 920px;
@@ -18,23 +18,23 @@ body {
 }
 
 :root {
-  --main-dark-color: #4894FE;
-  --main-primary-color:#63B4FF;
-  --main-sub-color: #8696BB;
+  --main-dark-color: #4894fe;
+  --main-primary-color: #3e56d5;
+  --main-sub-color: #8696bb;
   --main-rise-color: #d75455;
   --main-fall-color: #24936e;
   --main-bg-color: #ffffff;
-  --main-bg-sub-color: #FAFAFA;
+  --main-bg-sub-color: #fafafa;
   --main-bg-light-color: #676f9d;
   --van-primary-color: var(--main-primary-color) !important;
   --el-color-primary: var(--main-primary-color) !important;
 
-  --text-main-color: #0D1B34;
-  --text-secondary-color: #8696BB;
-  --text-notice-color:#FEB052;
+  --text-main-color: #0d1b34;
+  --text-secondary-color: #8696bb;
+  --text-notice-color: #feb052;
 
-  --form-bg-color: #FAFAFA;
-  --form-text-color: #8696BB;
+  --form-bg-color: #fafafa;
+  --form-text-color: #8696bb;
   --form-btn-bg-color: var(--main-primary-color);
-  --form-btn-text-color: #FAFAFA;
+  --form-btn-text-color: #fafafa;
 }
