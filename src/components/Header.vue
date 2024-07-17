@@ -36,10 +36,8 @@ const menu = computed(() => [
   }
 ])
 
-//
-const isMounted = ref(false)
 onMounted(() => {
-  isMounted.value = true
+  piniaBase.activeMenu()
 })
 
 watch(
@@ -60,18 +58,15 @@ watch(
         class="text-white text-[28px] absolute top-[20px] left-[20px]"
         @click="piniaBase.toggleMenu()"
       >
-        <font-awesome-icon :icon="['fas', 'bars']" v-show="!menuShow" />
-        <font-awesome-icon :icon="['fas', 'xmark']" v-show="menuShow" />
+        <font-awesome-icon :icon="['fas', menuShow ? 'xmark' : 'bars']" />
       </div>
     </dynamicDom>
-    <teleport to="#header-slot" v-if="isMounted && piniaBase?.menuIsOpen">
-      <div
-        class="font-black justify-center text-[24px] pt-[50px] pb-[20px] text-[white] tracking-[0.2em]"
-      >
+    <teleport to="#header-slot" v-if="piniaBase?.menuOnMount && piniaBase?.menuIsOpen">
+      <div class="font-black justify-center text-[24px] pt-[50px] pb-[20px] text-[white]">
         <div class="user flex items-center mb-[20px]">
           <el-avatar :size="50" :src="avatarUrl" class="mr-[10px] !bg-[#FFC940]" fit="fill" />
           Hi,{{ userName }}
-          <router-link :to="{ name: 'SettingProfilePage' }" class="ml-auto"
+          <router-link :to="{ name: 'SettingProfilePage' }" class="ml-auto tracking-[0.2em]"
             ><font-awesome-icon :icon="['fas', 'pen']" class="text-[16px]"
           /></router-link>
         </div>

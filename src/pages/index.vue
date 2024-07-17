@@ -7,20 +7,16 @@ const piniaUserInfo = useUserInfoStore()
 const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
 const name = computed(() => piniaUserInfo?.userInfo?.name)
-piniaStock.getData()
+// piniaStock.getData()
 //股利清單
 const piniaStockLoading = computed(() => piniaStock?.loading)
 const dividendDataList = computed(() => piniaStock?.dividendList)
 
-const isMounted = ref(false)
-onMounted(() => {
-  isMounted.value = true
-})
 const openFull = ref(false)
 </script>
 
 <template>
-  <teleport to="#header-slot" v-if="isMounted && !piniaBase?.menuIsOpen">
+  <teleport to="#header-slot" v-if="piniaBase?.menuOnMount && !piniaBase?.menuIsOpen">
     <div class="w-full font-black justify-center text-[48px] text-[white]">
       <div class="text-[24px] mb-[10px] text-center">Stock!</div>
       <div class="card bg-[white] rounded-xl text-[24px] text-[var(--main-primary-color)] p-[10px]">

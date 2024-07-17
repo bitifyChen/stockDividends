@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 
 export const useBaseStore = defineStore('base', {
-  persist: true,
   state: () => ({
-    menuIsOpen: false
+    menuIsOpen: false,
+    menuOnMount: false
   }),
   getters: {},
   actions: {
@@ -12,6 +12,9 @@ export const useBaseStore = defineStore('base', {
     },
     closeMenu() {
       this.menuIsOpen = false
+    },
+    activeMenu() {
+      this.menuOnMount = true
     }
   }
 })
