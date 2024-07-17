@@ -39,8 +39,8 @@ export const getStockList = (state) => {
 }
 
 export const getDividendList = (state) => {
-  const _stockList = state.stockList //擁有的所有股票資料
-  const _stockDividendList = state.orgDividendData //所有股票股利資料
+  const _stockList = state.stockList ?? [] //擁有的所有股票資料
+  const _stockDividendList = state.orgDividendData ?? [] //所有股票股利資料
   const _totalDividendList = []
 
   // Check if _stockList and _stockDividendList are objects
@@ -56,12 +56,7 @@ export const getDividendList = (state) => {
     }
 
     // Check if item is an object and has the necessary properties
-    if (
-      typeof item !== 'object' ||
-      !item.inStockStart ||
-      !item.inStockEnd ||
-      !Array.isArray(item.data)
-    ) {
+    if (typeof item !== 'object' || !item.inStockStart || !Array.isArray(item.data)) {
       console.error(`Invalid stock item data for stock ID: ${stockId}`)
       continue // Skip invalid stock items
     }

@@ -13,10 +13,10 @@ import {
 
 import { useCookies } from '@vueuse/integrations/useCookies'
 const cookies = useCookies(['token'])
-const _token = cookies.get('token')
 
 const db = getFirestore(app)
 const useUserStockRef = () => {
+  const _token = cookies.get('token')
   const userRef = doc(db, 'users', _token)
   const userStockRef = collection(userRef, 'stock')
   return userStockRef
