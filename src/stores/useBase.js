@@ -9,6 +9,9 @@ export const useBaseStore = defineStore('base', {
   actions: {
     toggleMenu() {
       this.menuIsOpen = !this.menuIsOpen
+    },
+    closeMenu() {
+      this.menuIsOpen = false
     }
   }
 })

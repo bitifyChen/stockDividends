@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
-  signOut
+  signOut,
+  updateProfile
 } from 'firebase/auth'
 import { getFirestore, doc } from 'firebase/firestore'
 
@@ -21,6 +22,19 @@ export const postUser = ({ email, password }) => {
         doc(db, `users${user.uid}`).then(() => {
           resolve(user)
         })
+      })
+      .catch((error) => {
+        reject(error)
+      })
+  })
+}
+
+export const patchUser = (params) => {
+  return new Promise((resolve, reject) => {
+    const user = auth.currentUser
+    updateProfile(user, params)
+      .then(() => {
+        resolve({ status: 200 })
       })
       .catch((error) => {
         reject(error)

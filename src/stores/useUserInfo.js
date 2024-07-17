@@ -4,10 +4,17 @@ export const useUserInfoStore = defineStore('userInfo', {
   state: () => ({
     userInfo: {}
   }),
-  getters: {},
+  getters: {
+    userName: (state) => {
+      return state.userInfo.displayName
+    }
+  },
   actions: {
     setUserInfo(e) {
       this.userInfo = e
+    },
+    syncUserInfo(e) {
+      this.userInfo = { ...this.userInfo, ...e }
     },
     clear() {
       this.userInfo = {}

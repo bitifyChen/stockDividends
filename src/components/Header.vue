@@ -1,12 +1,17 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { computed, watch } from 'vue'
+import { useUserInfoStore } from '@/stores/useUserInfo.js'
+import userAvatar from '@/assets/image/base/avatar.png'
+const piniaUser = useUserInfoStore()
 import { useBaseStore } from '@/stores/useBase.js'
 const piniaBase = useBaseStore()
 //Route
 const route = useRoute()
 const currentPath = computed(() => route.name)
-
+//User
+const userName = computed(() => piniaUser?.userName)
+const avatarUrl = computed(() => userAvatar)
 const menuShow = computed(() => piniaBase?.menuIsOpen)
 const menu = computed(() => [
   {
@@ -18,6 +23,11 @@ const menu = computed(() => [
     title: '庫存',
     path: 'StockPage',
     icon: ['fas', 'wallet']
+  },
+  {
+    title: '設定',
+    path: 'SettingPage',
+    icon: ['fas', 'gear']
   },
   {
     title: '登出',
@@ -34,9 +44,7 @@ onMounted(() => {
 
 watch(
   () => currentPath.value,
-  () => {
-    piniaBase.toggleMenu()
-  },
+  () => piniaBase.closeMenu(),
   { immediate: true }
 )
 </script>
@@ -44,7 +52,7 @@ watch(
 <template>
   <div>
     <dynamicDom
-      class="w-full relative top-0 z-[10] bg-[#3E56D5] p-[20px] overflow-hidden rounded-b-[20px]"
+      class="w-full relative top-0 z-[10] bg-[var(--main-primary-color)] p-[20px] overflow-hidden rounded-b-[20px]"
       dom="header-slot"
       :minHight="40"
     >
@@ -58,14 +66,21 @@ watch(
     </dynamicDom>
     <teleport to="#header-slot" v-if="isMounted && piniaBase?.menuIsOpen">
       <div
-        class="font-black justify-center text-[24px] pt-[50px] pb-[20px] text-[white] tracking-wide"
+        class="font-black justify-center text-[24px] pt-[50px] pb-[20px] text-[white] tracking-[0.2em]"
       >
+        <div class="user flex items-center mb-[20px]">
+          <el-avatar :size="50" :src="avatarUrl" class="mr-[10px] !bg-[#FFC940]" fit="fill" />
+          Hi,{{ userName }}
+          <router-link :to="{ name: 'SettingProfilePage' }" class="ml-auto"
+            ><font-awesome-icon :icon="['fas', 'pen']" class="text-[16px]"
+          /></router-link>
+        </div>
         <router-link
           :to="{ name: item.path }"
           v-for="item in menu"
           :key="item.title"
           class="my-[10px] block border-l-[10px] pl-[10px] border-[transparent]"
-          :class="{ 'border-[#FFC940]': currentPath === item.path }"
+          :class="{ '!border-[#FFC940]': currentPath === item.path }"
           ><font-awesome-icon :icon="item.icon" class="mr-[10px]" />{{ item.title }}</router-link
         >
       </div>
