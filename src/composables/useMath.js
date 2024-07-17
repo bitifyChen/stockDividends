@@ -22,6 +22,6 @@ export const divide = (num1, num2) => {
   return Number(math.format(math.divide(math.bignumber(num1), math.bignumber(num2))))
 }
 
-export const round = (value, unit) => {
+export const round = (value, unit = 0) => {
   return math.format(math.round(value, unit))
 }

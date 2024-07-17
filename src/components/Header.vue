@@ -64,7 +64,12 @@ watch(
     <teleport to="#header-slot" v-if="piniaBase?.menuOnMount && piniaBase?.menuIsOpen">
       <div class="font-black justify-center text-[24px] pt-[50px] pb-[20px] text-[white]">
         <div class="user flex items-center mb-[20px]">
-          <el-avatar :size="50" :src="avatarUrl" class="mr-[10px] !bg-[#FFC940]" fit="fill" />
+          <el-avatar
+            :size="50"
+            :src="avatarUrl"
+            class="mr-[10px] !bg-[var(--main-sub-color)]"
+            fit="fill"
+          />
           Hi,{{ userName }}
           <router-link :to="{ name: 'SettingProfilePage' }" class="ml-auto tracking-[0.2em]"
             ><font-awesome-icon :icon="['fas', 'pen']" class="text-[16px]"
@@ -75,7 +80,7 @@ watch(
           v-for="item in menu"
           :key="item.title"
           class="my-[10px] block border-l-[10px] pl-[10px] border-[transparent]"
-          :class="{ '!border-[#FFC940]': currentPath === item.path }"
+          :class="{ '!border-[var(--main-sub-color)]': currentPath === item.path }"
           ><font-awesome-icon :icon="item.icon" class="mr-[10px]" />{{ item.title }}</router-link
         >
       </div>
