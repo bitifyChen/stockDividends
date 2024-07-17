@@ -2,7 +2,9 @@
 import { deleteStock } from '@/firebase/stock.js'
 import { computed } from 'vue'
 import { useStockStore } from '@/stores/useStock.js'
+import { useBaseStore } from '@/stores/useBase.js'
 const piniaStock = useStockStore()
+const piniaBase = useBaseStore()
 const stockHoldList = computed(() => piniaStock?.stockList)
 const loading = computed(() => piniaStock?.loading)
 //van-collapse
@@ -38,10 +40,22 @@ const deleteMethod = (item) => {
 }
 //刷新資料
 const getStockMethod = () => piniaStock.getData()
+
+//
+const isMounted = ref(false)
+onMounted(() => {
+  isMounted.value = true
+})
 </script>
 
 <template>
-  <Navbar> <van-icon name="plus" size="28" @click="addMethod" /> </Navbar>
+  <teleport to="#header-slot" v-if="isMounted && !piniaBase?.menuIsOpen">
+    <div class="w-full font-black justify-between items-center flex text-[48px] text-[white]">
+      <div class="w-[26px] h-[26px]"></div>
+      <div class="text-[24px] text-center">庫存</div>
+      <van-icon name="plus" size="28" @click="addMethod" />
+    </div>
+  </teleport>
   <div class="min-h-[50px] cell-list" v-loading="loading">
     <van-collapse v-model="activeStock" accordion>
       <van-collapse-item :name="key" v-for="(value, key) in stockHoldList" :key="key">

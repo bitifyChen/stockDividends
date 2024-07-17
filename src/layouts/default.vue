@@ -2,10 +2,11 @@
 
 <template>
   <div class="main">
-    <div class="w-full h-[calc(100dvh-50px)] overflow-y-auto">
+    <Header />
+    <div class="w-full overflow-y-auto">
       <router-view />
     </div>
-    <Footer />
+    <!-- <Footer /> -->
   </div>
 </template>
 
