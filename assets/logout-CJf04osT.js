@@ -1,0 +1,1 @@
+import{ar as n,as as r,al as c,at as u,au as i,am as o}from"./index-Br0R_yqM.js";const l={__name:"logout",setup(p){const e=n(),s=r(["token"]),t=c(),a=u(0);return s.remove("token"),t.clear(),a.clear(),i().finally(()=>{e.push({name:"LoginPage"})}),(f,_)=>null}};typeof o=="function"&&o(l);export{l as default};
