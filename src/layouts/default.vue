@@ -3,10 +3,9 @@
 <template>
   <div class="main">
     <Header />
-    <div class="w-full overflow-y-auto">
+    <div class="w-full">
       <router-view />
     </div>
-    <!-- <Footer /> -->
   </div>
 </template>
 

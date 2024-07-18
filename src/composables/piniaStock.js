@@ -1,4 +1,4 @@
-import { add, subtract, multiply } from '@/composables/useMath.js'
+import { add, subtract, multiply, round } from '@/composables/useMath.js'
 import stockName from '@/data/stockName.json'
 export const getStockList = (state) => {
   const _data = {}
@@ -34,7 +34,12 @@ export const getStockList = (state) => {
       price: state.orgPriceData[e] ?? null, //現價,
       inStockStart: new Date(Math.min(..._stockDateListById)).toISOString(),
       inStockEnd: new Date(Math.max(..._stockDateListById)).toISOString(),
-      name: stockName[e] ?? '-'
+      name: stockName[e] ?? '-',
+      buyNum: _stockListById.reduce((total, item) => add(total, item.buyNum), 0),
+      buyPrice: _stockListById.reduce(
+        (total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))),
+        0
+      )
     }
   })
   return _data

@@ -35,7 +35,9 @@ const easyMode = ref(true)
       <div>
         <span class="text-[var(--main-primary-color)]">{{ payDate }}</span>
         將收到股利
-        <span class="text-[var(--main-primary-color)]">{{ totalEarn }}</span
+        <span class="text-[var(--main-primary-color)]">{{
+          Number(totalEarn).toLocaleString()
+        }}</span
         >元。
       </div>
     </div>
@@ -51,12 +53,15 @@ const easyMode = ref(true)
       <div class="text-[14px] py-[10px]">
         <div class="flex justify-between">
           <span>參加庫存</span>
-          <span class="text-[var(--main-primary-color)]">{{ stockNum }} 股</span>
+          <span class="text-[var(--main-primary-color)]">{{ stockNum.toLocaleString() }} 股</span>
         </div>
         <div class="">
           每股股票股利
           <span class="text-[var(--main-primary-color)]">{{ stockEarn }}</span
-          >，約可收到 <span class="text-[var(--main-primary-color)]">{{ totalEarn }}</span
+          >，約可收到
+          <span class="text-[var(--main-primary-color)]">{{
+            Number(totalEarn).toLocaleString()
+          }}</span
           >元
         </div>
       </div>

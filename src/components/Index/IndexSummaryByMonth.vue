@@ -38,7 +38,6 @@ onMounted(() => {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       datasets: [
         {
-          label: '# of Votes',
           backgroundColor: '#3e56d5',
           data: stockData.value,
           borderWidth: 1
@@ -46,9 +45,9 @@ onMounted(() => {
       ]
     },
     options: {
-      scales: {
-        y: {
-          beginAtZero: true
+      plugins: {
+        legend: {
+          display: false
         }
       }
     }
@@ -57,8 +56,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>月成長比較</div>
-  <canvas ref="chartHook"></canvas>
+  <div>
+    <div>月成長比較</div>
+    <canvas ref="chartHook"></canvas>
+  </div>
 </template>
 
 <style scoped></style>
