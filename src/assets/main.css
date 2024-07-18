@@ -19,8 +19,8 @@ body {
 
 :root {
   --main-primary-color: #3e56d5;
-  --main-sub-color: #FFC940;
-
+  --main-sub-color: #ffc940;
+  --main-gray-color: #e7e7e7;
 
   --main-dark-color: #4894fe;
   --main-rise-color: #d75455;
