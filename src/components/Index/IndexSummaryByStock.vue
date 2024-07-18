@@ -17,7 +17,7 @@ const stockData = computed(() => {
       _data[item.stockId].yearTotal = add(_data[item.stockId].yearTotal, item.total)
     } else {
       _data[item.stockId] = {
-        name: '',
+        stockName: item.stockName,
         stockId: item.stockId,
         yearTotal: item.total
       }
@@ -33,7 +33,7 @@ const stockData = computed(() => {
 
   if (remainingTotal > 0) {
     topFour.push({
-      name: 'Others',
+      stockName: '其他',
       stockId: 'others',
       yearTotal: remainingTotal
     })
@@ -46,7 +46,7 @@ onMounted(() => {
   new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: stockData.value.map((item) => item.stockId),
+      labels: stockData.value.map((item) => item.stockName),
       datasets: [
         {
           data: stockData.value.map((item) => item.yearTotal),

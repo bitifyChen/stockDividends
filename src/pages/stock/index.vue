@@ -56,7 +56,7 @@ const getStockMethod = () => piniaStock.getData()
         <template #title>
           <div class="flex justify-between">
             <div class="font-black text-[18px]">
-              {{ key }}
+              {{ value.name }} <span class="text-[12px]">{{ key }}</span>
             </div>
           </div>
         </template>
