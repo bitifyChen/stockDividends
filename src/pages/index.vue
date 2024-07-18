@@ -24,7 +24,7 @@ onMounted(() => {
       <IndexSummary :data="dividendDataList" v-loading="piniaStockLoading" />
     </div>
   </teleport>
-  <div class="p-[10px] pt-[40px] h-full flex flex-col">
+  <div class="p-[10px] h-full flex flex-col">
     <div class="w-full" v-loading="piniaStockLoading">
       <dividendList :data="dividendDataList" v-loading="piniaStockLoading" />
     </div>

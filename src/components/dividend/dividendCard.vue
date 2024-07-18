@@ -1,5 +1,5 @@
 <script setup>
-import { multiply } from '@/composables/useMath.js'
+import { multiply, round } from '@/composables/useMath.js'
 import dayjs from 'dayjs'
 const props = defineProps({
   data: {
@@ -8,36 +8,56 @@ const props = defineProps({
   }
 })
 const stockId = computed(() => props?.data?.stockId ?? '-')
+const stockName = computed(() => props?.data?.stockName ?? '-')
 const stockNum = computed(() => props?.data?.stockNum ?? '-')
+const stockEarn = computed(() => props?.data?.earn ?? '-')
 const tradingDate = computed(() =>
   props?.data?.tradingDate ? dayjs(props?.data?.tradingDate).format('YYYY-MM-DD') : '-'
 )
-const pay_date = computed(() =>
-  props?.data?.pay_date ? dayjs(props?.data?.pay_date).format('YYYY-MM-DD') : '-'
+const payDate = computed(() =>
+  props?.data?.payDate ? dayjs(props?.data?.payDate).format('YYYY-MM-DD') : '-'
 )
 
-const totalEarn = computed(() => multiply(props?.data?.stockNum ?? 0, props?.data?.earn ?? 0))
+const totalEarn = computed(() =>
+  round(multiply(props?.data?.stockNum ?? 0, props?.data?.earn ?? 0))
+)
+//簡易模式
+const easyMode = ref(true)
 </script>
 
 <template>
-  <div class="p-[4px] bg-[var(--main-bg-sub-color)] border border-[var(--main-sub-color)]">
-    <div class="">
-      <div class="font-black text-[16px] flex justify-between">
-        <span class="text-[var(--text-main-color)]">{{ pay_date }}</span>
-        <span class="text-[var(--main-rise-color)]">{{ totalEarn }}</span>
+  <div
+    class="px-[10px] border border-[var(--main-gray-color)] divide-y divide-[var(--main-gray-color)]"
+    @click="easyMode = !easyMode"
+  >
+    <div class="font-black text-[16px] py-[10px]">
+      <div class="text-[var(--main-primary-color)]">{{ stockId }} {{ stockName }}</div>
+      <div>
+        <span class="text-[var(--main-primary-color)]">{{ payDate }}</span>
+        將收到股利
+        <span class="text-[var(--main-primary-color)]">{{ totalEarn }}</span
+        >元。
       </div>
-      <div class="text-[var(--text-secondary-color)] text-[12px]">
-        <div class="flex justify-between">
-          <span>股息代碼</span>
-          <span>{{ stockId }}</span>
-        </div>
+    </div>
+    <div v-show="!easyMode">
+      <div class="text-[14px] py-[10px]">
         <div class="flex justify-between">
           <span>除息日期</span>
-          <span>{{ tradingDate }}</span>
+          <span class="text-[var(--main-primary-color)]">{{ tradingDate }}</span>
         </div>
+      </div>
+    </div>
+    <div v-show="!easyMode">
+      <div class="text-[14px] py-[10px]">
         <div class="flex justify-between">
-          <span>參與股數</span>
-          <span>{{ stockNum }}股</span>
+          <span>參加庫存</span>
+          <span class="text-[var(--main-primary-color)]">{{ stockNum }} 股</span>
+        </div>
+        <div class="">
+          每股股票股利
+          <span class="text-[var(--main-primary-color)]">{{ stockEarn }}</span
+          >，約可收到 <span class="text-[var(--main-primary-color)]">{{ totalEarn }}</span
+          >元
         </div>
       </div>
     </div>

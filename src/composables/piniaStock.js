@@ -91,7 +91,7 @@ export const getDividendList = (state) => {
           stockId: stockId,
           stockNum: stockNum,
           stockName: item?.name,
-          pay_date: i.CashDividendPaymentDate,
+          payDate: i.CashDividendPaymentDate,
           tradingDate: i.CashExDividendTradingDate,
           earn: i.CashEarningsDistribution
         }
@@ -101,5 +101,5 @@ export const getDividendList = (state) => {
     }
   }
 
-  return _totalDividendList.sort((a, b) => new Date(b.pay_date) - new Date(a.pay_date)) //日期：近=>遠
+  return _totalDividendList.sort((a, b) => new Date(b.payDate) - new Date(a.payDate)) //日期：近=>遠
 }

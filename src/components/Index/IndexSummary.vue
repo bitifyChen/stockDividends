@@ -24,7 +24,7 @@ const thisYearData = computed(() => {
 })
 //今年起訖
 const thisYearRange = computed(() => {
-  const dates = thisYearData.value.map((item) => new Date(item?.pay_date))
+  const dates = thisYearData.value.map((item) => new Date(item?.payDate))
   return [dayjs(Math.min(...dates)).format('MM/DD'), dayjs(Math.max(...dates)).format('MM/DD')]
 })
 
