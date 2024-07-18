@@ -1,4 +1,5 @@
 import { add, subtract, multiply } from '@/composables/useMath.js'
+import stockName from '@/data/stockName.json'
 export const getStockList = (state) => {
   const _data = {}
   state.stockIdList.forEach((e) => {
@@ -32,7 +33,8 @@ export const getStockList = (state) => {
         .sort((a, b) => new Date(b.buyDate) - new Date(a.buyDate)), //日期：近=>遠
       price: state.orgPriceData[e] ?? null, //現價,
       inStockStart: new Date(Math.min(..._stockDateListById)).toISOString(),
-      inStockEnd: new Date(Math.max(..._stockDateListById)).toISOString()
+      inStockEnd: new Date(Math.max(..._stockDateListById)).toISOString(),
+      name: stockName[e] ?? '-'
     }
   })
   return _data
@@ -88,6 +90,7 @@ export const getDividendList = (state) => {
           month: new Date(i.CashDividendPaymentDate).getMonth() + 1,
           stockId: stockId,
           stockNum: stockNum,
+          stockName: item?.name,
           pay_date: i.CashDividendPaymentDate,
           tradingDate: i.CashExDividendTradingDate,
           earn: i.CashEarningsDistribution
