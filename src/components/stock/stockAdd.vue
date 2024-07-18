@@ -43,6 +43,7 @@ const fields = computed(() => [
     rules: [{ required: true, message: '必填' }]
   }
 ])
+const isChanged = ref(false)
 const formHook = ref(null)
 const parentForm = ref({})
 const submitting = ref(false)
@@ -55,6 +56,7 @@ const submitMethod = (stay = false) => {
   postStock(parentForm.value)
     .then((res) => {
       if (res.status === 200) {
+        isChanged.value = true
         ElMessage({
           message: '新增成功',
           type: 'success',
@@ -62,7 +64,6 @@ const submitMethod = (stay = false) => {
         })
         if (!stay) {
           active.value = false
-          emit('finish')
         } else {
           const stockId = parentForm.value.stockId
           parentForm.value = { stockId }
@@ -83,6 +84,7 @@ const patchMethod = () => {
   patchStock(currentId.value, _data)
     .then((res) => {
       if (res.status === 200) {
+        isChanged.value = true
         ElMessage({
           message: '更新成功',
           type: 'success',
@@ -90,7 +92,6 @@ const patchMethod = () => {
         })
         active.value = false
         parentForm.value = {}
-        emit('finish')
       }
     })
     .finally(() => {
@@ -99,6 +100,7 @@ const patchMethod = () => {
 }
 //Popup
 const onClose = () => {
+  if (isChanged.value) emit('finish') //如果有過異動，離開時更新
   parentForm.value = {}
   currentId.value = null
 }

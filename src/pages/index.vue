@@ -13,7 +13,7 @@ const dividendDataList = computed(() => piniaStock?.dividendList)
 
 //取得資料
 onMounted(() => {
-  // piniaStock.getData()
+  piniaStock.getData()
 })
 </script>
 
