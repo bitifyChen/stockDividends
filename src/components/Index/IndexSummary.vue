@@ -25,6 +25,7 @@ const thisYearData = computed(() => {
 //今年起訖
 const thisYearRange = computed(() => {
   const dates = thisYearData.value.map((item) => new Date(item?.payDate))
+  if (!dates.length) return [null, null]
   return [dayjs(Math.min(...dates)).format('MM/DD'), dayjs(Math.max(...dates)).format('MM/DD')]
 })
 
@@ -66,7 +67,9 @@ const thisYearTotal = computed(() => {
         >
       </div>
       <div class="text-[var(--text-secondary-color)]" v-if="easyMode">
-        來自 {{ thisYearStockNum }} 支股票，計算期間為 {{ thisYearRange[0] }}~{{ thisYearRange[1] }}
+        來自 {{ thisYearStockNum }} 支股票，計算期間為 {{ thisYearRange[0] ?? '' }}~{{
+          thisYearRange[1] ?? ''
+        }}
       </div>
     </div>
     <IndexSummaryByStock v-if="!easyMode" :data="thisYearData" />
