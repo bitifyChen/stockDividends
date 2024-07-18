@@ -3,7 +3,9 @@ import { ref, computed } from 'vue'
 import { add, multiply, round } from '@/composables/useMath.js'
 import dayjs from 'dayjs'
 import { useUserInfoStore } from '@/stores/useUserInfo.js'
+import { useStockStore } from '@/stores/useStock.js'
 const piniaUser = useUserInfoStore()
+const piniaStock = useStockStore()
 const props = defineProps({
   data: {
     type: Array,
@@ -14,6 +16,8 @@ const props = defineProps({
 const userName = computed(() => piniaUser?.userName ?? '陌生人')
 //卡片顯示模式
 const easyMode = ref(true)
+//總花費
+const totalCost = computed(() => piniaStock.totalCost)
 //整理資料
 const thisYearData = computed(() => {
   return (
@@ -37,7 +41,6 @@ const thisYearStockNum = computed(() => {
   })
   return Array.from(set).length
 })
-
 //今年總金額
 const thisYearTotal = computed(() => {
   return (
@@ -63,7 +66,7 @@ const thisYearTotal = computed(() => {
       <div class="text-[var(--text-main-color)]">今年已領取股息約</div>
       <div class="flex justify-end items-center">
         <span class="text-[var(--main-sub-color)] text-[24px] font-black"
-          >$ {{ thisYearTotal }}</span
+          >$ {{ thisYearTotal.toLocaleString() }}元</span
         >
       </div>
       <div class="text-[var(--text-secondary-color)]" v-if="easyMode">
@@ -72,8 +75,11 @@ const thisYearTotal = computed(() => {
         }}
       </div>
     </div>
-    <IndexSummaryByStock v-if="!easyMode" :data="thisYearData" />
-    <IndexSummaryByMonth v-if="!easyMode" :data="thisYearData" />
+    <div v-if="!easyMode" class="space-y-[20px]">
+      <IndexSummaryByStock :data="thisYearData" />
+      <IndexSummaryByMonth :data="thisYearData" />
+      <IndexSummaryByYield :totalEarn="thisYearTotal" :totalCost="totalCost" />
+    </div>
   </div>
 </template>
 

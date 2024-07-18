@@ -1,6 +1,6 @@
 <script setup></script>
 <template>
-  <router-view class="base-wrap" />
+  <el-scrollbar height="100dvh"> <router-view class="base-wrap" /></el-scrollbar>
 </template>
 
 <style scoped>

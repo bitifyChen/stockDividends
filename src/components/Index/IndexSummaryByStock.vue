@@ -66,8 +66,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>前五名股票是</div>
-  <canvas ref="chartHook"></canvas>
+  <div>
+    <div>前五名股票是</div>
+    <canvas ref="chartHook"></canvas>
+  </div>
 </template>
 
 <style scoped></style>

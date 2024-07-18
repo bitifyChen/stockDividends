@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { getPrice } from '@/api/price.js'
 import { getStockList, getDividendList } from '@/composables/piniaStock.js'
 import { getStock, getStockDividend } from '@/firebase/stock.js'
+import { add } from '@/composables/useMath.js'
 
 export const useStockStore = defineStore('stock', {
   persist: true,
@@ -22,7 +23,17 @@ export const useStockStore = defineStore('stock', {
       return _set
     },
     stockList: (state) => getStockList(state),
-    dividendList: (state) => getDividendList(state)
+    dividendList: (state) => getDividendList(state),
+    totalCost: (state) => {
+      const _stockList = state.stockList
+      let _cost = 0
+      if (_stockList && typeof _stockList === 'object') {
+        Object.keys(_stockList).forEach((e) => {
+          _cost = add(_cost, _stockList[e]?.buyPrice)
+        })
+      }
+      return _cost
+    }
   },
   actions: {
     async getData() {
@@ -92,7 +103,7 @@ export const useStockStore = defineStore('stock', {
         }
       })
     },
-    clear() { 
+    clear() {
       this.orgData = []
       this.orgPriceData = {}
       this.orgDividendData = {}
