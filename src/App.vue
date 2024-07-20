@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+console.log(import.meta.env)
+</script>
 <template>
   <el-scrollbar height="100dvh"> <router-view class="base-wrap" /></el-scrollbar>
 </template>
