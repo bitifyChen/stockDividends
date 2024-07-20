@@ -28,7 +28,10 @@ jobs:
           file_name: .env
       
       - name: Build project
-        run: npm run build
+        run:
+          # Load the environment variables from the .env file
+          source .env
+          npm run build
 
       - name: Upload production-ready build files
         uses: actions/upload-artifact@v3
