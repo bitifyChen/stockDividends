@@ -1,1 +1,0 @@
-import{aO as n,aP as r,aH as c,u,aQ as i,aI as o}from"./index-DmeUGV8p.js";const p={__name:"logout",setup(l){const e=n(),s=r(["token"]),t=c(),a=u(0);return s.remove("token"),t.clear(),a.clear(),i().finally(()=>{e.push({name:"LoginPage"})}),(f,_)=>null}};typeof o=="function"&&o(p);export{p as default};
