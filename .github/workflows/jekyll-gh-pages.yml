@@ -20,10 +20,14 @@ jobs:
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
 
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          envkey_VITE_GS_API_PRICE_KEY: ${{ secrets.VITE_GS_API_PRICE_KEY }}
+          file_name: .env
+      
       - name: Build project
-        env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_GS_API_PRICE_KEY: ${{ secrets.VITE_GS_API_PRICE_KEY }}
         run: npm run build
 
       - name: Upload production-ready build files
