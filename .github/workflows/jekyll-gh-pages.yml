@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
-
+      
       - name: Build project
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
