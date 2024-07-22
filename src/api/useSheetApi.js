@@ -2,19 +2,12 @@ import axios from 'axios'
 import { useCookies } from '@vueuse/integrations/useCookies'
 
 /* KEY */
-const apiUserKey = 'AKfycbx_86TUDpzyfYc84zcxsmI0Bq8To4agJuZDqm3rX8IY2KFO9GZLds9supM7oPTe2AK8'
-const apiStockKey = 'AKfycbz1lmMHULbIjs2U5EByLYBd48SBalk_B0m2bV1Ychk0OeE5JGuF9MKws_qNosP3HRoR'
-const apiStockDividendKey =
-  'AKfycbzE6oGTkI0xe9ony1usM1YfycmYH1DNHOji8DkKfahE1H7JcsU-8T7qYIGafv2BKVGm'
-const apiPriceKey = 'AKfycbzXRYZtdTweTp40aQZxdpLK7yS1FlrOxCy4Nv8j5nXF61sR8q7lFQPXbmiVsTzkxF0'
+const apiPriceKey = import.meta.env.VITE_GS_API_PRICE_KEY
 const apiUrl = (id) => `https://script.google.com/macros/s/${id}/exec`
 //API Mapping
 
 const apiMapping = {
-  user: apiUserKey,
-  stock: apiStockKey,
-  price: apiPriceKey,
-  stockDividend: apiStockDividendKey
+  price: apiPriceKey
 }
 
 // create an axios instance

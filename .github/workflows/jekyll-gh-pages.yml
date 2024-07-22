@@ -19,8 +19,11 @@ jobs:
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
-
+      
       - name: Build project
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_GS_API_PRICE_KEY: ${{ secrets.VITE_GS_API_PRICE_KEY }}
         run: npm run build
 
       - name: Upload production-ready build files
@@ -44,6 +47,9 @@ jobs:
           
       - name: Copy index.html to 404.html
         run: cp ./dist/index.html ./dist/404.html    
+
+      - name: Copy index.html to 404.html
+        run: cp ./dist/index.html ./dist/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

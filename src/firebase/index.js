@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBu9F5XFpj9yom6q_e02sdq7MmJdx70cv4',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: 'stock-chenchenworkshop.firebaseapp.com',
   databaseURL: 'https://stock-chenchenworkshop-default-rtdb.firebaseio.com',
   projectId: 'stock-chenchenworkshop',
