@@ -1,6 +1,8 @@
 <script setup>
 import { postStock, patchStock } from '@/firebase/stock.js'
+import stockName from '@/data/stockName.json'
 import { keysToKeep } from '@/utils/base.js'
+import { re } from 'mathjs'
 const emit = defineEmits(['finish'])
 const active = ref(false)
 const open = (item = null) => {
@@ -16,30 +18,35 @@ const fields = computed(() => [
   {
     name: 'stockId',
     label: '股票代碼',
-    type: 'text',
-    cssStyle: true,
+    slot: 'stockId',
     readonly: isEditMode.value,
-    rules: [{ required: true, message: '必填' }]
+    rules: [
+      { required: true, message: '必填' },
+      {
+        validator: () => {
+          return stockName[parentForm.value.stockId] ? true : false
+        },
+        trigger: 'change',
+        message: '請檢察股票代碼'
+      }
+    ]
   },
   {
     name: 'buyDate',
     label: '買入日期',
     type: 'date',
-    cssStyle: true,
     rules: [{ required: true, message: '必填' }]
   },
   {
     name: 'buyPrice',
     label: '買入價',
     type: 'text',
-    cssStyle: true,
     rules: [{ required: true, message: '必填' }]
   },
   {
     name: 'buyNum',
     label: '買入股數',
     type: 'text',
-    cssStyle: true,
     rules: [{ required: true, message: '必填' }]
   }
 ])
@@ -98,6 +105,19 @@ const patchMethod = () => {
       submitting.value = false
     })
 }
+//股票名稱
+const stockSearch = ref(null)
+const openStockSearch = () => {
+  stockSearch.value && stockSearch.value.open()
+}
+const stockNameList = computed(() => {
+  return Object.keys(stockName).map((id) => {
+    return { text: `(${id}) ${stockName[id]}`, value: id }
+  })
+})
+const stockNameDisplay = computed(() => {
+  return stockName[parentForm.value.stockId] ?? null
+})
 //Popup
 const onClose = () => {
   if (isChanged.value) emit('finish') //如果有過異動，離開時更新
@@ -127,6 +147,17 @@ defineExpose({
         :submitting="submitting"
         @submitFn="isEditMode ? patchMethod() : submitMethod()"
       >
+        <template #stockId>
+          <el-input v-model="parentForm.stockId" class="h-[48px]"></el-input>
+          <div class="flex text-[12px] leading-4 justify-between">
+            <div class="text-[var(--main-primary-color)]">
+              {{ stockNameDisplay ?? '-' }}
+            </div>
+            <div class="text-[var(--main-primary-color)]" @click="openStockSearch">
+              <font-awesome-icon :icon="['fas', 'magnifying-glass']" class="mr-[4px]" />股票代碼查詢
+            </div>
+          </div>
+        </template>
         <template #bottom v-if="!isEditMode">
           <el-button
             @click="keepSubmitMethod"
@@ -138,6 +169,11 @@ defineExpose({
         </template>
       </TwoDynamicForm>
     </div>
+    <TwoStockSearch
+      ref="stockSearch"
+      :list="stockNameList"
+      @finish="(e) => (parentForm.stockId = e)"
+    />
   </van-popup>
 </template>
 
