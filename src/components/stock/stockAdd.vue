@@ -8,7 +8,7 @@ const active = ref(false)
 const open = (item = null) => {
   if (item) {
     parentForm.value = { ...item }
-    currentId.value = item.id
+    currentId.value = item.id ?? null
   }
   active.value = true
 }

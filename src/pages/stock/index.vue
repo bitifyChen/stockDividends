@@ -1,17 +1,23 @@
 <script setup>
+import { Plus, ListPlus, ChartLine } from 'lucide-vue-next'
 import { deleteStock } from '@/firebase/stock.js'
 import { computed } from 'vue'
 import { useStockStore } from '@/stores/useStock.js'
 import { useBaseStore } from '@/stores/useBase.js'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
 const stockHoldList = computed(() => piniaStock?.stockList)
 const loading = computed(() => piniaStock?.loading)
 //van-collapse
-const activeStock = ref('null')
+const activeStock = ref(null)
 //新增
 const stockAddHook = ref(null)
-const addMethod = () => stockAddHook.value && stockAddHook.value.open()
+const addMethod = (stockId = null) =>
+  stockId
+    ? stockAddHook.value && stockAddHook.value.open({ stockId })
+    : stockAddHook.value && stockAddHook.value.open()
 //更新
 const patchMethod = (item) => stockAddHook.value && stockAddHook.value.open(item)
 //刪除
@@ -38,6 +44,11 @@ const deleteMethod = (item) => {
       })
   })
 }
+//詳情
+const detailMethod = ({ stockId = null, id = null }) => {
+  if (!stockId) return
+  router.push({ name: 'StockDetailPage', params: { id: stockId } })
+}
 //刷新資料
 const getStockMethod = () => piniaStock.getData()
 </script>
@@ -47,7 +58,7 @@ const getStockMethod = () => piniaStock.getData()
     <div class="w-full font-black justify-between items-center flex text-[48px] text-[white]">
       <div class="w-[26px] h-[26px]"></div>
       <div class="text-[24px] text-center">庫存</div>
-      <van-icon name="plus" size="28" @click="addMethod" />
+      <div class="w-[26px] h-[26px]"></div>
     </div>
   </teleport>
   <div class="min-h-[50px] cell-list" v-loading="loading">
@@ -72,6 +83,27 @@ const getStockMethod = () => piniaStock.getData()
   </div>
 
   <stockAdd ref="stockAddHook" @finish="getStockMethod" />
+  <fixedFooter>
+    <div class="space-y-[10px]">
+      <div
+        v-show="activeStock"
+        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
+      >
+        <ChartLine size="24" @click="detailMethod({ stockId: activeStock })" />
+      </div>
+      <div
+        v-show="activeStock"
+        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
+      >
+        <ListPlus size="24" @click="addMethod(activeStock)" />
+      </div>
+      <div
+        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
+      >
+        <Plus size="24" @click="addMethod" />
+      </div>
+    </div>
+  </fixedFooter>
 </template>
 
 <style scoped lang="scss">
