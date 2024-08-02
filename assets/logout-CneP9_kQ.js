@@ -1,0 +1,1 @@
+import{aW as n,aX as r,aP as c,u,aY as i,aQ as o}from"./index-DUPCiGbX.js";const p={__name:"logout",setup(l){const e=n(),s=r(["token"]),t=c(),a=u(0);return s.remove("token"),t.clear(),a.clear(),i().finally(()=>{e.push({name:"LoginPage"})}),(f,_)=>null}};typeof o=="function"&&o(p);export{p as default};
