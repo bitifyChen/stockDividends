@@ -14,6 +14,10 @@ const props = defineProps({
     type: Function,
     default: () => {}
   },
+  sellMethod: {
+    type: Function,
+    default: () => {}
+  },
   deleteMethod: {
     type: Function,
     default: () => {}
@@ -34,33 +38,35 @@ const earnTotal = computed(() => add(earnDividend.value, earnPrice.value))
 </script>
 
 <template>
-  <div class="mx-[-16px] mt-[-12px]">
-    <div class="bg-[var(--main-sub-color)] px-[16px] py-[10px] font-black text-[18px] text-right">
-      <div class="text-[white] flex justify-between items-center">
-        <span class="text-[14px]">現價/收盤價</span> {{ stockPrice }}
+  <div>
+    <div class="border-2 border-[var(--main-primary-color)] p-[4px]">
+      <div class="font-black text-[18px] text-right">
+        <div class="text-[var(--main-primary-color)] flex justify-between items-center">
+          <span class="text-[14px]">現價/收盤價</span> {{ stockPrice }}
+        </div>
+      </div>
+      <div class="text-[color:var(--text-main-color)] text-[14px] font-black">
+        <div class="flex justify-between items-center">
+          <span>已領股利</span> {{ earnDividend }}
+        </div>
+        <div class="flex justify-between items-center">
+          <span>未實現價差</span>
+          <span>{{ earnPrice }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>合計</span>
+          <span
+            :class="{
+              'text-[var(--main-fall-color)]': earnTotal < 0,
+              'text-[var(--main-rise-color)]': earnTotal > 0
+            }"
+          >
+            {{ earnTotal }}</span
+          >
+        </div>
       </div>
     </div>
-    <div
-      class="px-[16px] py-[10px] text-[color:var(--text-main-color)] text-[14px] font-black border-b-4 border-[var(--main-sub-color)]"
-    >
-      <div class="flex justify-between items-center"><span>已領股利</span> {{ earnDividend }}</div>
-      <div class="flex justify-between items-center">
-        <span>未實現價差</span>
-        <span>{{ earnPrice }}</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span>合計</span>
-        <span
-          :class="{
-            'text-[var(--main-fall-color)]': earnTotal < 0,
-            'text-[var(--main-rise-color)]': earnTotal > 0
-          }"
-        >
-          {{ earnTotal }}</span
-        >
-      </div>
-    </div>
-    <div class="divide-y divide-[var(--main-sub-color)]">
+    <div class="divide-y divide-[var(--main-gray-color)]">
       <van-swipe-cell v-for="item in stockHoldList" :key="item.id">
         <template #left>
           <van-button square type="primary" text="詳情" class="swipe-cell-button" />
@@ -69,10 +75,18 @@ const earnTotal = computed(() => add(earnDividend.value, earnPrice.value))
         <template #right>
           <van-button
             square
-            type="warning"
+            color="green"
             text="修改"
             class="swipe-cell-button"
-            @click="props.patchMethod(item)"
+            @click="props.patchMethod(item, !!item.sellDate)"
+          />
+          <van-button
+            v-if="!item.sellDate"
+            square
+            type="warning"
+            text="售出"
+            class="swipe-cell-button"
+            @click="props.sellMethod(item)"
           />
           <van-button
             square

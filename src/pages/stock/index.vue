@@ -14,12 +14,16 @@ const loading = computed(() => piniaStock?.loading)
 const activeStock = ref(null)
 //新增
 const stockAddHook = ref(null)
+//售出
+const stockSellHook = ref(null)
 const addMethod = (stockId = null) =>
   stockId
     ? stockAddHook.value && stockAddHook.value.open({ stockId })
     : stockAddHook.value && stockAddHook.value.open()
 //更新
-const patchMethod = (item) => stockAddHook.value && stockAddHook.value.open(item)
+const patchMethod = (item, isSell) => stockAddHook.value && stockAddHook.value.open(item, isSell)
+//售出
+const sellMethod = (item) => stockSellHook.value && stockSellHook.value.open(item)
 //刪除
 const deleteMethod = (item) => {
   showConfirmDialog({
@@ -69,12 +73,14 @@ const getStockMethod = () => piniaStock.getData()
             <div class="font-black text-[18px]">
               {{ value.name }} <span class="text-[12px]">{{ key }}</span>
             </div>
+            <div class="text-[12px] font-black">{{ value.buyNum }}股</div>
           </div>
         </template>
         <stockList
           :data="value"
           :stockId="key"
           :patchMethod="patchMethod"
+          :sellMethod="sellMethod"
           :deleteMethod="deleteMethod"
           @finish="getStockMethod"
         />
@@ -83,6 +89,7 @@ const getStockMethod = () => piniaStock.getData()
   </div>
 
   <stockAdd ref="stockAddHook" @finish="getStockMethod" />
+  <stockSell ref="stockSellHook" @finish="getStockMethod" />
   <fixedFooter>
     <div class="space-y-[10px]">
       <div
@@ -100,7 +107,7 @@ const getStockMethod = () => piniaStock.getData()
       <div
         class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
       >
-        <Plus size="24" @click="addMethod" />
+        <Plus size="24" @click="addMethod()" />
       </div>
     </div>
   </fixedFooter>

@@ -8,9 +8,9 @@ export const getStockList = (state) => {
     _data[e] = {
       data: _stockListById
         .map((x) => {
-          //股價相關
+          //股價相關(如有售出日，則以售出價格算)
           const earnPrice = state.orgPriceData[e]
-            ? multiply(subtract(state.orgPriceData[e], x.buyPrice), x.buyNum)
+            ? multiply(subtract( x.sellDate ? x.sellPrice : state.orgPriceData[e] , x.buyPrice), x.buyNum)
             : null
           //股息相關
           const _dividendList = state.orgDividendData[e]
@@ -35,8 +35,8 @@ export const getStockList = (state) => {
       inStockStart: new Date(Math.min(..._stockDateListById)).toISOString(),
       inStockEnd: new Date(Math.max(..._stockDateListById)).toISOString(),
       name: stockName[e] ?? '-',
-      buyNum: _stockListById.reduce((total, item) => add(total, item.buyNum), 0),
-      buyPrice: _stockListById.reduce(
+      buyNum: _stockListById.filter((f) => !f.sellDate).reduce((total, item) => add(total, item.buyNum), 0),
+      buyPrice: _stockListById.filter((f) => !f.sellDate).reduce(
         (total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))),
         0
       )

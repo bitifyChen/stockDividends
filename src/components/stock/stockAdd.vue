@@ -5,51 +5,67 @@ import { keysToKeep } from '@/utils/base.js'
 import { re } from 'mathjs'
 const emit = defineEmits(['finish'])
 const active = ref(false)
-const open = (item = null) => {
+const isSell = ref(false)
+const open = (item = null, isItemSell = false) => {
   if (item) {
     parentForm.value = { ...item }
     currentId.value = item.id ?? null
+    isSell.value = isItemSell
   }
   active.value = true
 }
 const currentId = ref(null)
 const isEditMode = computed(() => currentId.value !== null)
-const fields = computed(() => [
-  {
-    name: 'stockId',
-    label: '股票代碼',
-    slot: 'stockId',
-    readonly: isEditMode.value,
-    rules: [
-      { required: true, message: '必填' },
-      {
-        validator: () => {
-          return stockName[parentForm.value.stockId] ? true : false
-        },
-        trigger: 'change',
-        message: '請檢察股票代碼'
-      }
-    ]
-  },
-  {
-    name: 'buyDate',
-    label: '買入日期',
-    type: 'date',
-    rules: [{ required: true, message: '必填' }]
-  },
-  {
-    name: 'buyPrice',
-    label: '買入價',
-    type: 'text',
-    rules: [{ required: true, message: '必填' }]
-  },
-  {
-    name: 'buyNum',
-    label: '買入股數',
-    type: 'text',
-    rules: [{ required: true, message: '必填' }]
-  }
-])
+const fields = computed(() =>
+  [
+    {
+      name: 'stockId',
+      label: '股票代碼',
+      slot: 'stockId',
+      readonly: isEditMode.value,
+      rules: [
+        { required: true, message: '必填' },
+        {
+          validator: () => {
+            return stockName[parentForm.value.stockId] ? true : false
+          },
+          trigger: 'change',
+          message: '請檢察股票代碼'
+        }
+      ]
+    },
+    {
+      name: 'buyDate',
+      label: '買入日期',
+      type: 'date',
+      rules: [{ required: true, message: '必填' }]
+    },
+    isSell.value && {
+      name: 'sellDate',
+      label: '售出日期',
+      type: 'date',
+      rules: [{ required: true, message: '必填' }]
+    },
+    {
+      name: 'buyPrice',
+      label: '買入價',
+      type: 'text',
+      rules: [{ required: true, message: '必填' }]
+    },
+    isSell.value && {
+      name: 'sellPrice',
+      label: '售出價',
+      type: 'text',
+      rules: [{ required: true, message: '必填' }]
+    },
+    {
+      name: 'buyNum',
+      label: '買入股數',
+      type: 'text',
+      rules: [{ required: true, message: '必填' }]
+    }
+  ].filter(Boolean)
+)
 const isChanged = ref(false)
 const formHook = ref(null)
 const parentForm = ref({})
@@ -148,7 +164,11 @@ defineExpose({
         @submitFn="isEditMode ? patchMethod() : submitMethod()"
       >
         <template #stockId>
-          <el-input v-model="parentForm.stockId" class="h-[48px]"></el-input>
+          <el-input
+            v-model="parentForm.stockId"
+            class="h-[48px]"
+            :readonly="fields.find((e) => e.name === 'stockId').readonly"
+          ></el-input>
           <div class="flex text-[12px] leading-4 justify-between">
             <div class="text-[var(--main-primary-color)]">
               {{ stockNameDisplay ?? '-' }}
