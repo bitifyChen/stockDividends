@@ -1,5 +1,7 @@
 <script setup>
 import { add } from '@/composables/useMath.js'
+import { usePageSettingStore } from '@/stores/usePageSetting.js'
+const piniaPageSetting = usePageSettingStore()
 import { computed } from 'vue'
 const props = defineProps({
   data: {
@@ -23,8 +25,12 @@ const props = defineProps({
     default: () => {}
   }
 })
+//顯示相關設定
+const isHiddenSold = computed(() => piniaPageSetting.stock.hiddenSold)
 //持股
-const stockHoldList = computed(() => props?.data?.data)
+const stockHoldList = computed(() =>
+  isHiddenSold.value ? props?.data?.data.filter((e) => !e.sellDate) : props?.data?.data
+)
 //現價
 const stockPrice = computed(() => props?.data?.price ?? '未更新')
 //已領股利

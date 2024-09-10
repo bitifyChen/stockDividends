@@ -3,7 +3,7 @@
 
 
 <template>
-  <div class="fixed bottom-[10px] right-[10px]"><slot /></div>
+  <div class="fixed bottom-[10px] right-[10px] flex"><slot /></div>
 </template>
 
 

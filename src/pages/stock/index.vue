@@ -1,5 +1,5 @@
 <script setup>
-import { Plus, ListPlus, ChartLine } from 'lucide-vue-next'
+import { Plus, ListPlus, ChartLine, Settings2 } from 'lucide-vue-next'
 import { deleteStock } from '@/firebase/stock.js'
 import { computed } from 'vue'
 import { useStockStore } from '@/stores/useStock.js'
@@ -10,6 +10,9 @@ const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
 const stockHoldList = computed(() => piniaStock?.stockList)
 const loading = computed(() => piniaStock?.loading)
+//設定
+const pageSettingHook = ref(null)
+const pageSettingMethod = () => pageSettingHook.value && pageSettingHook.value.toggle()
 //van-collapse
 const activeStock = ref(null)
 //新增
@@ -62,7 +65,7 @@ const getStockMethod = () => piniaStock.getData()
     <div class="w-full font-black justify-between items-center flex text-[48px] text-[white]">
       <div class="w-[26px] h-[26px]"></div>
       <div class="text-[24px] text-center">庫存</div>
-      <div class="w-[26px] h-[26px]"></div>
+      <div class="w-[26px] h-[26px]"><Settings2 @click="pageSettingMethod" /></div>
     </div>
   </teleport>
   <div class="min-h-[50px] cell-list" v-loading="loading">
@@ -90,25 +93,29 @@ const getStockMethod = () => piniaStock.getData()
 
   <stockAdd ref="stockAddHook" @finish="getStockMethod" />
   <stockSell ref="stockSellHook" @finish="getStockMethod" />
-  <fixedFooter>
-    <div class="space-y-[10px]">
-      <div
-        v-show="activeStock"
-        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
-      >
-        <ChartLine size="24" @click="detailMethod({ stockId: activeStock })" />
-      </div>
-      <div
-        v-show="activeStock"
-        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
-      >
-        <ListPlus size="24" @click="addMethod(activeStock)" />
-      </div>
-      <div
-        class="w-[50px] h-[50px] bg-[var(--main-primary-color)] text-[white] rounded-[50%] flex justify-center items-center"
-      >
-        <Plus size="24" @click="addMethod()" />
-      </div>
+  <stockPageSetting ref="pageSettingHook" @finish="syncPageSettingMethod" />
+  <fixedFooter class="space-x-[10px]">
+    <div
+      v-show="activeStock"
+      @click="detailMethod({ stockId: activeStock })"
+      class="p-[10px] bg-[var(--main-primary-color)] text-[white] rounded-full flex justify-center items-center"
+    >
+      <ChartLine size="24" />
+      <p class="mx-[10px] tracking-wide text-[14px]">詳情</p>
+    </div>
+    <div
+      v-show="activeStock"
+      @click="addMethod(activeStock)"
+      class="p-[10px] bg-[var(--main-primary-color)] text-[white] rounded-full flex justify-center items-center"
+    >
+      <ListPlus size="24" />
+      <p class="mx-[10px] tracking-wide text-[14px]">批量</p>
+    </div>
+    <div
+      @click="addMethod()"
+      class="p-[10px] bg-[var(--main-primary-color)] text-[white] rounded-full flex justify-center items-center"
+    >
+      <Plus size="24" />
     </div>
   </fixedFooter>
 </template>
