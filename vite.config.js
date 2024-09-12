@@ -8,7 +8,7 @@ import { VantResolver } from '@vant/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
 import Pages from 'vite-plugin-pages'
 import Layouts from 'vite-plugin-vue-layouts'
-
+import { VitePWA } from 'vite-plugin-pwa';
 import axios from 'axios';
 
 
@@ -29,7 +29,31 @@ export default defineConfig({
     }),
     Components({
       resolvers: [ElementPlusResolver(), VantResolver()]
-    })
+    }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+      },
+      manifest: {
+        name: 'Stock! 股利小幫手',
+        short_name: '股利小幫手',
+        description: '協助您計算您的股利',
+        theme_color: '#3E56D5',
+        icons: [
+          {
+            src: 'src/assets/192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'src/assets/512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      },
+    }),
   ],
   resolve: {
     alias: {
