@@ -57,7 +57,7 @@ const detailMethod = ({ stockId = null, id = null }) => {
   router.push({ name: 'StockDetailPage', params: { id: stockId } })
 }
 //刷新資料
-const getStockMethod = () => piniaStock.getData()
+const getStockMethod = () => piniaStock.getData(true)
 </script>
 
 <template>

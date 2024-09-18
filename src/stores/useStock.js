@@ -3,6 +3,7 @@ import { getPrice } from '@/api/price.js'
 import { getStockList, getDividendList } from '@/composables/piniaStock.js'
 import { getStock, getStockDividend } from '@/firebase/stock.js'
 import { add } from '@/composables/useMath.js'
+import dayjs from 'dayjs'
 
 export const useStockStore = defineStore('stock', {
   persist: true,
@@ -10,7 +11,11 @@ export const useStockStore = defineStore('stock', {
     loading: false,
     orgData: [],
     orgPriceData: {},
-    orgDividendData: {}
+    orgDividendData: {},
+    update: {
+      isNeedUpdate: false,
+      date: null
+    }
   }),
   getters: {
     stockIdList: (state) => {
@@ -36,9 +41,16 @@ export const useStockStore = defineStore('stock', {
     }
   },
   actions: {
-    async getData() {
+    async getData(isForce = false) {
+      if (!isForce) {
+        if (!this.update.isNeedUpdate || this.update.date && (this.update.date >  dayjs().format('YYYY-MM-DD'))) {
+          {
+            this.loading = false
+            return
+          }
+        }
+      }
       this.loading = true
-
       try {
         const res = await getStock()
         if (res.status === 200) {
@@ -64,12 +76,13 @@ export const useStockStore = defineStore('stock', {
           })
           // 等待所有的 promises 完成
           await Promise.all(promises)
+          this.update.date = dayjs().format('YYYY-MM-DD')
         }
       } catch (error) {
         console.error('Error fetching data:', error)
       }
-
       this.loading = false
+      this.update.isNeedUpdate=false
     },
     async getDividendData(stockId) {
       return getStockDividend(stockId).then((res) => {
