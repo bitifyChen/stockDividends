@@ -1,1 +1,0 @@
-import{aS as n,a_ as r,aT as c,u,a$ as i,aU as o}from"./index-BjEIvlsI.js";const p={__name:"logout",setup(l){const e=n(),s=r(["token"]),t=c(),a=u(0);return s.remove("token"),t.clear(),a.clear(),i().finally(()=>{e.push({name:"LoginPage"})}),(_,f)=>null}};typeof o=="function"&&o(p);export{p as default};
