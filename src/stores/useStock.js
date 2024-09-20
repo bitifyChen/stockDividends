@@ -44,8 +44,9 @@ export const useStockStore = defineStore('stock', {
     async getData(isForce = false) {
       //非強制時或非必須更新，檢查是否需要更新
       if (!isForce && !this.update.isNeedUpdate) {
-        if (this.update.date && dayjs(this.update.date).isSameOrAfter(dayjs(), 'day'))  {
-          {         
+        if (this.update.date && dayjs(this.update.date).isSameOrAfter(dayjs(), 'day')) {
+          {
+            this.getPriceData() // 僅更新價格
             this.loading = false
             return
           }
@@ -83,7 +84,7 @@ export const useStockStore = defineStore('stock', {
         console.error('Error fetching data:', error)
       }
       this.loading = false
-      this.update.isNeedUpdate=false
+      this.update.isNeedUpdate = false
     },
     async getDividendData(stockId) {
       return getStockDividend(stockId).then((res) => {
@@ -110,12 +111,18 @@ export const useStockStore = defineStore('stock', {
         }
       })
     },
-    async getPriceData(stockId) {
-      return getPrice({ stockId: stockId }).then((res) => {
-        if (res.status === 200) {
-          return res?.data?.price !== '' ? res?.data?.price : null
-        }
-      })
+    async getPriceData(stockId = null) {
+      if (stockId) {
+        return getPrice({ stockId: stockId }).then((res) => {
+          if (res.status === 200) {
+            return res?.data?.price !== '' ? res?.data?.price : null
+          }
+        })
+      } else { 
+        Object.keys(this.orgPriceData).forEach(async(e) => {   
+          this.orgPriceData[e] = await this.getPriceData(e)
+        })
+      }
     },
     clear() {
       this.orgData = []
