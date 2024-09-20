@@ -6,6 +6,7 @@ import { useStockStore } from '@/stores/useStock.js'
 const piniaUserInfo = useUserInfoStore()
 const piniaStock = useStockStore()
 const piniaBase = useBaseStore()
+const isMounted = ref(false)
 const name = computed(() => piniaUserInfo?.userInfo?.name)
 //股利清單
 const piniaStockLoading = computed(() => piniaStock?.loading)
@@ -14,11 +15,12 @@ const dividendDataList = computed(() => piniaStock?.dividendList)
 //取得資料
 onMounted(() => {
   piniaStock.getData()
+  isMounted.value = true
 })
 </script>
 
 <template>
-  <teleport to="#header-slot" v-if="piniaBase?.menuOnMount && !piniaBase?.menuIsOpen">
+  <teleport to="#header-slot" v-if="isMounted && piniaBase?.menuOnMount && !piniaBase?.menuIsOpen">
     <div class="w-full justify-center">
       <div class="text-[24px] font-black text-[white] mb-[10px] text-center">Stock!</div>
       <IndexSummary :data="dividendDataList" v-loading="piniaStockLoading" />

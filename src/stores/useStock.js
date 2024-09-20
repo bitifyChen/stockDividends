@@ -42,9 +42,10 @@ export const useStockStore = defineStore('stock', {
   },
   actions: {
     async getData(isForce = false) {
-      if (!isForce) {
-        if (!this.update.isNeedUpdate || this.update.date && (this.update.date >  dayjs().format('YYYY-MM-DD'))) {
-          {
+      //非強制時或非必須更新，檢查是否需要更新
+      if (!isForce && !this.update.isNeedUpdate) {
+        if (this.update.date && dayjs(this.update.date).isSameOrAfter(dayjs(), 'day'))  {
+          {         
             this.loading = false
             return
           }
