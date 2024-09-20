@@ -63,7 +63,7 @@ const thisYearTotal = computed(() => {
       />
     </div>
     <div class="">
-      <div class="text-[var(--text-main-color)]">今年已領取股息約</div>
+      <div class="text-[var(--text-main-color)]">今年已領取股利約</div>
       <div class="flex justify-end items-center">
         <span class="text-[var(--main-sub-color)] text-[24px] font-black"
           >$ {{ thisYearTotal.toLocaleString() }}元</span

@@ -12,7 +12,7 @@ export const getStockList = (state) => {
           const earnPrice = state.orgPriceData[e]
             ? multiply(subtract( x.sellDate ? x.sellPrice : state.orgPriceData[e] , x.buyPrice), x.buyNum)
             : null
-          //股息相關
+          //股利相關
           const _dividendList = state.orgDividendData[e]
             ? state.orgDividendData[e].filter((date) => date.CashExDividendTradingDate > x.buyDate)
             : null
@@ -26,7 +26,7 @@ export const getStockList = (state) => {
           return {
             ...x,
             earnPrice: earnPrice,
-            earnDividend: earnDividend,
+            earnDividend: round(earnDividend??0),
             dividendList: _dividendList
           }
         })
