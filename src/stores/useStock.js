@@ -121,6 +121,7 @@ export const useStockStore = defineStore('stock', {
       this.orgData = []
       this.orgPriceData = {}
       this.orgDividendData = {}
+      this.update.isNeedUpdate = true
     }
   }
 })

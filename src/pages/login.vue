@@ -1,8 +1,9 @@
 <script setup>
 import { postUserLogin } from '@/firebase/user.js'
 import TwoDynamicForm from '@/components/Two/TwoDynamicForm.vue'
+import { useStockStore } from '@/stores/useStock.js'
 import { useRouter } from 'vue-router'
-
+const piniaStock = useStockStore()
 const router = useRouter()
 const fields = computed(() => [
   {
@@ -29,6 +30,7 @@ const loginMethod = () => {
   loading.value = true
   postUserLogin(parentForm.value)
     .then((res) => {
+      piniaStock.clear()
       ElMessage({
         message: '登入成功',
         type: 'success',
