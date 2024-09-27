@@ -34,39 +34,45 @@ const dataOnlyDate = computed(() => {
 watch(
   () => props.modelValue,
   () => {
-    date.value = props.modelValue ? new Date(props.modelValue) : null
+    date.value = props.modelValue ? props.modelValue : null
   },
   { immediate: true }
 )
+
+const preventNativeKeyboard = () => {
+  datePicker.value.blur() // 让输入框失去焦点，防止键盘弹出
+}
 </script>
 
 <template>
-  <div class="el-date-picker">
-    <el-date-picker
-      v-model="date"
-      :class="[props.readonly ? 'is-readonly' : '']"
-      type="date"
-      :placeholder="props.placeholder"
-      @change="onChange"
-      :readonly="props.readonly"
-      :disabled="props.disabled"
-    />
-  </div>
+  <input
+    type="date"
+    v-model="date"
+    class="time-input"
+    :class="[props.readonly ? 'is-readonly' : '']"
+    :placeholder="props.placeholder"
+    :readonly="props.readonly"
+    :disabled="props.disabled"
+    @change="onChange"
+    @click="(e) => e.currentTarget.showPicker()"
+  />
 </template>
 
 <style scoped lang="scss">
-.el-date-picker :deep() {
-  .el-input {
-    width: 100%;
-    height: 48px;
-  }
-  .el-input__wrapper {
-    width: 100%;
-    border: 1px solid rgba(17, 17, 19, 0.2);
-    border-radius: 4px;
-    box-shadow: none;
-    height: 48px;
-    line-height: 48px;
-  }
+.time-input {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: none;
+  background-color: var(--form-bg-color);
+  height: 48px;
+  flex: 1 1 auto;
+  text-align: left;
+  padding: 1px 11px;
+  color: var(--el-input-text-color, var(--el-text-color-regular));
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+input::-webkit-date-and-time-value {
+  text-align: left;
 }
 </style>

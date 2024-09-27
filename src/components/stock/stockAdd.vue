@@ -49,19 +49,19 @@ const fields = computed(() =>
     {
       name: 'buyPrice',
       label: '買入價',
-      type: 'text',
+      type: 'number',
       rules: [{ required: true, message: '必填' }]
     },
     isSell.value && {
       name: 'sellPrice',
       label: '售出價',
-      type: 'text',
+      type: 'number',
       rules: [{ required: true, message: '必填' }]
     },
     {
       name: 'buyNum',
       label: '買入股數',
-      type: 'text',
+      type: 'number',
       rules: [{ required: true, message: '必填' }]
     }
   ].filter(Boolean)
