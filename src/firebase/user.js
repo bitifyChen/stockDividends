@@ -19,9 +19,7 @@ export const postUser = ({ email, password }) => {
         // Signed in
         const user = userCredential.user
         // Create a document for the user in Firestore
-        doc(db, `users${user.uid}`).then(() => {
-          resolve(user)
-        })
+        resolve(user)
       })
       .catch((error) => {
         reject(error)

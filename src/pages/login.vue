@@ -21,10 +21,7 @@ const fields = computed(() => [
     rules: [{ required: true, message: '密码为必填项' }]
   }
 ])
-const parentForm = ref({
-  email: 'bitify@gmail.com',
-  password: '123456'
-})
+const parentForm = ref({})
 const loading = ref(false)
 const loginMethod = () => {
   loading.value = true
