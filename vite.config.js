@@ -30,7 +30,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver(), VantResolver()]
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: {
         enabled: true,
       },
@@ -53,7 +53,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 4000000
+        maximumFileSizeToCacheInBytes: 4000000,
+        clientsClaim: true,
       }
     }),
   ],
