@@ -25,6 +25,11 @@ const menu = computed(() => [
     icon: ['fas', 'wallet']
   },
   {
+    title: '歷史',
+    path: 'HistoryPage',
+    icon: ['fas', 'clock-rotate-left']
+  },
+  {
     title: '設定',
     path: 'SettingPage',
     icon: ['fas', 'gear']
@@ -37,12 +42,12 @@ const menu = computed(() => [
 ])
 
 onMounted(() => {
-  piniaBase.activeMenu()
+  piniaBase?.activeMenu()
 })
 
 watch(
-  () => currentPath.value,
-  () => piniaBase.closeMenu(),
+  () => currentPath?.value,
+  () => piniaBase?.closeMenu(),
   { immediate: true }
 )
 </script>

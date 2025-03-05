@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { add, multiply, round } from '@/composables/useMath.js'
 import { useBaseStore } from '@/stores/useBase.js'
 import { useUserInfoStore } from '@/stores/useUserInfo.js'
 import { useStockStore } from '@/stores/useStock.js'
@@ -10,7 +11,9 @@ const isMounted = ref(false)
 const name = computed(() => piniaUserInfo?.userInfo?.name)
 //股利清單
 const piniaStockLoading = computed(() => piniaStock?.loading)
-const dividendDataList = computed(() => piniaStock?.dividendList)
+const dividendDataList = computed(() =>
+  piniaStock?.dividendList?.filter((item) => item?.year === new Date().getFullYear())
+)
 
 //取得資料
 onMounted(() => {

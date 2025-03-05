@@ -10,27 +10,40 @@ const props = defineProps({
   data: {
     type: Array,
     default: () => []
+  },
+  open: {
+    type: Boolean,
+    default: false
+  },
+  year: {
+    type: Number,
+    required: false
   }
 })
 //使用者名稱
 const userName = computed(() => piniaUser?.userName ?? '陌生人')
 //卡片顯示模式
-const easyMode = ref(true)
+const easyMode = ref(props?.open ? false : true)
 //總花費
-const totalCost = computed(() => piniaStock.totalCost)
+const totalCost = computed(() =>
+  props?.year
+    ? piniaStock.getStockCost({ dateRange: [`${props.year}/01/01`, `${props.year}/12/31`] })
+    : piniaStock.totalCost
+)
 //整理資料
-const thisYearData = computed(() => {
-  return (
-    props?.data
-      ?.filter((item) => item?.year === new Date().getFullYear())
-      .map((e) => ({ ...e, total: round(multiply(e?.stockNum ?? 0, e?.earn ?? 0)) })) ?? []
-  )
-})
-//今年起訖
+const thisYearData = computed(
+  () =>
+    props?.data.map((e) => ({ ...e, total: round(multiply(e?.stockNum ?? 0, e?.earn ?? 0)) })) ?? []
+)
+
+//該年起訖
 const thisYearRange = computed(() => {
   const dates = thisYearData.value.map((item) => new Date(item?.payDate))
   if (!dates.length) return [null, null]
-  return [dayjs(Math.min(...dates)).format('MM/DD'), dayjs(Math.max(...dates)).format('MM/DD')]
+  return [
+    dayjs(Math.min(...dates)).format('YYYY/MM/DD'),
+    dayjs(Math.max(...dates)).format('YYYY/MM/DD')
+  ]
 })
 
 //來自幾支股票
@@ -41,7 +54,8 @@ const thisYearStockNum = computed(() => {
   })
   return Array.from(set).length
 })
-//今年總金額
+
+//該年總金額
 const thisYearTotal = computed(() => {
   return (
     thisYearData.value && thisYearData.value.reduce((total, item) => add(total, item?.total), 0)
@@ -54,6 +68,7 @@ const thisYearTotal = computed(() => {
     <div class="flex justify-between">
       <div>{{ userName }}</div>
       <font-awesome-icon
+        v-if="!props?.open"
         :icon="[
           'fas',
           easyMode ? 'up-right-and-down-left-from-center' : 'down-left-and-up-right-to-center'
@@ -63,7 +78,7 @@ const thisYearTotal = computed(() => {
       />
     </div>
     <div class="">
-      <div class="text-[var(--text-main-color)]">今年已領取股利約</div>
+      <div class="text-[var(--text-main-color)]">{{ props?.year }}年已領取股利約</div>
       <div class="flex justify-end items-center">
         <span class="text-[var(--main-sub-color)] text-[24px] font-black"
           >$ {{ thisYearTotal.toLocaleString() }}元</span
@@ -79,6 +94,11 @@ const thisYearTotal = computed(() => {
       <IndexSummaryByStock :data="thisYearData" />
       <IndexSummaryByMonth :data="thisYearData" />
       <IndexSummaryByYield :totalEarn="thisYearTotal" :totalCost="totalCost" />
+      <div class="text-[var(--text-secondary-color)]">
+        來自 {{ thisYearStockNum }} 支股票，計算期間為 {{ thisYearRange[0] ?? '' }}~{{
+          thisYearRange[1] ?? ''
+        }}
+      </div>
     </div>
   </div>
 </template>

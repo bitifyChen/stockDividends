@@ -118,11 +118,27 @@ export const useStockStore = defineStore('stock', {
             return res?.data?.price !== '' ? res?.data?.price : null
           }
         })
-      } else { 
-        Object.keys(this.orgPriceData).forEach(async(e) => {   
+      } else {
+        Object.keys(this.orgPriceData).forEach(async (e) => {
           this.orgPriceData[e] = await this.getPriceData(e)
         })
       }
+    },
+    //Methods
+    //持股=>帶搜尋條件
+    getStockList(config = null) {
+      return getStockList(useStockStore(), config)
+    },
+    //價格=>帶搜尋條件
+    getStockCost(config = null) {
+      const _stockList = this.getStockList(config)
+      let _cost = 0
+      if (_stockList && typeof _stockList === 'object') {
+        Object.keys(_stockList).forEach((e) => {
+          _cost = add(_cost, _stockList[e]?.buyPrice)
+        })
+      }
+      return _cost
     },
     clear() {
       this.orgData = []

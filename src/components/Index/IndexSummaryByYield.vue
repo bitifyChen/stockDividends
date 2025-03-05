@@ -11,9 +11,10 @@ const props = defineProps({
     default: 0
   }
 })
-const totalYield = computed(() =>
-  round(multiply(divide(props.totalEarn ?? 0, props.totalCost ?? 0), 100), 2)
-)
+const totalYield = computed(() => {
+  if (props.totalEarn * props.totalCost === 0) return 0 //排除0
+  return round(multiply(divide(props.totalEarn ?? 0, props.totalCost ?? 0), 100), 2)
+})
 </script>
 
 <template>

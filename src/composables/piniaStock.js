@@ -1,16 +1,34 @@
 import { add, subtract, multiply, round } from '@/composables/useMath.js'
 import stockName from '@/data/stockName.json'
-export const getStockList = (state) => {
+export const getStockList = (state, config = null) => {
   const _data = {}
+  //如果夾帶搜尋條件
+  let rangeStart, rangeEnd
+  if (config) {
+    rangeStart = new Date(config.dateRange[0])
+    rangeEnd = new Date(config.dateRange[1])
+  }
   state.stockIdList.forEach((e) => {
-    const _stockListById = state.orgData.filter((f) => f.stockId === e) //此支股票所有資料
-    const _stockDateListById = _stockListById.map((e) => new Date(e.buyDate)) //此支股票所有日期
+    if (e === undefined) return
+    const _stockListById =
+      rangeStart && rangeEnd
+        ? state.orgData.filter(
+            (f) =>
+              f.stockId === e &&
+              new Date(f.buyDate) < new Date(rangeEnd) &&
+              (!f.sellDate || new Date(f.sellDate) > new Date(rangeStart))
+          )
+        : state.orgData.filter((f) => f.stockId === e)
+    const _stockDateListById = _stockListById.map((e) => new Date(e?.buyDate)) //此支股票所有日期
     _data[e] = {
       data: _stockListById
         .map((x) => {
           //股價相關(如有售出日，則以售出價格算)
           const earnPrice = state.orgPriceData[e]
-            ? multiply(subtract( x.sellDate ? x.sellPrice : state.orgPriceData[e] , x.buyPrice), x.buyNum)
+            ? multiply(
+                subtract(x.sellDate ? x.sellPrice : state.orgPriceData[e], x.buyPrice),
+                x.buyNum
+              )
             : null
           //股利相關
           const _dividendList = state.orgDividendData[e]
@@ -26,20 +44,25 @@ export const getStockList = (state) => {
           return {
             ...x,
             earnPrice: earnPrice,
-            earnDividend: round(earnDividend??0),
+            earnDividend: round(earnDividend ?? 0),
             dividendList: _dividendList
           }
         })
         .sort((a, b) => new Date(b.buyDate) - new Date(a.buyDate)), //日期：近=>遠
       price: state.orgPriceData[e] ?? null, //現價,
-      inStockStart: new Date(Math.min(..._stockDateListById)).toISOString(),
-      inStockEnd: new Date(Math.max(..._stockDateListById)).toISOString(),
+      inStockStart: _stockDateListById.length
+        ? new Date(Math.min(..._stockDateListById))?.toISOString()
+        : null,
+      inStockEnd: _stockDateListById.length
+        ? new Date(Math.max(..._stockDateListById))?.toISOString()
+        : null,
       name: stockName[e] ?? '-',
-      buyNum: _stockListById.filter((f) => !f.sellDate).reduce((total, item) => add(total, item.buyNum), 0),
-      buyPrice: _stockListById.filter((f) => !f.sellDate).reduce(
-        (total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))),
-        0
-      )
+      buyNum: _stockListById
+        .filter((f) => !f.sellDate)
+        .reduce((total, item) => add(total, item.buyNum), 0),
+      buyPrice: _stockListById
+        .filter((f) => !f.sellDate)
+        .reduce((total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))), 0)
     }
   })
   return _data
