@@ -62,9 +62,14 @@ const submitting = ref(false)
 
 const sellMethod = async () => {
   submitting.value = true
-  //更改此筆資料(張數減少、添加售出日)
+  //計算買賣
+  const sellNum = parentForm.value.sellNum * 1;
+  const buyNum = parentForm.value.buyNum * 1;
+  const isSellOut = sellNum === buyNum;
+
+  // 修改原資料：已賣出部份
   const editData = {
-    buyNum: parentForm.value.sellNum * 1,
+    buyNum: sellNum,
     sellDate: parentForm.value.sellDate,
     sellPrice: parentForm.value.sellPrice
   }
@@ -73,18 +78,22 @@ const sellMethod = async () => {
       isChanged.value = true
     }
   })
-  //添加新資料(未售出的股票)
-  const newData = {
-    stockId: parentForm.value.stockId,
-    buyDate: parentForm.value.buyDate,
-    buyPrice: parentForm.value.buyPrice,
-    buyNum: parentForm.value.buyNum * 1 - parentForm.value.sellNum * 1
-  }
-  await postStock(newData).then((res) => {
+
+  // 如果沒賣完才新增一筆未售出的資料
+  if (!isSellOut) {
+    const newData = {
+      stockId: parentForm.value.stockId,
+      buyDate: parentForm.value.buyDate,
+      buyPrice: parentForm.value.buyPrice,
+      buyNum: buyNum - sellNum
+    }
+
+    await postStock(newData).then((res) => {
     if (res.status === 200) {
       isChanged.value = true
     }
-  })
+    })
+  }
   ElMessage({
     message: '更新成功',
     type: 'success',
