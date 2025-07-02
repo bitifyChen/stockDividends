@@ -17,7 +17,7 @@ const props = defineProps({
   },
   year: {
     type: Number,
-    required: false
+    required: true
   }
 })
 //使用者名稱
