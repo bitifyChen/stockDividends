@@ -1,21 +1,25 @@
 <script setup>
 import { usePageSettingStore } from '@/stores/usePageSetting.js'
+
 const piniaPageSetting = usePageSettingStore()
 
 const emit = defineEmits(['finish'])
 const active = ref(false)
 const toggle = () => (active.value = !active.value)
+const onClose = () => {
+  active.value = false
+  emit('finish')
+}
 
-//隱藏已賣出
 const hiddenSold = computed(() => piniaPageSetting.stock.hiddenSold)
 const hiddenSoldHandler = () => piniaPageSetting.toggleSetting('stock', 'hiddenSold')
+
 defineExpose({
   toggle
 })
 </script>
 
 <template>
-  <!-- 右側彈出 -->
   <van-popup
     v-model:show="active"
     position="right"

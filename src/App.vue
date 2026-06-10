@@ -1,9 +1,13 @@
 <script setup>
-import UpdateNotification from '@/components/UpdateNotification.vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const isDashboard = computed(() => route.meta?.layout === 'dashboard')
 </script>
 <template>
-  <el-scrollbar height="100dvh"> <router-view class="base-wrap" /></el-scrollbar>
-  <UpdateNotification />
+  <el-scrollbar height="100dvh" :class="{ dark: isDashboard }">
+    <router-view class="base-wrap" />
+  </el-scrollbar>
 </template>
 
 <style scoped>

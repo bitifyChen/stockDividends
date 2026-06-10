@@ -15,6 +15,12 @@ import { Locale } from 'vant'
 import zhTwVant from 'vant/es/locale/lang/zh-TW'
 Locale.use('zh-TW', zhTwVant)
 
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister())
+  })
+}
+
 //Font Awesome
 /* import the fontawesome core */
 import { library } from '@fortawesome/fontawesome-svg-core'

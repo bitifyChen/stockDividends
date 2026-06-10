@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <div class="main">
+  <div class="main frontend-shell">
     <Header />
     <div class="w-full">
       <router-view />

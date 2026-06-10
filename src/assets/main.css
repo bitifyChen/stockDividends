@@ -11,10 +11,16 @@ body {
   background-color: #3e56d5;
 }
 #app {
-  max-width: 920px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  min-height: 100dvh;
   font-weight: normal;
   background-color: var(--main-bg-color);
+}
+
+.frontend-shell {
+  max-width: 920px;
+  margin: 0 auto;
 }
 
 :root {
@@ -25,6 +31,9 @@ body {
   --main-dark-color: #4894fe;
   --main-rise-color: #d75455;
   --main-fall-color: #24936e;
+  --stock-rise-color: var(--main-rise-color);
+  --stock-fall-color: var(--main-fall-color);
+  --stock-neutral-color: #7c8794;
   --main-bg-color: #ffffff;
   --main-bg-sub-color: #fafafa;
   --main-bg-light-color: #676f9d;
@@ -39,4 +48,14 @@ body {
   --form-text-color: #8696bb;
   --form-btn-bg-color: var(--main-primary-color);
   --form-btn-text-color: #fafafa;
+}
+
+.value-up,
+.stock-rise {
+  color: var(--stock-rise-color) !important;
+}
+
+.value-down,
+.stock-fall {
+  color: var(--stock-fall-color) !important;
 }
