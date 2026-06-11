@@ -12,7 +12,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import axios from 'axios'
 
 export default defineConfig({
-  base: '/stockDividends/',
+  base: '/',
   plugins: [
     twse(),
     vue(),
