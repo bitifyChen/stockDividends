@@ -9,7 +9,7 @@ const cookies = useCookies(['token'])
 const routes = setupLayouts(generatedRoutes)
 
 const router = createRouter({
-   history: createWebHistory(),
+   history: createWebHistory('/'),
   routes
 })
 
