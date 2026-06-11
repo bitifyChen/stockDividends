@@ -30,6 +30,22 @@ export const getEtfHoldings = ({
 export const getEtfEvents = ({ mode = 'stock', stockCode = null, etfCode = null, date = null }) =>
   get('/etf/events', { mode, stockCode, etfCode, date })
 
+export const getEtfFirstBuyEvents = ({
+  page = 1,
+  pageSize = 50,
+  date = null,
+  stockCode = null,
+  etfCode = null
+} = {}) =>
+  get('/etf/events', {
+    type: 'first_buy',
+    page,
+    pageSize,
+    date,
+    stockCode,
+    etfCode
+  })
+
 export const getEtfStockDetail = ({ etfCode, stockCode }) => get(`/etf/${etfCode}/${stockCode}`)
 
 export const getEtfStockSeries = ({ etfCode, stockCode, range = '1m' }) =>

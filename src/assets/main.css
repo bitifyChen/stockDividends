@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -31,9 +35,6 @@ body {
   --main-dark-color: #4894fe;
   --main-rise-color: #d75455;
   --main-fall-color: #24936e;
-  --stock-rise-color: var(--main-rise-color);
-  --stock-fall-color: var(--main-fall-color);
-  --stock-neutral-color: #7c8794;
   --main-bg-color: #ffffff;
   --main-bg-sub-color: #fafafa;
   --main-bg-light-color: #676f9d;
@@ -48,14 +49,4 @@ body {
   --form-text-color: #8696bb;
   --form-btn-bg-color: var(--main-primary-color);
   --form-btn-text-color: #fafafa;
-}
-
-.value-up,
-.stock-rise {
-  color: var(--stock-rise-color) !important;
-}
-
-.value-down,
-.stock-fall {
-  color: var(--stock-fall-color) !important;
 }

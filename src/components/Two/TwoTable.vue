@@ -48,18 +48,22 @@ defineProps({
 <style lang="scss">
 .two-table-wrapper {
   overflow: hidden;
-  border: 1px solid #2f3339;
-  border-radius: 6px;
-  background: #202328;
+  border: 1px solid rgb(148 163 184 / 0.12);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgb(15 18 26 / 0.96), rgb(10 13 20 / 0.96));
+  box-shadow:
+    0 18px 48px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.03);
 
   .two-el-table {
-    --el-table-border-color: #2f3339;
-    --el-table-header-bg-color: #202328;
-    --el-table-bg-color: #202328;
-    --el-table-tr-bg-color: #202328;
-    --el-table-text-color: #cbd5e1;
-    --el-table-header-text-color: #aab4c0;
-    --el-table-row-hover-bg-color: #2a2d33;
+    --el-table-border-color: rgb(148 163 184 / 0.12);
+    --el-table-header-bg-color: transparent;
+    --el-table-bg-color: transparent;
+    --el-table-tr-bg-color: transparent;
+    --el-table-text-color: #d7e1ed;
+    --el-table-header-text-color: #94a3b8;
+    --el-table-row-hover-bg-color: rgb(34 211 238 / 0.05);
 
     background-color: transparent;
 
@@ -70,14 +74,16 @@ defineProps({
     th.el-table__cell {
       border-bottom: 1px solid var(--el-table-border-color) !important;
       background-color: var(--el-table-header-bg-color) !important;
-      padding: 10px 0;
-      font-size: 12px;
+      padding: 14px 0;
+      font-size: 11px;
       font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     td.el-table__cell {
       border-bottom: 1px solid var(--el-table-border-color) !important;
-      padding: 10px 0;
+      padding: 14px 0;
       font-size: 13px;
     }
 
@@ -86,7 +92,7 @@ defineProps({
     }
 
     .cell {
-      padding: 0 12px;
+      padding: 0 14px;
       white-space: nowrap;
     }
 
@@ -96,8 +102,8 @@ defineProps({
   }
 
   .empty-placeholder {
-    padding: 42px 16px;
-    color: #7c858f;
+    padding: 52px 16px;
+    color: #8a97a8;
     text-align: center;
     font-size: 13px;
   }

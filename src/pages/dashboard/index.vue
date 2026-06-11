@@ -1,13 +1,14 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useStockStore } from '@/stores/useStock.js'
+import { ArrowDownRight, ArrowUpRight, Calendar, Coins, LayoutGrid, Wallet } from 'lucide-vue-next'
 import { add, multiply, round, subtract } from '@/composables/useMath.js'
-import { Activity, ArrowDownRight, ArrowUpRight, Calendar, Coins, Wallet } from 'lucide-vue-next'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
-import { formatRatio, formatShare, normalizeArray, shareColumnLabel } from '@/utils/etfDashboard.js'
+import { useStockStore } from '@/stores/useStock.js'
+import { formatShare, shareUnitLabel } from '@/utils/etfDashboard.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
 const stockStore = useStockStore()
+
 const loading = computed(() => stockStore.loading)
 const stockList = computed(() => stockStore.stockList)
 const dividendList = computed(() => stockStore.dividendList)
@@ -30,10 +31,7 @@ const holdingRows = computed(() =>
   })
 )
 
-const totalMarketValue = computed(() =>
-  holdingRows.value.reduce((total, stock) => add(total, stock.marketValue), 0)
-)
-
+const totalMarketValue = computed(() => holdingRows.value.reduce((total, stock) => add(total, stock.marketValue), 0))
 const unrealizedProfit = computed(() => subtract(totalMarketValue.value, totalCost.value))
 const profitRate = computed(() => {
   if (totalCost.value === 0) return 0
@@ -48,11 +46,15 @@ const ytdDividend = computed(() =>
 )
 
 const recentDividends = computed(() => dividendList.value.slice(0, 6))
-const topHoldings = computed(() => [...holdingRows.value].sort((a, b) => b.marketValue - a.marketValue).slice(0, 8))
+const topHoldings = computed(() => [...holdingRows.value].sort((a, b) => b.marketValue - a.marketValue).slice(0, 6))
+const holdingSharePercent = (row) => {
+  if (!totalMarketValue.value) return '0.0'
+  return ((row.marketValue / totalMarketValue.value) * 100).toFixed(1)
+}
 
 const stats = computed(() => [
   {
-    label: '總市值',
+    label: '持股市值',
     value: `$ ${totalMarketValue.value.toLocaleString()}`,
     note: `成本 $ ${totalCost.value.toLocaleString()}`,
     icon: Wallet
@@ -65,16 +67,16 @@ const stats = computed(() => [
     icon: unrealizedProfit.value >= 0 ? ArrowUpRight : ArrowDownRight
   },
   {
-    label: `${currentYear} 股利`,
+    label: `${currentYear} 年股利`,
     value: `$ ${ytdDividend.value.toLocaleString()}`,
-    note: `${recentDividends.value.length} 筆近期紀錄`,
+    note: `${recentDividends.value.length} 筆紀錄`,
     icon: Coins
   },
   {
     label: '持股檔數',
     value: `${holdingRows.value.length}`,
-    note: 'Firebase 個人資料',
-    icon: Activity
+    note: `${shareUnitLabel(dashboardSettingStore.shareUnit)}目前顯示中`,
+    icon: LayoutGrid
   }
 ])
 
@@ -84,21 +86,35 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="terminal-page" v-loading="loading">
-    <section class="terminal-titlebar">
-      <div>
-        <div class="terminal-kicker">Portfolio</div>
-        <h1>投資組合總覽</h1>
+  <div class="dashboard-home" v-loading="loading">
+    <section class="hero-card">
+      <div class="hero-copy">
+        <div class="eyebrow">Portfolio Intelligence</div>
+        <h1>投資組合的即時指揮中心</h1>
+        <p>
+          以霓虹光暈包裹數據密度，讓持股、股利與主動 ETF 的動態不再像傳統金融網站那樣擁擠與壓迫。
+          你現在看到的是一個更像 SaaS 控制台的投資視覺。
+        </p>
       </div>
-      <div class="terminal-date">
-        <Calendar :size="15" />
-        <span>{{ currentYear }} 年度</span>
+      <div class="hero-badges">
+        <div class="badge-card">
+          <span>顯示單位</span>
+          <strong>{{ dashboardSettingStore.shareUnit === 'lot' ? '張' : '股' }}</strong>
+        </div>
+        <div class="badge-card">
+          <span>最新更新</span>
+          <strong>{{ currentYear }} / 06</strong>
+        </div>
+        <div class="badge-card accent">
+          <span>主色調</span>
+          <strong>Neon Cyan</strong>
+        </div>
       </div>
     </section>
 
-    <section class="market-strip">
-      <article v-for="item in stats" :key="item.label" class="ticker-card">
-        <div class="ticker-head">
+    <section class="metric-grid">
+      <article v-for="item in stats" :key="item.label" class="metric-card">
+        <div class="metric-head">
           <span>{{ item.label }}</span>
           <component :is="item.icon" :size="16" />
         </div>
@@ -109,48 +125,35 @@ onMounted(() => {
       </article>
     </section>
 
-    <section class="terminal-grid">
-      <div class="terminal-panel wide">
+    <section class="content-grid">
+      <div class="panel panel-large">
         <div class="panel-head">
-          <h2>主要持股</h2>
-          <router-link :to="{ name: 'Dashboard_My_Holdings' }">查看全部</router-link>
+          <div>
+            <h2>持股概況</h2>
+            <span>目前權重最高的標的</span>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>股票</th>
-                <th>{{shareColumnLabel(dashboardSettingStore.shareUnit, '目前')}}</th>
-                <th>市值</th>
-                <th>損益</th>
-                <th>報酬率</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in topHoldings" :key="row.id">
-                <td>
-                  <strong>{{ row.name || '-' }}</strong>
-                  <span>{{ row.id }}</span>
-                </td>
-                <td>{{ formatShare(row.shares, dashboardSettingStore.shareUnit) }}</td>
-                <td>$ {{ row.marketValue.toLocaleString() }}</td>
-                <td :class="row.profit >= 0 ? 'value-up' : 'value-down'">
-                  {{ row.profit >= 0 ? '+' : '' }}{{ row.profit.toLocaleString() }}
-                </td>
-                <td :class="row.profitRate >= 0 ? 'value-up' : 'value-down'">
-                  {{ row.profitRate >= 0 ? '+' : '' }}{{ row.profitRate }}%
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-if="!topHoldings.length" class="terminal-empty">目前尚無持股資料。</div>
+        <div class="holding-list">
+          <div v-for="row in topHoldings" :key="row.id" class="holding-row">
+            <div>
+              <strong>{{ row.name || '-' }}</strong>
+              <span>{{ row.id }}</span>
+            </div>
+            <div class="holding-meta">
+              <strong>{{ formatShare(row.shares, dashboardSettingStore.shareUnit) }}</strong>
+              <small>{{ holdingSharePercent(row) }}%</small>
+            </div>
+          </div>
+          <div v-if="!topHoldings.length" class="empty-state">目前沒有持股資料</div>
         </div>
       </div>
 
-      <div class="terminal-panel">
+      <div class="panel">
         <div class="panel-head">
-          <h2>最近股利</h2>
-          <router-link :to="{ name: 'Dashboard_My_Dividend' }">查看全部</router-link>
+          <div>
+            <h2>近期股利</h2>
+            <span>最近六筆現金流入</span>
+          </div>
         </div>
         <div class="activity-list">
           <div v-for="item in recentDividends" :key="item.payDate + item.stockId" class="activity-row">
@@ -160,7 +163,7 @@ onMounted(() => {
             </div>
             <em>+$ {{ (item.earn * item.stockNum).toLocaleString() }}</em>
           </div>
-          <div v-if="!recentDividends.length" class="terminal-empty compact">目前尚無股利紀錄。</div>
+          <div v-if="!recentDividends.length" class="empty-state compact">目前沒有股利紀錄</div>
         </div>
       </div>
     </section>
@@ -168,157 +171,193 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.terminal-page {
-  display: flex;
-  flex-direction: column;
+.dashboard-home {
+  display: grid;
   gap: 18px;
 }
 
-.terminal-titlebar,
-.terminal-panel,
-.ticker-card {
-  border: 1px solid #2f3339;
-  border-radius: 6px;
-  background: #1b1d21;
+.hero-card,
+.metric-card,
+.panel {
+  border: 1px solid rgb(148 163 184 / 0.12);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
+  box-shadow:
+    0 18px 48px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.03);
 }
 
-.terminal-titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
+.hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  gap: 20px;
+  padding: 28px;
 }
 
-.terminal-kicker {
-  color: #7c858f;
-  font-size: 12px;
+.eyebrow {
+  color: #22d3ee;
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 h1,
 h2 {
   margin: 0;
-  color: #f7fafc;
-  letter-spacing: 0;
+  color: #f8fbff;
+  letter-spacing: -0.04em;
 }
 
 h1 {
-  margin-top: 4px;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-h2 {
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.terminal-date {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.market-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.ticker-card {
-  padding: 14px;
-}
-
-.ticker-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.ticker-card strong {
-  display: block;
   margin-top: 10px;
-  color: #f7fafc;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 0.95;
+}
+
+.hero-copy p {
+  max-width: 60ch;
+  margin: 16px 0 0;
+  color: #a4b0c0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.hero-badges {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.badge-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid rgb(148 163 184 / 0.12);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.03);
+}
+
+.badge-card span,
+.metric-card small,
+.panel-head span,
+.holding-row span,
+.activity-row span,
+.empty-state {
+  color: #7d8a9d;
+  font-size: 12px;
+}
+
+.badge-card strong {
+  color: #f8fbff;
   font-size: 20px;
   font-weight: 900;
 }
 
-.ticker-card small {
-  display: block;
-  margin-top: 4px;
-  color: #7c858f;
-  font-size: 12px;
+.badge-card.accent {
+  border-color: rgb(34 211 238 / 0.22);
+  box-shadow: 0 0 0 1px rgb(34 211 238 / 0.05) inset, 0 18px 40px rgb(34 211 238 / 0.08);
 }
 
-.terminal-grid {
+.metric-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.terminal-panel {
-  min-width: 0;
-  overflow: hidden;
+.metric-card {
+  padding: 18px;
 }
 
-.panel-head {
+.metric-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 15px 16px;
-  border-bottom: 1px solid #2f3339;
-}
-
-.panel-head a {
-  color: #9ff7ef;
+  color: #94a3b8;
   font-size: 12px;
   font-weight: 900;
 }
 
-.table-wrap {
-  overflow: auto;
-}
-
-table {
-  width: 100%;
-  min-width: 720px;
-  border-collapse: collapse;
-  color: #d4d8dd;
-  font-size: 13px;
-}
-
-th,
-td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #2f3339;
-  text-align: left;
-  white-space: nowrap;
-}
-
-th {
-  background: #202328;
-  color: #aab4c0;
-  font-size: 12px;
+.metric-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #f8fbff;
+  font-size: clamp(1.15rem, 2vw, 1.8rem);
   font-weight: 900;
 }
 
-td:first-child {
+.metric-card small {
+  display: block;
+  margin-top: 6px;
+}
+
+.content-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 16px;
+}
+
+.panel {
+  padding: 18px;
+}
+
+.panel-large {
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-head h2 {
+  font-size: 18px;
+}
+
+.holding-list,
+.activity-list {
+  display: grid;
+}
+
+.holding-row,
+.activity-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid rgb(148 163 184 / 0.1);
+}
+
+.holding-row:first-child,
+.activity-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.holding-row strong,
+.activity-row strong {
+  color: #f8fbff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.holding-meta {
+  display: grid;
+  justify-items: end;
   gap: 3px;
 }
 
-td:first-child span,
-.activity-row span {
-  color: #7c858f;
-  font-size: 12px;
+.holding-meta strong,
+.activity-row em {
+  color: #22d3ee;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .value-up {
@@ -329,59 +368,46 @@ td:first-child span,
   color: var(--stock-fall-color) !important;
 }
 
-.activity-list {
-  display: grid;
-}
-
-.activity-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 16px;
-  border-bottom: 1px solid #2f3339;
-}
-
-.activity-row strong {
-  display: block;
-  color: #f7fafc;
-  font-size: 13px;
-}
-
-.activity-row em {
-  color: var(--stock-rise-color);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.terminal-empty {
-  padding: 42px 16px;
-  color: #7c858f;
+.empty-state {
+  padding: 34px 0 10px;
   text-align: center;
-  font-size: 13px;
 }
 
-.terminal-empty.compact {
-  padding: 24px 16px;
+.empty-state.compact {
+  padding-top: 14px;
 }
 
-@media (max-width: 1180px) {
-  .market-strip,
-  .terminal-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 760px) {
-  .market-strip,
-  .terminal-grid {
+@media (max-width: 1100px) {
+  .hero-card,
+  .content-grid {
     grid-template-columns: 1fr;
   }
 
-  .terminal-titlebar {
-    align-items: stretch;
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-card {
+    padding: 20px;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .holding-row,
+  .activity-row {
     flex-direction: column;
+  }
+
+  .holding-meta {
+    justify-items: start;
   }
 }
 </style>

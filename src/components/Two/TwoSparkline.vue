@@ -68,6 +68,7 @@ const strokeClass = computed(() => {
   align-items: center;
   justify-content: flex-start;
   min-width: 96px;
+  filter: drop-shadow(0 0 8px rgb(34 211 238 / 0.14));
 }
 
 .sparkline-shell svg {
@@ -77,7 +78,7 @@ const strokeClass = computed(() => {
 
 .sparkline-line {
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

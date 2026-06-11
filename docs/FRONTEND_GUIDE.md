@@ -1,3 +1,150 @@
+# 2026-06-11
+
+## Subject
+Stock display names now use canonical Taiwan stock master
+
+## Owner
+Backend
+
+## Affected APIs
+
+- `GET /etf/holdings?etfCode=XXXX`
+- `GET /etf/holdings?stockCode=2327`
+- `GET /etf/stocks`
+- `GET /etf/stocks/{stockCode}`
+- `GET /etf/stocks/{stockCode}/series`
+- `GET /etf/events?type=first_buy`
+
+## Change
+
+- `stock_code` is the unique key for stock identity.
+- `stock_name` is now normalized by backend canonical stock master.
+- Source-specific Excel/API names are no longer trusted as display names.
+- If source and canonical names differ, backend may include `source_stock_name`.
+- Backend may also include `stock_full_name`, `stock_market`, and `stock_aliases`.
+
+## Frontend Handling
+
+- Use `stock_code` for identity, routing, grouping, comparison, and de-duplication.
+- Use `stock_name` for normal display.
+- Do not group by ETF source stock names such as `國巨*` or `國巨股份`.
+- `source_stock_name` is for debug/source trace only; do not use it as the product display name.
+- Example: `2327` should display as `國巨` across `00403A`, `00981A`, `00982A`, and `00991A`.
+
+# 2026-06-11
+
+## Subject
+Active ETF list adds `00991A`
+
+## Owner
+Backend
+
+## Affected APIs
+
+- `GET /etf/list`
+- `GET /etf/available-dates?etfCode=00991A`
+- `GET /etf/holdings?etfCode=00991A`
+- `GET /etf/holdings?etfCode=00991A&date=YYYY-MM-DD`
+- `GET /etf/stocks/{stockCode}/series?range=1w|1m|6m|1y|max`
+- `GET /etf/fhtrust?sourceCode=ETF23&date=YYYY-MM-DD&save=0`
+
+## Change
+
+- Added Fhtrust active ETF `00991A`.
+- Display name: `主動復華未來50`.
+- Official name: `復華台灣未來50主動式ETF基金`.
+- Source provider: `fhtrust`.
+- Source code: `ETF23`.
+- Listing/display start date: `2025-12-18`.
+- Display date offset is `0`, same as ezmoney/unified dates.
+- Historical data has been backfilled through latest available source date `2026-06-10`.
+
+## Frontend Handling
+
+- No new frontend wrapper is required for normal screens.
+- ETF selectors and list pages should receive `00991A` from `GET /etf/list`.
+- Date picker should use `GET /etf/available-dates?etfCode=00991A`.
+- Current holdings can use `GET /etf/holdings?etfCode=00991A`.
+- Stock detail pages should automatically include `00991A` in stock-level series when that stock is held.
+- `/etf/fhtrust` is a backend manual test/fetch endpoint; frontend product pages normally do not need to call it.
+
+# 2026-06-11
+
+## Subject
+First-buy page uses global ETF event list with current holdings
+
+## Owner
+Backend
+
+## Affected APIs
+
+- `GET /etf/events?type=first_buy`
+- `GET /etf/events?type=first_buy&date=YYYY-MM-DD`
+- `GET /etf/events?type=first_buy&stockCode=3363`
+- `GET /etf/events?type=first_buy&etfCode=00992A`
+
+## Change
+
+- First-buy events no longer require selecting one ETF first.
+- The backend now returns first-buy rows across all tracked ETFs.
+- `etfCode`, `stockCode`, and `date` are optional filters.
+- Pagination is supported by `page` and `pageSize`.
+- Rows from each ETF's first tracked snapshot are excluded, so initial imports do not mark every holding as first-buy.
+- `buy_shares` is the first-build shares on the event date.
+- `event_shares` is the ETF holding shares on the event date.
+- `current_shares` is the latest current holding shares for the same ETF-stock pair.
+- `snapshot_date` is the first-buy event date.
+- `current_snapshot_date` is the latest current holding date.
+- `is_currently_held=false` means the ETF no longer holds this stock in the latest snapshot.
+
+## Suggested Table Columns
+
+- `stock_code` / `stock_name`: stock
+- `etf_code` / `etf_name`: ETF
+- `buy_shares`: first-build shares
+- `current_shares`: latest current shares
+- `snapshot_date`: first-buy event date
+- `current_snapshot_date`: latest holding date
+
+## Example
+
+`GET /etf/events?type=first_buy&date=2026-06-08`
+
+Response shape:
+
+```json
+{
+  "type": "first_buy",
+  "snapshot_date": "2026-06-08",
+  "page": 1,
+  "pageSize": 200,
+  "totalCount": 1,
+  "items": [
+    {
+      "stock_code": "3363",
+      "stock_name": "上詮",
+      "etf_code": "00992A",
+      "etf_name": "主動群益科技創新",
+      "buy_shares": 300000,
+      "event_shares": 300000,
+      "current_shares": 300000,
+      "snapshot_date": "2026-06-08",
+      "current_snapshot_date": "2026-06-10",
+      "event_holding_ratio": 0.54,
+      "current_holding_ratio": 0.5,
+      "is_currently_held": true
+    }
+  ]
+}
+```
+
+## Frontend Handling
+
+- The first-buy table should label `buy_shares` as first-build shares.
+- The first-buy table should label `current_shares` as latest/current shares.
+- If a row needs event-day inventory, use `event_shares`.
+- If `is_currently_held=false`, show current shares as `0` or a sold-out state.
+
 # 2026-06-10
 
 ## Subject

@@ -62,106 +62,11 @@
     }
   ],
   "paths": {
-    "/website/health": {
-      "get": {
-        "tags": ["Website"],
-        "summary": "網站健康檢查",
-        "description": "確認後端服務是否可用。",
-        "x-frontend-purpose": "前台可用於 API 狀態燈或除錯頁。",
-        "responses": {
-          "200": {
-            "description": "服務正常",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                },
-                "examples": {
-                  "ok": {
-                    "value": {
-                      "status": "ok"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/website/info": {
-      "get": {
-        "tags": ["Website"],
-        "summary": "取得網站版本資訊",
-        "description": "從 Firebase 讀取網站版本資料。",
-        "x-frontend-purpose": "前台可用於顯示版本、公告或更新資訊。",
-        "responses": {
-          "200": {
-            "description": "網站資訊",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      },
-      "patch": {
-        "tags": ["Website"],
-        "summary": "更新網站版本資訊",
-        "description": "更新 Firebase 內的網站版本資料。",
-        "x-frontend-purpose": "管理端或測試工具使用，一般使用者頁面不需要串接。",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["product"],
-                "properties": {
-                  "product": {
-                    "type": "string",
-                    "example": "stockDividends"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "更新成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                },
-                "examples": {
-                  "updated": {
-                    "value": {
-                      "message": "Version updated successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
     "/dividend": {
       "get": {
-        "tags": ["Stock"],
+        "tags": [
+          "Stock"
+        ],
         "summary": "取得或更新股利資料",
         "description": "帶 `stockId` 時取得單一股票股利；帶 `mode=all` 時觸發全市場股利更新。",
         "x-frontend-purpose": "前台股票詳情可查單一股票股利；`mode=all` 為外部排程或後端維護使用。",
@@ -182,7 +87,9 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["all"]
+              "enum": [
+                "all"
+              ]
             },
             "description": "使用 `all` 觸發批次更新"
           }
@@ -193,7 +100,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": ["object", "array"],
+                  "type": [
+                    "object",
+                    "array"
+                  ],
                   "additionalProperties": true
                 }
               }
@@ -201,194 +111,15 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/price": {
-      "get": {
-        "tags": ["Stock"],
-        "summary": "取得或更新股價資料",
-        "description": "帶 `stockId` 時取得單一股票價格；帶 `mode=all` 時觸發全市場股價更新。",
-        "x-frontend-purpose": "前台股票詳情可查單一股票價格；`mode=all` 為外部排程或後端維護使用。",
-        "parameters": [
-          {
-            "name": "stockId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "2330"
-            },
-            "description": "股票代碼"
-          },
-          {
-            "name": "mode",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all"]
-            },
-            "description": "使用 `all` 觸發批次更新"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "股價資料或批次更新結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": ["object", "array"],
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/etf/health": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "ETF API 健康檢查",
-        "description": "確認 ETF API 是否可用。",
-        "x-frontend-purpose": "API 文件頁或 ETF 功能頁可用來顯示後端狀態。",
-        "responses": {
-          "200": {
-            "description": "服務正常",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                },
-                "examples": {
-                  "ok": {
-                    "value": {
-                      "status": "ok"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/etf/list": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "取得已設定可觀測 ETF 清單",
-        "description": "回傳 `etf_source_configs`，代表目前系統已設定 crawler 的 ETF 清單。",
-        "x-frontend-purpose": "前台 ETF selector 與 API 文件頁的主要清單來源。",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/SourceProvider"
-          },
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "$ref": "#/components/parameters/SourceCode"
-          },
-          {
-            "$ref": "#/components/parameters/IsActive"
-          },
-          {
-            "$ref": "#/components/parameters/BatchEnabled"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ETF source config 清單",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtfSourceConfig"
-                  }
-                },
-                "examples": {
-                  "configs": {
-                    "value": [
-                      {
-                        "etf_code": "00403A",
-                        "etf_name": "主動統一升級50",
-                        "source_provider": "ezmoney",
-                        "source_company": "統一投信",
-                        "source_code": "63YTW",
-                        "source_method": "GET",
-                        "crawler_type": "xlsx",
-                        "parser_key": "ezmoney_asset_xlsx",
-                        "release_time": "16:30:00",
-                        "timezone": "Asia/Taipei",
-                        "update_frequency": "daily",
-                        "batch_enabled": true,
-                        "is_active": true,
-                        "last_status": "idle"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/source-configs": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "取得已設定可觀測 ETF 清單",
-        "description": "`/etf/list` 的同義路由，回傳相同資料。",
-        "x-frontend-purpose": "保留給內部語意清楚的呼叫；前端第一階段建議優先使用 `/etf/list`。",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/SourceProvider"
-          },
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "$ref": "#/components/parameters/SourceCode"
-          },
-          {
-            "$ref": "#/components/parameters/IsActive"
-          },
-          {
-            "$ref": "#/components/parameters/BatchEnabled"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ETF source config 清單",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtfSourceConfig"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
           }
         }
       }
     },
     "/etf/active-list": {
       "get": {
-        "tags": ["ETF"],
+        "tags": [
+          "ETF"
+        ],
         "summary": "取得目前 active ETF 主檔",
         "description": "回傳目前資料庫中的 active ETF 主檔與最新 snapshot 資訊。",
         "x-frontend-purpose": "可用於 ETF 總覽，但第一階段 selector 建議使用 `/etf/list`。",
@@ -412,7 +143,9 @@
         }
       },
       "post": {
-        "tags": ["Internal"],
+        "tags": [
+          "Internal"
+        ],
         "summary": "匯入 active ETF 清單",
         "description": "手動或批次匯入某日期 active ETF 清單。",
         "x-frontend-purpose": "後端維護用，一般前台頁面不需要串接。",
@@ -443,228 +176,11 @@
         }
       }
     },
-    "/etf/holdings": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "查詢 ETF 持股或股票被 ETF 持有狀態",
-        "description": "可依 ETF 代碼查目前持股、帶 `includeTrendDays` 回傳每檔股票近 N 日曲線、依日期查某日持股快照、或依股票代碼查目前相關 ETF 持有量。若同時帶 `stockCode` 與 `dateRange`，回傳單一股票在該 ETF 的歷史序列。",
-        "x-frontend-purpose": "00403A 持股頁、ETF 日期進出頁、股票相關 ETF 頁的主要資料來源。",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "name": "stockCode",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "2330"
-            },
-            "description": "股票代碼；與 `etfCode` 二選一"
-          },
-          {
-            "name": "includeTrendDays",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 365,
-              "example": 30
-            },
-            "description": "搭配 `etfCode` 使用，回傳最新持股並為每檔股票附上近 N 日 trend"
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2026-06-05"
-            },
-            "description": "指定 snapshot 日期；搭配 `etfCode` 時回傳該日進出變化"
-          },
-          {
-            "name": "dateRange",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "2025-05-22,2026-06-09"
-            },
-            "description": "搭配 `stockCode` 使用，回傳單一股票在該區間的持股序列"
-          },
-          {
-            "name": "mode",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["summary"]
-            },
-            "description": "搭配 `etfCode` 使用，回傳 ETF 總持股摘要"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "持股、摘要或進出變化",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "oneOf": [
-                      {
-                        "$ref": "#/components/schemas/EtfHolding"
-                      },
-                      {
-                        "$ref": "#/components/schemas/EtfHoldingChange"
-                      },
-                      {
-                        "$ref": "#/components/schemas/StockEtfHolding"
-                      }
-                    ]
-                  }
-                },
-                "examples": {
-                  "latestHoldings": {
-                    "value": [
-                      {
-                        "etf_code": "00403A",
-                        "etf_name": "主動統一升級50",
-                        "stock_code": "2330",
-                        "stock_name": "台積電",
-                        "holding_shares": 123000,
-                        "holding_ratio": 8.5,
-                        "snapshot_date": "2026-06-05",
-                        "trend": [
-                          {
-                            "snapshot_date": "2026-05-22",
-                            "holding_shares": 120000
-                          },
-                          {
-                            "snapshot_date": "2026-05-23",
-                            "holding_shares": 123000
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": ["Internal"],
-        "summary": "匯入 ETF 持股",
-        "description": "手動或批次匯入 ETF 某日期持股 snapshot。",
-        "x-frontend-purpose": "後端維護用，一般前台頁面不需要串接。",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EtfHoldingImportRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "匯入結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/etf/events": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "查詢 ETF 或股票事件",
-        "description": "依股票查首次買入、首次賣出、多家 ETF 買賣等事件；或依 ETF 查某日持股變化。",
-        "x-frontend-purpose": "股票事件頁與 ETF 日期變化頁使用。",
-        "parameters": [
-          {
-            "name": "mode",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["stock", "etf"],
-              "default": "stock"
-            },
-            "description": "`stock` 依股票查事件；`etf` 依 ETF 查每日變化"
-          },
-          {
-            "$ref": "#/components/parameters/StockCode"
-          },
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2026-06-05"
-            },
-            "description": "指定事件日期"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "事件摘要與明細",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/StockEventResponse"
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/EtfHoldingChange"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
     "/etf/available-dates": {
       "get": {
-        "tags": ["ETF"],
+        "tags": [
+          "ETF"
+        ],
         "summary": "取得某支 ETF 的可用日期清單",
         "description": "回傳該 ETF 已有持股 snapshot 的日期清單，可用於日期選擇器 disabled。`from` / `to` 可限制區間。",
         "x-frontend-purpose": "ETF 日期選擇器的 disabled 資料來源。",
@@ -713,387 +229,11 @@
         }
       }
     },
-    "/etf/{etfCode}/{stockCode}": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "Get ETF stock relationship summary",
-        "description": "Returns the latest summary for a specific ETF and stock pair.",
-        "x-frontend-purpose": "ETF detail page summary for one stock.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "$ref": "#/components/parameters/StockCode"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relationship summary",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EtfPairDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/{etfCode}/{stockCode}/series": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "Get ETF stock relationship series",
-        "description": "Returns the historical series for a specific ETF and stock pair.",
-        "x-frontend-purpose": "ETF detail page trend data for one stock.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "$ref": "#/components/parameters/StockCode"
-          },
-          {
-            "name": "range",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["1w", "1m", "6m", "1y", "max"],
-              "default": "1m"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2026-06-09"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relationship series",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EtfPairSeriesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/stocks": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "Get stock catalog",
-        "description": "Returns a paginated stock list aggregated from current ETF holdings.",
-        "x-frontend-purpose": "Stock observation list page.",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 200,
-              "default": 50
-            }
-          },
-          {
-            "name": "q",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "2330"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Stock catalog",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockCatalogResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/stocks/{stockCode}": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "Get stock observation detail",
-        "description": "Returns current ETF holders and summary for one stock.",
-        "x-frontend-purpose": "Stock observation detail page.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/StockCode"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Stock observation detail",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockObservationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/stocks/{stockCode}/series": {
-      "get": {
-        "tags": ["ETF"],
-        "summary": "Get stock observation series",
-        "description": "Returns multi-ETF trend series for a stock.",
-        "x-frontend-purpose": "Stock observation chart data.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/StockCode"
-          },
-          {
-            "name": "range",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["1w", "1m", "6m", "1y", "max"],
-              "default": "1m"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2026-06-09"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Stock observation series",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockObservationSeriesResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/fetch-all": {
-      "get": {
-        "tags": ["Internal"],
-        "summary": "批次抓取所有已啟用 ETF 來源",
-        "description": "讀取 `etf_source_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。",
-        "x-frontend-purpose": "給外部排程工具使用，例如每日 16:35 後定時呼叫；一般使用者頁面不直接串接。",
-        "parameters": [
-          {
-            "name": "force",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            },
-            "description": "是否忽略 release time 強制抓取"
-          },
-          {
-            "name": "save",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            },
-            "description": "是否寫入 Supabase；`false` 用於預覽與測試"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "批次抓取結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FetchAllResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    },
-    "/etf/ezmoney": {
-      "get": {
-        "tags": ["Internal"],
-        "summary": "手動抓取 ezmoney ETF XLSX",
-        "description": "依 `fundCode` 抓取 ezmoney XLSX，解析後可選擇是否寫入 Supabase。",
-        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
-        "parameters": [
-          {
-            "name": "fundCode",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "63YTW"
-            },
-            "description": "ezmoney 來源代碼"
-          },
-          {
-            "$ref": "#/components/parameters/EtfCode"
-          },
-          {
-            "name": "etfName",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "主動統一升級50"
-            }
-          },
-          {
-            "name": "save",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            },
-            "description": "是否寫入 Supabase"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "解析或匯入結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EzmoneyImportResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": ["Internal"],
-        "summary": "手動抓取 ezmoney ETF XLSX",
-        "description": "POST 版本，功能同 GET。",
-        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["fundCode"],
-                "properties": {
-                  "fundCode": {
-                    "type": "string",
-                    "example": "63YTW"
-                  },
-                  "etfCode": {
-                    "type": "string",
-                    "example": "00403A"
-                  },
-                  "etfName": {
-                    "type": "string",
-                    "example": "主動統一升級50"
-                  },
-                  "save": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "解析或匯入結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EzmoneyImportResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/ServerError"
-          }
-        }
-      }
-    }
-    ,
     "/etf/capitalfund": {
       "get": {
-        "tags": ["Internal"],
+        "tags": [
+          "Internal"
+        ],
         "summary": "手動抓取 capitalfund ETF 資料",
         "description": "依 `sourceCode` 抓取群益投信官方 portfolio API，解析後可選擇是否寫入 Supabase。可用 `date` 指定歷史日期。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -1162,7 +302,9 @@
         }
       },
       "post": {
-        "tags": ["Internal"],
+        "tags": [
+          "Internal"
+        ],
         "summary": "手動抓取 capitalfund ETF 資料",
         "description": "POST 版本，功能同 GET。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -1172,7 +314,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["sourceCode"],
+                "required": [
+                  "sourceCode"
+                ],
                 "properties": {
                   "sourceCode": {
                     "type": "string",
@@ -1217,6 +361,1107 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/events": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "查詢 ETF 或股票事件",
+        "description": "依股票查首次買入、首次賣出、多家 ETF 買賣等事件；或依 ETF 查某日持股變化。",
+        "x-frontend-purpose": "股票事件頁與 ETF 日期變化頁使用。",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stock",
+                "etf",
+                "first-buy",
+                "first_buy"
+              ],
+              "default": "stock"
+            },
+            "description": "Use stock or etf for legacy filtered views; use first-buy/first_buy to list first-buy events across all tracked ETFs."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "first_buy"
+              ]
+            },
+            "description": "Use type=first_buy to list first-buy events across all tracked ETFs. etfCode, stockCode, and date are optional filters."
+          },
+          {
+            "$ref": "#/components/parameters/StockCode"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-05"
+            },
+            "description": "指定事件日期"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "事件摘要與明細",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/StockEventResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FirstBuyEventsResponse"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EtfHoldingChange"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/ezmoney": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "手動抓取 ezmoney ETF XLSX",
+        "description": "依 `fundCode` 抓取 ezmoney XLSX，解析後可選擇是否寫入 Supabase。",
+        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
+        "parameters": [
+          {
+            "name": "fundCode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "63YTW"
+            },
+            "description": "ezmoney 來源代碼"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "etfName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "主動統一升級50"
+            }
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否寫入 Supabase"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "解析或匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EzmoneyImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "手動抓取 ezmoney ETF XLSX",
+        "description": "POST 版本，功能同 GET。",
+        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fundCode"
+                ],
+                "properties": {
+                  "fundCode": {
+                    "type": "string",
+                    "example": "63YTW"
+                  },
+                  "etfCode": {
+                    "type": "string",
+                    "example": "00403A"
+                  },
+                  "etfName": {
+                    "type": "string",
+                    "example": "主動統一升級50"
+                  },
+                  "save": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "解析或匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EzmoneyImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/fetch-all": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "批次抓取所有已啟用 ETF 來源",
+        "description": "讀取 `etf_source_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。",
+        "x-frontend-purpose": "給外部排程工具使用，例如每日 16:35 後定時呼叫；一般使用者頁面不直接串接。",
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否忽略 release time 強制抓取"
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否寫入 Supabase；`false` 用於預覽與測試"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "批次抓取結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchAllResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/fhtrust": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Fetch Fhtrust ETF holdings",
+        "description": "Manual backend fetch/test endpoint for Fhtrust active ETF sources. Normal frontend screens should use /etf/list, /etf/available-dates, and /etf/holdings.",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ETF23"
+            },
+            "description": "Fhtrust source code, for 00991A use ETF23."
+          },
+          {
+            "name": "etfCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "00991A"
+            }
+          },
+          {
+            "name": "etfName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "主動復華未來50"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-10"
+            },
+            "description": "Source/display date. Fhtrust uses display_date_offset_days=0."
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            },
+            "description": "Use save=0 to parse only without DB/Drive writes."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parsed/imported Fhtrust ETF holdings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sourceCode": {
+                      "type": "string",
+                      "example": "ETF23"
+                    },
+                    "etfCode": {
+                      "type": "string",
+                      "example": "00991A"
+                    },
+                    "etfName": {
+                      "type": "string",
+                      "example": "主動復華未來50"
+                    },
+                    "snapshotDate": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2026-06-10"
+                    },
+                    "sourceSnapshotDate": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2026-06-10"
+                    },
+                    "rows": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "example": 50
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        }
+                      ]
+                    },
+                    "xlsxBackup": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "summary": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Fetch or import failed."
+          }
+        }
+      }
+    },
+    "/etf/health": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "ETF API 健康檢查",
+        "description": "確認 ETF API 是否可用。",
+        "x-frontend-purpose": "API 文件頁或 ETF 功能頁可用來顯示後端狀態。",
+        "responses": {
+          "200": {
+            "description": "服務正常",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "value": {
+                      "status": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etf/holdings": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "查詢 ETF 持股或股票被 ETF 持有狀態",
+        "description": "可依 ETF 代碼查目前持股、帶 `includeTrendDays` 回傳每檔股票近 N 日曲線、依日期查某日持股快照、或依股票代碼查目前相關 ETF 持有量。若同時帶 `stockCode` 與 `dateRange`，回傳單一股票在該 ETF 的歷史序列。",
+        "x-frontend-purpose": "00403A 持股頁、ETF 日期進出頁、股票相關 ETF 頁的主要資料來源。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "stockCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2330"
+            },
+            "description": "股票代碼；與 `etfCode` 二選一"
+          },
+          {
+            "name": "includeTrendDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "example": 30
+            },
+            "description": "搭配 `etfCode` 使用，回傳最新持股並為每檔股票附上近 N 日 trend"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-05"
+            },
+            "description": "指定 snapshot 日期；搭配 `etfCode` 時回傳該日進出變化"
+          },
+          {
+            "name": "dateRange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2025-05-22,2026-06-09"
+            },
+            "description": "搭配 `stockCode` 使用，回傳單一股票在該區間的持股序列"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "summary"
+              ]
+            },
+            "description": "搭配 `etfCode` 使用，回傳 ETF 總持股摘要"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "持股、摘要或進出變化",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/EtfHolding"
+                      },
+                      {
+                        "$ref": "#/components/schemas/EtfHoldingChange"
+                      },
+                      {
+                        "$ref": "#/components/schemas/StockEtfHolding"
+                      }
+                    ]
+                  }
+                },
+                "examples": {
+                  "latestHoldings": {
+                    "value": [
+                      {
+                        "etf_code": "00403A",
+                        "etf_name": "主動統一升級50",
+                        "stock_code": "2330",
+                        "stock_name": "台積電",
+                        "holding_shares": 123000,
+                        "holding_ratio": 8.5,
+                        "snapshot_date": "2026-06-05",
+                        "trend": [
+                          {
+                            "snapshot_date": "2026-05-22",
+                            "holding_shares": 120000
+                          },
+                          {
+                            "snapshot_date": "2026-05-23",
+                            "holding_shares": 123000
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "匯入 ETF 持股",
+        "description": "手動或批次匯入 ETF 某日期持股 snapshot。",
+        "x-frontend-purpose": "後端維護用，一般前台頁面不需要串接。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EtfHoldingImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/etf/list": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "取得已設定可觀測 ETF 清單",
+        "description": "回傳 `etf_source_configs`，代表目前系統已設定 crawler 的 ETF 清單。",
+        "x-frontend-purpose": "前台 ETF selector 與 API 文件頁的主要清單來源。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SourceProvider"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "$ref": "#/components/parameters/SourceCode"
+          },
+          {
+            "$ref": "#/components/parameters/IsActive"
+          },
+          {
+            "$ref": "#/components/parameters/BatchEnabled"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ETF source config 清單",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtfSourceConfig"
+                  }
+                },
+                "examples": {
+                  "configs": {
+                    "value": [
+                      {
+                        "etf_code": "00403A",
+                        "etf_name": "主動統一升級50",
+                        "source_provider": "ezmoney",
+                        "source_company": "統一投信",
+                        "source_code": "63YTW",
+                        "source_method": "GET",
+                        "crawler_type": "xlsx",
+                        "parser_key": "ezmoney_asset_xlsx",
+                        "release_time": "16:30:00",
+                        "timezone": "Asia/Taipei",
+                        "update_frequency": "daily",
+                        "batch_enabled": true,
+                        "is_active": true,
+                        "last_status": "idle"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/source-configs": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "取得已設定可觀測 ETF 清單",
+        "description": "`/etf/list` 的同義路由，回傳相同資料。",
+        "x-frontend-purpose": "保留給內部語意清楚的呼叫；前端第一階段建議優先使用 `/etf/list`。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SourceProvider"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "$ref": "#/components/parameters/SourceCode"
+          },
+          {
+            "$ref": "#/components/parameters/IsActive"
+          },
+          {
+            "$ref": "#/components/parameters/BatchEnabled"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ETF source config 清單",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtfSourceConfig"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/stocks": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Get stock catalog",
+        "description": "Returns a paginated stock list aggregated from current ETF holdings.",
+        "x-frontend-purpose": "Stock observation list page.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2330"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockCatalogResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/stocks/{stockCode}": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Get stock observation detail",
+        "description": "Returns current ETF holders and summary for one stock.",
+        "x-frontend-purpose": "Stock observation detail page.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StockCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock observation detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockObservationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/stocks/{stockCode}/series": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Get stock observation series",
+        "description": "Returns multi-ETF trend series for a stock.",
+        "x-frontend-purpose": "Stock observation chart data.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StockCode"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1w",
+                "1m",
+                "6m",
+                "1y",
+                "max"
+              ],
+              "default": "1m"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-09"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock observation series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockObservationSeriesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/{etfCode}/{stockCode}": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Get ETF stock relationship summary",
+        "description": "Returns the latest summary for a specific ETF and stock pair.",
+        "x-frontend-purpose": "ETF detail page summary for one stock.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "$ref": "#/components/parameters/StockCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relationship summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtfPairDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/{etfCode}/{stockCode}/series": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Get ETF stock relationship series",
+        "description": "Returns the historical series for a specific ETF and stock pair.",
+        "x-frontend-purpose": "ETF detail page trend data for one stock.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "$ref": "#/components/parameters/StockCode"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1w",
+                "1m",
+                "6m",
+                "1y",
+                "max"
+              ],
+              "default": "1m"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-09"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relationship series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtfPairSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/price": {
+      "get": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "取得或更新股價資料",
+        "description": "帶 `stockId` 時取得單一股票價格；帶 `mode=all` 時觸發全市場股價更新。",
+        "x-frontend-purpose": "前台股票詳情可查單一股票價格；`mode=all` 為外部排程或後端維護使用。",
+        "parameters": [
+          {
+            "name": "stockId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2330"
+            },
+            "description": "股票代碼"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all"
+              ]
+            },
+            "description": "使用 `all` 觸發批次更新"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "股價資料或批次更新結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/website/health": {
+      "get": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "網站健康檢查",
+        "description": "確認後端服務是否可用。",
+        "x-frontend-purpose": "前台可用於 API 狀態燈或除錯頁。",
+        "responses": {
+          "200": {
+            "description": "服務正常",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "value": {
+                      "status": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/website/info": {
+      "get": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "取得網站版本資訊",
+        "description": "從 Firebase 讀取網站版本資料。",
+        "x-frontend-purpose": "前台可用於顯示版本、公告或更新資訊。",
+        "responses": {
+          "200": {
+            "description": "網站資訊",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Website"
+        ],
+        "summary": "更新網站版本資訊",
+        "description": "更新 Firebase 內的網站版本資料。",
+        "x-frontend-purpose": "管理端或測試工具使用，一般使用者頁面不需要串接。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "product"
+                ],
+                "properties": {
+                  "product": {
+                    "type": "string",
+                    "example": "stockDividends"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                },
+                "examples": {
+                  "updated": {
+                    "value": {
+                      "message": "Version updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           }
         }
       }
@@ -1308,7 +1553,9 @@
     "schemas": {
       "HealthResponse": {
         "type": "object",
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "properties": {
           "status": {
             "type": "string",
@@ -1402,22 +1649,39 @@
             "type": "boolean"
           },
           "last_run_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "last_success_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "last_status": {
             "type": "string",
-            "enum": ["idle", "running", "success", "failed"]
+            "enum": [
+              "idle",
+              "running",
+              "success",
+              "failed"
+            ]
           },
           "last_error": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "next_run_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "metadata": {
@@ -1456,7 +1720,10 @@
             "format": "date"
           },
           "last_snapshot_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "is_active": {
@@ -1467,7 +1734,10 @@
       },
       "ActiveEtfImportRequest": {
         "type": "object",
-        "required": ["snapshotDate", "items"],
+        "required": [
+          "snapshotDate",
+          "items"
+        ],
         "properties": {
           "snapshotDate": {
             "type": "string",
@@ -1485,7 +1755,10 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["etfCode", "etfName"],
+              "required": [
+                "etfCode",
+                "etfName"
+              ],
               "properties": {
                 "etfCode": {
                   "type": "string",
@@ -1554,7 +1827,9 @@
       },
       "EtfHoldingInput": {
         "type": "object",
-        "required": ["stockCode"],
+        "required": [
+          "stockCode"
+        ],
         "properties": {
           "stockCode": {
             "type": "string",
@@ -1568,10 +1843,16 @@
             "type": "number"
           },
           "holdingValue": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "holdingRatio": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           }
         }
       },
@@ -1592,16 +1873,62 @@
             "type": "string"
           },
           "stock_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
           },
           "holding_shares": {
             "type": "number"
           },
           "holding_value": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "holding_ratio": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_stock_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
+            "example": "國巨*"
+          },
+          "stock_full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical full company name from Taiwan stock master.",
+            "example": "國巨股份有限公司"
+          },
+          "stock_market": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
+            "example": "listed"
+          },
+          "stock_aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Known aliases from Taiwan stock master, including source/official variants.",
+            "example": [
+              "國巨",
+              "國巨*",
+              "國巨股份有限公司"
+            ]
           }
         },
         "additionalProperties": true
@@ -1613,7 +1940,11 @@
             "type": "string"
           },
           "stock_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
           },
           "etf_code": {
             "type": "string"
@@ -1625,11 +1956,50 @@
             "type": "number"
           },
           "holding_ratio": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "snapshot_date": {
             "type": "string",
             "format": "date"
+          },
+          "source_stock_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
+            "example": "國巨*"
+          },
+          "stock_full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical full company name from Taiwan stock master.",
+            "example": "國巨股份有限公司"
+          },
+          "stock_market": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
+            "example": "listed"
+          },
+          "stock_aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Known aliases from Taiwan stock master, including source/official variants.",
+            "example": [
+              "國巨",
+              "國巨*",
+              "國巨股份有限公司"
+            ]
           }
         },
         "additionalProperties": true
@@ -1651,20 +2021,66 @@
             "type": "string"
           },
           "stock_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
           },
           "holding_shares": {
             "type": "number"
           },
           "previous_holding_shares": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "share_change": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "event_type": {
             "type": "string",
             "description": "可能值依資料庫 view 設計，例如 first_buy、increase、decrease、sold_out"
+          },
+          "source_stock_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
+            "example": "國巨*"
+          },
+          "stock_full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical full company name from Taiwan stock master.",
+            "example": "國巨股份有限公司"
+          },
+          "stock_market": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
+            "example": "listed"
+          },
+          "stock_aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Known aliases from Taiwan stock master, including source/official variants.",
+            "example": [
+              "國巨",
+              "國巨*",
+              "國巨股份有限公司"
+            ]
           }
         },
         "additionalProperties": true
@@ -1722,7 +2138,11 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": ["waiting", "success", "failed"]
+                  "enum": [
+                    "waiting",
+                    "success",
+                    "failed"
+                  ]
                 },
                 "releaseAt": {
                   "type": "string",
@@ -1745,11 +2165,17 @@
             "type": "string"
           },
           "firstSeenDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "lastSnapshotDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "availableDates": {
@@ -1760,7 +2186,10 @@
             }
           },
           "config": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "additionalProperties": true
           }
         }
@@ -1772,20 +2201,29 @@
             "type": "string"
           },
           "etf_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "stock_code": {
             "type": "string"
           },
           "stock_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "summary": {
             "type": "object",
             "additionalProperties": true
           },
           "current": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "additionalProperties": true
           },
           "series": {
@@ -1811,11 +2249,17 @@
             "type": "string"
           },
           "start_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "end_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "summary": {
@@ -1861,10 +2305,16 @@
             "type": "string"
           },
           "stock_name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "latest_snapshot_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "summary": {
@@ -1891,11 +2341,17 @@
             "type": "string"
           },
           "start_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "end_date": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "holders": {
@@ -1928,7 +2384,10 @@
             "format": "date"
           },
           "sourceSnapshotDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "rows": {
@@ -1969,6 +2428,209 @@
           }
         },
         "additionalProperties": true
+      },
+      "FirstBuyEvent": {
+        "type": "object",
+        "required": [
+          "stock_code",
+          "etf_code",
+          "buy_shares",
+          "current_shares",
+          "snapshot_date",
+          "event_shares",
+          "current_snapshot_date",
+          "is_currently_held"
+        ],
+        "properties": {
+          "stock_code": {
+            "type": "string",
+            "example": "3363"
+          },
+          "stock_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "上詮",
+            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
+          },
+          "etf_code": {
+            "type": "string",
+            "example": "00992A"
+          },
+          "etf_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "主動群益科技創新"
+          },
+          "buy_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 300000,
+            "description": "First-build shares on the first-buy event date."
+          },
+          "current_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 300000,
+            "description": "Latest current holding shares for the same ETF-stock pair. Returns 0 when the ETF no longer currently holds the stock."
+          },
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-08",
+            "description": "First-buy event date."
+          },
+          "previous_snapshot_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "previous_shares": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "holding_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 0.54,
+            "description": "Backward-compatible alias for event_holding_ratio."
+          },
+          "source_rank": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 35
+          },
+          "event_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "ETF holding shares on the first-buy event date.",
+            "example": 300000
+          },
+          "current_snapshot_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Latest current holding date for the same ETF-stock pair.",
+            "example": "2026-06-10"
+          },
+          "event_holding_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Holding ratio on the first-buy event date.",
+            "example": 0.54
+          },
+          "current_holding_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Latest current holding ratio for the same ETF-stock pair.",
+            "example": 0.5
+          },
+          "is_currently_held": {
+            "type": "boolean",
+            "description": "Whether the ETF still holds this stock in the latest snapshot.",
+            "example": true
+          },
+          "source_stock_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
+            "example": "國巨*"
+          },
+          "stock_full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical full company name from Taiwan stock master.",
+            "example": "國巨股份有限公司"
+          },
+          "stock_market": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
+            "example": "listed"
+          },
+          "stock_aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Known aliases from Taiwan stock master, including source/official variants.",
+            "example": [
+              "國巨",
+              "國巨*",
+              "國巨股份有限公司"
+            ]
+          }
+        }
+      },
+      "FirstBuyEventsResponse": {
+        "type": "object",
+        "required": [
+          "type",
+          "page",
+          "pageSize",
+          "totalCount",
+          "items"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "first_buy"
+          },
+          "snapshot_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "example": 200
+          },
+          "totalCount": {
+            "type": "integer",
+            "example": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirstBuyEvent"
+            }
+          }
+        }
       }
     }
   }

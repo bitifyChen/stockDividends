@@ -24,7 +24,7 @@ router.beforeEach(async (to, from, next) => {
       next()
     } catch (error) {
       next({
-        name: to?.path?.startsWith('/dashboard') ? 'Dashboard_Login' : 'LoginPage',
+        name: to?.path?.startsWith('/dashboard') ? 'DashboardLoginPage' : 'LoginPage',
         query: to?.path?.startsWith('/dashboard') ? { redirect: to.fullPath } : undefined
       })
     }
