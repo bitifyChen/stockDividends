@@ -45,9 +45,7 @@ jobs:
           name: production-files
           path: ./dist
 
-      - name: Copy index.html to 404.html
-        run: cp ./dist/index.html ./dist/404.html
-
+      # 這裡幫你刪除了重複的一行
       - name: Copy index.html to 404.html
         run: cp ./dist/index.html ./dist/404.html
 
@@ -56,3 +54,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          # ✨ 關鍵修改：強制 peaceiris 在每次部署時，都在 gh-pages 分支寫入這個 CNAME 檔
+          cname: stock.chenchenworkshop.com
