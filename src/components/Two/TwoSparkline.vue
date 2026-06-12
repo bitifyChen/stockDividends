@@ -41,7 +41,9 @@ const normalizedPoints = computed(() => {
 
 const pathData = computed(() => {
   if (!normalizedPoints.value.length) return ''
-  return normalizedPoints.value.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  return normalizedPoints.value
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+    .join(' ')
 })
 
 const strokeClass = computed(() => {
@@ -55,7 +57,13 @@ const strokeClass = computed(() => {
 
 <template>
   <div class="sparkline-shell" :class="strokeClass">
-    <svg v-if="pathData" :viewBox="`0 0 ${width} ${height}`" :width="width" :height="height" preserveAspectRatio="none">
+    <svg
+      v-if="pathData"
+      :viewBox="`0 0 ${width} ${height}`"
+      :width="width"
+      :height="height"
+      preserveAspectRatio="none"
+    >
       <path :d="pathData" class="sparkline-line" />
     </svg>
     <span v-else class="sparkline-empty">-</span>

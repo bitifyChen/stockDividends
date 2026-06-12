@@ -63,9 +63,9 @@ const submitting = ref(false)
 const sellMethod = async () => {
   submitting.value = true
   //計算買賣
-  const sellNum = parentForm.value.sellNum * 1;
-  const buyNum = parentForm.value.buyNum * 1;
-  const isSellOut = sellNum === buyNum;
+  const sellNum = parentForm.value.sellNum * 1
+  const buyNum = parentForm.value.buyNum * 1
+  const isSellOut = sellNum === buyNum
 
   // 修改原資料：已賣出部份
   const editData = {
@@ -89,9 +89,9 @@ const sellMethod = async () => {
     }
 
     await postStock(newData).then((res) => {
-    if (res.status === 200) {
-      isChanged.value = true
-    }
+      if (res.status === 200) {
+        isChanged.value = true
+      }
     })
   }
   ElMessage({

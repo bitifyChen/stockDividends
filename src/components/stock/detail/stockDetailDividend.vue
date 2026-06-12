@@ -55,7 +55,6 @@ onMounted(() => {
 })
 </script>
 
-
 <template>
   <div>
     <div>歷年股利</div>
@@ -63,6 +62,4 @@ onMounted(() => {
   </div>
 </template>
 
-
-<style scoped>
-</style>
+<style scoped></style>

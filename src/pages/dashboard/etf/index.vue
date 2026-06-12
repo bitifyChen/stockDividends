@@ -5,7 +5,7 @@ import { ArrowRight, ChartLine, Layers3, TrendingUp } from 'lucide-vue-next'
 const cards = [
   {
     title: '每日進出',
-    description: '觀察主動 ETF 每個交易日對持股的加碼、減碼與首次買入變化。',
+    description: '觀察ETF 每個交易日對持股的加碼、減碼與首次買入變化。',
     to: '/dashboard/etf/events',
     icon: TrendingUp
   },
@@ -17,7 +17,7 @@ const cards = [
   },
   {
     title: '首次買入',
-    description: '追蹤每檔主動 ETF 第一次建立部位的訊號與進場位置。',
+    description: '追蹤每檔ETF 第一次建立部位的訊號與進場位置。',
     to: '/dashboard/etf/first-buy',
     icon: ChartLine
   }
@@ -29,9 +29,9 @@ const cards = [
     <section class="hero-shell">
       <div class="hero-copy">
         <div class="eyebrow">Active ETF</div>
-        <h1>主動 ETF 資料控制台</h1>
+        <h1>ETF 資料控制台</h1>
         <p>
-          專為投資人設計的資料檢視介面。聚焦主動 ETF 的每日進出、持股結構與首次建倉訊號，
+          專為投資人設計的資料檢視介面。聚焦ETF 的每日進出、持股結構與首次建倉訊號，
           用更冷靜、更有層次的視覺語言呈現市場脈動。
         </p>
       </div>
@@ -73,8 +73,7 @@ const cards = [
   padding: 28px;
   border: 1px solid rgb(148 163 184 / 0.12);
   border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
   box-shadow:
     0 18px 48px rgb(0 0 0 / 0.16),
     inset 0 1px 0 rgb(255 255 255 / 0.03);
@@ -150,8 +149,7 @@ h1 {
   padding: 20px;
   border: 1px solid rgb(148 163 184 / 0.12);
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
   box-shadow:
     0 18px 48px rgb(0 0 0 / 0.14),
     inset 0 1px 0 rgb(255 255 255 / 0.03);
@@ -179,8 +177,7 @@ h1 {
   justify-content: center;
   border-radius: 18px;
   color: #061016;
-  background:
-    linear-gradient(135deg, rgb(34 211 238), rgb(16 185 129));
+  background: linear-gradient(135deg, rgb(34 211 238), rgb(16 185 129));
   box-shadow: 0 16px 40px rgb(34 211 238 / 0.16);
 }
 

@@ -2,7 +2,7 @@ import { Activity, Briefcase, Coins, Eye, TrendingUp } from 'lucide-vue-next'
 
 export const navGroups = [
   {
-    label: '主動 ETF',
+    label: 'ETF',
     items: [
       {
         title: '每日進出',

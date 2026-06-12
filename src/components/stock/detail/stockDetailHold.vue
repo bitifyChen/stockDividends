@@ -106,7 +106,6 @@ onMounted(() => {
 })
 </script>
 
-
 <template>
   <div>
     <div>持有變化</div>
@@ -128,6 +127,4 @@ onMounted(() => {
   </div>
 </template>
 
-
-<style scoped>
-</style>
+<style scoped></style>

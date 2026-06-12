@@ -37,7 +37,6 @@ defineExpose({
 })
 </script>
 
-
 <template>
   <van-popup class="" v-model:show="show" position="bottom" round>
     <div
@@ -58,6 +57,4 @@ defineExpose({
   </van-popup>
 </template>
 
-
-<style scoped>
-</style>
+<style scoped></style>

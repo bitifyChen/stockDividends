@@ -53,9 +53,9 @@
 ## Dashboard Navigation
 
 - Sidebar 需要分組為：
-  - `主動 ETF`
+  - `ETF`
   - `我的`
-- `主動 ETF` 底下固定包含：
+- `ETF` 底下固定包含：
   - `每日進出`
   - `目前持股`
   - `首次買入`

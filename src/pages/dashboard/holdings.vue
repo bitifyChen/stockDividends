@@ -16,7 +16,8 @@ const holdings = computed(() => {
       const item = stockStore.stockList[id]
       const marketValue = item.price ? multiply(item.price, item.buyNum) : 0
       const profit = item.price ? subtract(marketValue, item.buyPrice) : 0
-      const profitRate = item.buyPrice > 0 ? round(multiply(subtract(marketValue / item.buyPrice, 1), 100), 2) : 0
+      const profitRate =
+        item.buyPrice > 0 ? round(multiply(subtract(marketValue / item.buyPrice, 1), 100), 2) : 0
 
       return {
         id,
@@ -30,7 +31,9 @@ const holdings = computed(() => {
         profitRate
       }
     })
-    .filter((item) => !keyword || item.name?.toLowerCase().includes(keyword) || item.id.includes(keyword))
+    .filter(
+      (item) => !keyword || item.name?.toLowerCase().includes(keyword) || item.id.includes(keyword)
+    )
 })
 
 onMounted(() => {
@@ -223,7 +226,14 @@ h2 {
   font-size: 13px;
 }
 
+.terminal-panel {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 :deep(.terminal-el-table) {
+  min-width: 760px;
+
   .el-table__header th {
     font-size: 12px;
     font-weight: 900;
@@ -234,6 +244,14 @@ h2 {
   .terminal-titlebar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .terminal-search {
+    width: 100%;
+  }
+
+  .terminal-panel {
+    border-radius: 12px;
   }
 }
 </style>

@@ -10,14 +10,14 @@ export const useElMessageBox = (
 ) => {
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line no-unused-vars
-      ElMessageBox.confirm(message, title, {
-        confirmButtonText: confirmButtonText,
-        cancelButtonText: cancelButtonText,
-        center: true,
-        customClass: type
-      })
-        .then(() => resolve(true))
-        .catch(() => reject(false))
+    ElMessageBox.confirm(message, title, {
+      confirmButtonText: confirmButtonText,
+      cancelButtonText: cancelButtonText,
+      center: true,
+      customClass: type
+    })
+      .then(() => resolve(true))
+      .catch(() => reject(false))
   })
 }
 

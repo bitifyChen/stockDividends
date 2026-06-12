@@ -108,7 +108,11 @@ export const getDividendList = (state) => {
         }
 
         const stockNum = item.data
-          .filter((x) => x.buyDate < i.CashExDividendTradingDate && (!x.sellDate || x.sellDate > i.CashExDividendTradingDate))
+          .filter(
+            (x) =>
+              x.buyDate < i.CashExDividendTradingDate &&
+              (!x.sellDate || x.sellDate > i.CashExDividendTradingDate)
+          )
           .reduce((total, stock) => {
             return add(total, stock.buyNum)
           }, 0)

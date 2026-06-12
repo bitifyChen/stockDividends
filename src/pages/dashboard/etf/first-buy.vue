@@ -5,7 +5,12 @@ import { RefreshCw, Search } from 'lucide-vue-next'
 import { getEtfFirstBuyEvents, getEtfList } from '@/api/etf.js'
 import TwoTable from '@/components/Two/TwoTable.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
-import { formatShare, normalizeArray, normalizeObject, shareColumnLabel } from '@/utils/etfDashboard.js'
+import {
+  formatShare,
+  normalizeArray,
+  normalizeObject,
+  shareColumnLabel
+} from '@/utils/etfDashboard.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
 
@@ -24,28 +29,60 @@ const etfCode = ref('')
 const columns = computed(() => [
   { label: '股票', slot: 'stock', minWidth: '180' },
   { label: 'ETF', slot: 'etf', minWidth: '180' },
-  { label: shareColumnLabel(dashboardSettingStore.shareUnit, '建倉'), slot: 'event_shares', minWidth: '130' },
-  { label: shareColumnLabel(dashboardSettingStore.shareUnit, '目前'), slot: 'current_shares', minWidth: '130' },
-  { label: shareColumnLabel(dashboardSettingStore.shareUnit, '加碼速度') + '/日', slot: 'growth_rate', minWidth: '130' },
+  {
+    label: shareColumnLabel(dashboardSettingStore.shareUnit, '建倉'),
+    slot: 'event_shares',
+    minWidth: '130'
+  },
+  {
+    label: shareColumnLabel(dashboardSettingStore.shareUnit, '目前'),
+    slot: 'current_shares',
+    minWidth: '130'
+  },
+  {
+    label: shareColumnLabel(dashboardSettingStore.shareUnit, '加碼速度') + '/日',
+    slot: 'growth_rate',
+    minWidth: '130'
+  },
   { label: '狀態', slot: 'status', width: '120', align: 'center' },
   { label: '資料日期', prop: 'snapshot_date', width: '130' },
   { label: '詳情', slot: 'actions', width: '96', align: 'center' }
 ])
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize.value)))
-const pageStart = computed(() => (totalCount.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
-const pageEnd = computed(() => Math.min(totalCount.value, page.value * pageSize.value))
-const selectedDateLabel = computed(() => (date.value ? dayjs(date.value).format('YYYY/MM/DD') : '全部日期'))
-const selectedEtfLabel = computed(() => etfOptions.value.find((item) => item.etf_code === etfCode.value)?.etf_name || '全部 ETF')
-const uniqueEtfCount = computed(() => new Set(rows.value.map((row) => row?.etf_code).filter(Boolean)).size)
-const totalBuyShares = computed(() => rows.value.reduce((total, row) => total + Number(row?.buy_shares || 0), 0))
-const totalCurrentShares = computed(() =>
-  rows.value.reduce((total, row) => total + Number(row?.is_currently_held === false ? 0 : row?.current_shares || 0), 0)
+const pageStart = computed(() =>
+  totalCount.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1
 )
-const heldCount = computed(() => rows.value.filter((row) => row?.is_currently_held !== false).length)
-const soldOutCount = computed(() => rows.value.filter((row) => row?.is_currently_held === false).length)
-const growingCount = computed(() =>
-  rows.value.filter((row) => Number(row?.current_shares || 0) > Number(row?.event_shares ?? row?.buy_shares ?? 0)).length
+const pageEnd = computed(() => Math.min(totalCount.value, page.value * pageSize.value))
+const selectedDateLabel = computed(() =>
+  date.value ? dayjs(date.value).format('YYYY/MM/DD') : '全部日期'
+)
+const selectedEtfLabel = computed(
+  () => etfOptions.value.find((item) => item.etf_code === etfCode.value)?.etf_name || '全部 ETF'
+)
+const uniqueEtfCount = computed(
+  () => new Set(rows.value.map((row) => row?.etf_code).filter(Boolean)).size
+)
+const totalBuyShares = computed(() =>
+  rows.value.reduce((total, row) => total + Number(row?.buy_shares || 0), 0)
+)
+const totalCurrentShares = computed(() =>
+  rows.value.reduce(
+    (total, row) => total + Number(row?.is_currently_held === false ? 0 : row?.current_shares || 0),
+    0
+  )
+)
+const heldCount = computed(
+  () => rows.value.filter((row) => row?.is_currently_held !== false).length
+)
+const soldOutCount = computed(
+  () => rows.value.filter((row) => row?.is_currently_held === false).length
+)
+const growingCount = computed(
+  () =>
+    rows.value.filter(
+      (row) => Number(row?.current_shares || 0) > Number(row?.event_shares ?? row?.buy_shares ?? 0)
+    ).length
 )
 
 const detailRoute = (row) => ({
@@ -198,9 +235,9 @@ onMounted(async () => {
   <div class="first-buy-page">
     <section class="console-bar">
       <div>
-        <div class="breadcrumb">主動 ETF / 首次買入</div>
+        <div class="breadcrumb">ETF / 首次買入</div>
         <h1>首次買入</h1>
-        <p class="subtitle">顯示所有主動 ETF 的首次建倉事件，並直接對照目前持股狀態與加碼速度。</p>
+        <p class="subtitle">顯示所有ETF 的首次建倉事件，並直接對照目前持股狀態與加碼速度。</p>
       </div>
 
       <div class="console-tools">
@@ -216,7 +253,12 @@ onMounted(async () => {
             @change="submitSearch"
           >
             <el-option label="全部 ETF" value="" />
-            <el-option v-for="item in etfOptions" :key="item.etf_code" :label="`${item.etf_code} ${item.etf_name}`" :value="item.etf_code" />
+            <el-option
+              v-for="item in etfOptions"
+              :key="item.etf_code"
+              :label="`${item.etf_code} ${item.etf_name}`"
+              :value="item.etf_code"
+            />
           </el-select>
         </label>
 
@@ -310,17 +352,31 @@ onMounted(async () => {
         </template>
 
         <template #event_shares="{ row }">
-          <span class="value-neutral">{{ formatShare(row.event_shares ?? row.buy_shares, dashboardSettingStore.shareUnit) }}</span>
+          <span class="value-neutral">{{
+            formatShare(row.event_shares ?? row.buy_shares, dashboardSettingStore.shareUnit)
+          }}</span>
         </template>
 
         <template #current_shares="{ row }">
           <span :class="row.is_currently_held === false ? 'value-down' : ''">
-            {{ row.is_currently_held === false ? '0' : formatShare(row.current_shares, dashboardSettingStore.shareUnit) }}
+            {{
+              row.is_currently_held === false
+                ? '0'
+                : formatShare(row.current_shares, dashboardSettingStore.shareUnit)
+            }}
           </span>
         </template>
 
         <template #growth_rate="{ row }">
-          <span :class="growthRate(row) > 0 ? 'value-up' : growthRate(row) < 0 ? 'value-down' : 'value-neutral'">
+          <span
+            :class="
+              growthRate(row) > 0
+                ? 'value-up'
+                : growthRate(row) < 0
+                  ? 'value-down'
+                  : 'value-neutral'
+            "
+          >
             {{ formatGrowthPerDay(growthRate(row)) }}
           </span>
         </template>
@@ -336,7 +392,9 @@ onMounted(async () => {
         </template>
 
         <template #actions="{ row }">
-          <router-link v-if="row.stock_code" class="detail-link" :to="detailRoute(row)">詳情</router-link>
+          <router-link v-if="row.stock_code" class="detail-link" :to="detailRoute(row)"
+            >詳情</router-link
+          >
           <span v-else class="detail-disabled">-</span>
         </template>
 
@@ -347,7 +405,9 @@ onMounted(async () => {
         <span>第 {{ page }} / {{ totalPages }} 頁</span>
         <div>
           <button type="button" :disabled="page <= 1 || loading" @click="prevPage">上一頁</button>
-          <button type="button" :disabled="page >= totalPages || loading" @click="nextPage">下一頁</button>
+          <button type="button" :disabled="page >= totalPages || loading" @click="nextPage">
+            下一頁
+          </button>
         </div>
       </div>
     </section>
@@ -358,16 +418,18 @@ onMounted(async () => {
 .first-buy-page {
   display: grid;
   gap: 16px;
+  max-width: 100%;
+  min-width: 0;
   color: #cbd5e1;
 }
 
 .console-bar,
 .console-panel {
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid #2f3339;
   border-radius: 16px;
-  background:
-    linear-gradient(180deg, rgba(18, 22, 28, 0.96), rgba(13, 16, 20, 0.96)),
-    #1b1d21;
+  background: linear-gradient(180deg, rgba(18, 22, 28, 0.96), rgba(13, 16, 20, 0.96)), #1b1d21;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
 }
 
@@ -402,16 +464,26 @@ h1 {
 }
 
 .console-tools {
+  --filter-control-height: 38px;
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.console-tools > * {
+  min-width: 0;
 }
 
 .field,
 .date-picker-control {
   display: grid;
+  align-content: end;
   gap: 6px;
+  max-width: 100%;
+  min-width: 0;
   color: #94a3b8;
   font-size: 12px;
   font-weight: 900;
@@ -419,17 +491,60 @@ h1 {
 
 .field :deep(.el-select),
 .date-picker-control :deep(.el-date-editor) {
+  width: 170px;
   min-width: 170px;
 }
 
+.field :deep(.dashboard-select) {
+  display: block;
+  max-width: 100%;
+  height: var(--filter-control-height);
+}
+
+.date-picker-control :deep(.el-date-editor) {
+  width: 220px;
+  min-width: 220px;
+}
+
+.field :deep(.el-select .el-input),
+.date-picker-control :deep(.el-input) {
+  height: var(--filter-control-height);
+}
+
+.field :deep(.el-select__wrapper),
+.field :deep(.el-select .el-input__wrapper),
+.date-picker-control :deep(.el-input__wrapper) {
+  box-sizing: border-box;
+  height: var(--filter-control-height);
+  min-height: var(--filter-control-height);
+  border-radius: 10px;
+  background: #111317;
+  box-shadow: 0 0 0 1px #30343a inset;
+}
+
+.field :deep(.el-select__selection),
+.field :deep(.el-select__placeholder) {
+  min-height: var(--filter-control-height);
+  line-height: var(--filter-control-height);
+}
+
+.field :deep(.el-select .el-input__inner),
+.date-picker-control :deep(.el-input__inner) {
+  height: var(--filter-control-height);
+  line-height: var(--filter-control-height);
+  color: #e2e8f0;
+}
+
 .text-input {
-  height: 38px;
-  min-width: 140px;
+  box-sizing: border-box;
+  height: var(--filter-control-height);
+  min-width: 200px;
   border: 1px solid #30343a;
   border-radius: 10px;
   background: #111317;
   padding: 0 12px;
   color: #e2e8f0;
+  line-height: var(--filter-control-height);
   outline: none;
 }
 
@@ -456,13 +571,15 @@ h1 {
 .action-button,
 .ghost-button {
   gap: 8px;
-  height: 38px;
+  box-sizing: border-box;
+  height: var(--filter-control-height);
   padding: 0 14px;
 }
 
 .refresh-button {
-  width: 38px;
-  height: 38px;
+  box-sizing: border-box;
+  width: var(--filter-control-height);
+  height: var(--filter-control-height);
 }
 
 .refresh-button:disabled,
@@ -606,6 +723,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  max-width: 100%;
   padding-top: 16px;
   color: #7c858f;
   font-size: 13px;
@@ -613,6 +731,7 @@ h1 {
 
 .pagination-bar div {
   display: flex;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -648,10 +767,32 @@ h1 {
   }
 
   .field :deep(.el-select),
+  .field :deep(.dashboard-select),
+  .field :deep(.el-select__wrapper),
+  .field :deep(.el-select .el-input),
   .date-picker-control :deep(.el-date-editor),
+  .date-picker-control :deep(.el-input),
+  .date-picker-control :deep(.el-input__wrapper),
   .text-input {
     width: 100%;
+    max-width: 100%;
     min-width: 0;
+  }
+
+  .action-button,
+  .ghost-button,
+  .refresh-button,
+  .pagination-bar button {
+    width: 100%;
+  }
+
+  .pagination-bar div {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .console-panel {
+    padding: 12px;
   }
 
   .metric-strip {

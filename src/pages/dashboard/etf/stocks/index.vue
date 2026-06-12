@@ -4,7 +4,13 @@ import { RefreshCw, Search } from 'lucide-vue-next'
 import { getEtfStocks } from '@/api/etf.js'
 import TwoTable from '@/components/Two/TwoTable.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
-import { formatNumber, formatShare, normalizeArray, normalizeObject, shareColumnLabel } from '@/utils/etfDashboard.js'
+import {
+  formatNumber,
+  formatShare,
+  normalizeArray,
+  normalizeObject,
+  shareColumnLabel
+} from '@/utils/etfDashboard.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
 const loading = ref(false)
@@ -17,13 +23,25 @@ const errorMessage = ref('')
 
 const columns = computed(() => [
   { label: '股票', slot: 'stock', minWidth: '180' },
-  { label: '持有 ETF 數', prop: 'holder_count', formatter: (row) => formatNumber(row.holder_count), minWidth: '120' },
-  { label: shareColumnLabel(dashboardSettingStore.shareUnit, '總持有'), prop: 'total_current_shares', formatter: (row) => formatShare(row.total_current_shares, dashboardSettingStore.shareUnit), minWidth: '150' },
+  {
+    label: '持有 ETF 數',
+    prop: 'holder_count',
+    formatter: (row) => formatNumber(row.holder_count),
+    minWidth: '120'
+  },
+  {
+    label: shareColumnLabel(dashboardSettingStore.shareUnit, '總持有'),
+    prop: 'total_current_shares',
+    formatter: (row) => formatShare(row.total_current_shares, dashboardSettingStore.shareUnit),
+    minWidth: '150'
+  },
   { label: '最新日期', prop: 'latest_snapshot_date', width: '130' },
   { label: '操作', slot: 'actions', width: '96', align: 'center' }
 ])
 
-const total = computed(() => pagination.value.total || pagination.value.totalItems || rows.value.length)
+const total = computed(
+  () => pagination.value.total || pagination.value.totalItems || rows.value.length
+)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
 const detailRoute = (row) => ({
@@ -82,14 +100,19 @@ onMounted(() => {
   <div class="stocks-page">
     <section class="console-bar">
       <div>
-        <div class="breadcrumb">主動 ETF / 個股觀測</div>
+        <div class="breadcrumb">ETF / 個股觀測</div>
         <h1>個股觀測</h1>
       </div>
 
       <div class="console-tools">
         <label class="search-field">
           <Search :size="16" />
-          <input v-model.trim="q" type="search" placeholder="搜尋股票代號或名稱" @keydown.enter="submitSearch" />
+          <input
+            v-model.trim="q"
+            type="search"
+            placeholder="搜尋股票代號或名稱"
+            @keydown.enter="submitSearch"
+          />
         </label>
         <button class="action-button" type="button" @click="submitSearch">搜尋</button>
         <button class="refresh-button" type="button" :disabled="loading" @click="loadRows">
@@ -109,7 +132,9 @@ onMounted(() => {
           </div>
         </template>
         <template #actions="{ row }">
-          <router-link v-if="row.stock_code" class="detail-link" :to="detailRoute(row)">詳情</router-link>
+          <router-link v-if="row.stock_code" class="detail-link" :to="detailRoute(row)"
+            >詳情</router-link
+          >
           <span v-else class="detail-disabled">-</span>
         </template>
         <template #empty>{{ loading ? '資料讀取中' : '目前沒有個股觀測資料' }}</template>
@@ -119,7 +144,9 @@ onMounted(() => {
         <span>第 {{ page }} / {{ totalPages }} 頁</span>
         <div>
           <button type="button" :disabled="page <= 1 || loading" @click="prevPage">上一頁</button>
-          <button type="button" :disabled="page >= totalPages || loading" @click="nextPage">下一頁</button>
+          <button type="button" :disabled="page >= totalPages || loading" @click="nextPage">
+            下一頁
+          </button>
         </div>
       </div>
     </section>
@@ -290,7 +317,22 @@ h1 {
   }
 
   .search-field {
+    width: 100%;
     min-width: 0;
+  }
+
+  .action-button,
+  .refresh-button,
+  .pagination-bar button {
+    width: 100%;
+  }
+
+  .pagination-bar div {
+    flex-direction: column;
+  }
+
+  .console-panel {
+    padding: 12px;
   }
 }
 </style>

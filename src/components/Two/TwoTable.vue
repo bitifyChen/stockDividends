@@ -47,16 +47,19 @@ defineProps({
 
 <style lang="scss">
 .two-table-wrapper {
-  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgb(148 163 184 / 0.12);
   border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.96), rgb(10 13 20 / 0.96));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.96), rgb(10 13 20 / 0.96));
   box-shadow:
     0 18px 48px rgb(0 0 0 / 0.18),
     inset 0 1px 0 rgb(255 255 255 / 0.03);
 
   .two-el-table {
+    min-width: 760px;
     --el-table-border-color: rgb(148 163 184 / 0.12);
     --el-table-header-bg-color: transparent;
     --el-table-bg-color: transparent;
@@ -111,5 +114,15 @@ defineProps({
 
 .two-el-table .el-scrollbar__bar {
   z-index: 5;
+}
+
+@media (max-width: 760px) {
+  .two-table-wrapper {
+    border-radius: 16px;
+  }
+
+  .two-table-wrapper .two-el-table {
+    min-width: 680px;
+  }
 }
 </style>

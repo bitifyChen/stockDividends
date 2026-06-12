@@ -18,7 +18,6 @@ const totalDividend = computed(
 const totalUnrealized = computed(() => subtract(nowPrice.value, buyPrice.value) ?? 0)
 </script>
 
-
 <template>
   <div>
     <div>股票概要</div>
@@ -70,6 +69,4 @@ const totalUnrealized = computed(() => subtract(nowPrice.value, buyPrice.value) 
   </div>
 </template>
 
-
-<style scoped>
-</style>
+<style scoped></style>

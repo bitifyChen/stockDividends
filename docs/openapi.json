@@ -13,6 +13,20 @@
   ],
   "x-current-work-items": [
     {
+      "id": "yuanta-passive-etf-source",
+      "title": "Yuanta passive ETF 0050 source integration",
+      "status": "ready_for_frontend",
+      "frontendEntry": "0050 is available through existing ETF/stock APIs. It is passive, so snapshots are saved only when composition changes; stock series may include carried-forward points.",
+      "primaryApis": [
+        "GET /etf/list",
+        "GET /etf/holdings?etfCode=0050",
+        "GET /etf/stocks/{stockCode}",
+        "GET /etf/stocks/{stockCode}/series",
+        "GET /etf/available-dates?etfCode=0050",
+        "GET /etf/yuanta"
+      ]
+    },
+    {
       "id": "active-etf-holdings",
       "title": "主動式 ETF 每日持股與進出資料",
       "status": "in_progress",
@@ -599,7 +613,7 @@
           "Internal"
         ],
         "summary": "批次抓取所有已啟用 ETF 來源",
-        "description": "讀取 `etf_source_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。",
+        "description": "讀取 `etf_source_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。 Includes ezmoney, capitalfund, fhtrust, and yuanta providers.",
         "x-frontend-purpose": "給外部排程工具使用，例如每日 16:35 後定時呼叫；一般使用者頁面不直接串接。",
         "parameters": [
           {
@@ -1465,6 +1479,81 @@
           }
         }
       }
+    },
+    "/etf/yuanta": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Fetch Yuanta ETF holdings",
+        "description": "Manual backend fetch/test endpoint for Yuanta ETF sources. 0050 uses etf_type=passive and snapshot/backup policy composition_changed, so repeated same-composition fetches create fetch logs but do not save duplicate holdings snapshots or Drive files.",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "0050"
+            },
+            "description": "Yuanta ETF stock code/source code."
+          },
+          {
+            "name": "etfCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "0050"
+            }
+          },
+          {
+            "name": "etfName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Yuanta Taiwan 50"
+            }
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            },
+            "description": "Use save=0 to parse only without DB/Drive writes."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parsed/imported Yuanta ETF holdings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YuantaImportResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Fetch/import failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1695,6 +1784,36 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "etf_type": {
+            "type": "string",
+            "enum": [
+              "active",
+              "passive"
+            ],
+            "description": "ETF behavior type. passive ETFs are fetched daily but may not save daily holdings snapshots.",
+            "example": "passive"
+          },
+          "snapshot_policy": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "composition_changed",
+              "holdings_changed"
+            ],
+            "description": "Controls when holdings snapshots are saved.",
+            "example": "composition_changed"
+          },
+          "backup_policy": {
+            "type": "string",
+            "enum": [
+              "always",
+              "composition_changed",
+              "holdings_changed",
+              "never"
+            ],
+            "description": "Controls when xlsx backups are uploaded to Google Drive.",
+            "example": "composition_changed"
           }
         },
         "additionalProperties": true
@@ -1929,6 +2048,25 @@
               "國巨*",
               "國巨股份有限公司"
             ]
+          },
+          "etf_type": {
+            "type": "string",
+            "enum": [
+              "active",
+              "passive"
+            ],
+            "description": "ETF behavior type from source config.",
+            "example": "passive"
+          },
+          "snapshot_policy": {
+            "type": "string",
+            "description": "Snapshot save policy from source config.",
+            "example": "composition_changed"
+          },
+          "backup_policy": {
+            "type": "string",
+            "description": "Drive backup policy from source config.",
+            "example": "composition_changed"
           }
         },
         "additionalProperties": true
@@ -2000,6 +2138,25 @@
               "國巨*",
               "國巨股份有限公司"
             ]
+          },
+          "etf_type": {
+            "type": "string",
+            "enum": [
+              "active",
+              "passive"
+            ],
+            "description": "ETF behavior type from source config.",
+            "example": "passive"
+          },
+          "snapshot_policy": {
+            "type": "string",
+            "description": "Snapshot save policy from source config.",
+            "example": "composition_changed"
+          },
+          "backup_policy": {
+            "type": "string",
+            "description": "Drive backup policy from source config.",
+            "example": "composition_changed"
           }
         },
         "additionalProperties": true
@@ -2269,9 +2426,15 @@
           "series": {
             "type": "array",
             "items": {
-              "type": "object",
-              "additionalProperties": true
+              "$ref": "#/components/schemas/EtfSeriesPoint"
             }
+          },
+          "etf_type": {
+            "type": "string",
+            "enum": [
+              "active",
+              "passive"
+            ]
           }
         },
         "additionalProperties": true
@@ -2358,7 +2521,22 @@
             "type": "array",
             "items": {
               "type": "object",
-              "additionalProperties": true
+              "additionalProperties": true,
+              "properties": {
+                "etf_type": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "passive"
+                  ]
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtfSeriesPoint"
+                  }
+                }
+              }
             }
           }
         },
@@ -2631,6 +2809,124 @@
             }
           }
         }
+      },
+      "EtfSeriesPoint": {
+        "type": "object",
+        "properties": {
+          "snapshot_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "current_shares": {
+            "type": "number"
+          },
+          "previous_shares": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "delta_shares": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "holding_ratio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "is_carried_forward": {
+            "type": "boolean",
+            "description": "True when backend inserted a synthetic point to keep passive ETF lines visible within the selected range."
+          }
+        },
+        "additionalProperties": true
+      },
+      "YuantaImportResponse": {
+        "type": "object",
+        "properties": {
+          "sourceCode": {
+            "type": "string",
+            "example": "0050"
+          },
+          "etfCode": {
+            "type": "string",
+            "example": "0050"
+          },
+          "etfName": {
+            "type": "string",
+            "example": "Yuanta Taiwan 50"
+          },
+          "sourceName": {
+            "type": "string",
+            "example": "yuanta"
+          },
+          "sourceCompany": {
+            "type": "string",
+            "example": "Yuanta"
+          },
+          "etfType": {
+            "type": "string",
+            "example": "passive"
+          },
+          "snapshotPolicy": {
+            "type": "string",
+            "example": "composition_changed"
+          },
+          "backupPolicy": {
+            "type": "string",
+            "example": "composition_changed"
+          },
+          "snapshotDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-11"
+          },
+          "sourceSnapshotDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-11"
+          },
+          "rows": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "example": 50
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            ]
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "compositionChanged": {
+            "type": "boolean"
+          },
+          "holdingsChanged": {
+            "type": "boolean"
+          },
+          "snapshotSaved": {
+            "type": "boolean"
+          },
+          "xlsxBackup": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "summary": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
       }
     }
   }

@@ -48,12 +48,16 @@ const navGroups = computed(() =>
 
 const navItems = computed(() => navGroups.value.flatMap((group) => group.items))
 const currentNavItem = computed(() => navItems.value.find((item) => isNavActive(item)))
-const currentNavGroup = computed(() => navGroups.value.find((group) => group.items.some((item) => isNavActive(item))))
+const currentNavGroup = computed(() =>
+  navGroups.value.find((group) => group.items.some((item) => isNavActive(item)))
+)
 
 const isNavActive = (item) => {
   if (currentRouteName.value === item.path) return true
   const targetPath = item.to
-  return Boolean(targetPath && (route.path === targetPath || route.path.startsWith(targetPath + '/')))
+  return Boolean(
+    targetPath && (route.path === targetPath || route.path.startsWith(targetPath + '/'))
+  )
 }
 
 const closeSidebar = () => {
@@ -174,18 +178,23 @@ onUnmounted(() => {
                     <strong>檢視角度</strong>
                     <span>{{ shareUnitIsLot ? '張' : '股' }}</span>
                   </div>
-                  <el-switch v-model="shareUnitIsLot" inline-prompt active-text="張" inactive-text="股" />
+                  <el-switch
+                    v-model="shareUnitIsLot"
+                    inline-prompt
+                    active-text="張"
+                    inactive-text="股"
+                  />
                 </div>
               </div>
             </template>
           </el-dropdown>
-          <button class="topbar-icon-button" type="button">
+          <!-- <button class="topbar-icon-button" type="button">
             <Bell :size="16" />
           </button>
           <div class="topbar-avatar">
             <img v-if="userInfo.photoURL" :src="userInfo.photoURL" alt="Avatar" />
             <User v-else :size="17" />
-          </div>
+          </div> -->
         </div>
       </header>
 
@@ -205,11 +214,11 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .dashboard-shell {
   min-height: 100dvh;
+  width: 100%;
   display: grid;
   grid-template-columns: 272px minmax(0, 1fr);
   color: #e5eef7;
-  background:
-    radial-gradient(circle at top left, rgb(34 211 238 / 0.12), transparent 32%),
+  background: radial-gradient(circle at top left, rgb(34 211 238 / 0.12), transparent 32%),
     radial-gradient(circle at 85% 20%, rgb(244 114 182 / 0.08), transparent 24%),
     linear-gradient(180deg, #05070b 0%, #090c13 100%);
 }
@@ -219,8 +228,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 20% 20%, rgb(34 211 238 / 0.05), transparent 24%),
+  background: radial-gradient(circle at 20% 20%, rgb(34 211 238 / 0.05), transparent 24%),
     radial-gradient(circle at 80% 0%, rgb(255 255 255 / 0.04), transparent 18%);
   opacity: 0.8;
 }
@@ -238,6 +246,11 @@ onUnmounted(() => {
   --main-glow-color: rgb(34 211 238 / 0.22);
 }
 
+.dashboard-shell,
+.dashboard-shell * {
+  box-sizing: border-box;
+}
+
 .dashboard-sidebar {
   position: sticky;
   top: 0;
@@ -246,8 +259,7 @@ onUnmounted(() => {
   height: 100dvh;
   flex-direction: column;
   border-right: 1px solid rgb(148 163 184 / 0.14);
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(8 10 16 / 0.96));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(8 10 16 / 0.96));
   backdrop-filter: blur(20px);
   padding: 26px 18px;
 }
@@ -267,8 +279,7 @@ onUnmounted(() => {
   justify-content: center;
   border-radius: 16px;
   color: #061016;
-  background:
-    linear-gradient(135deg, rgb(34 211 238), rgb(16 185 129));
+  background: linear-gradient(135deg, rgb(34 211 238), rgb(16 185 129));
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.12) inset,
     0 14px 40px rgb(34 211 238 / 0.18);
@@ -450,6 +461,7 @@ onUnmounted(() => {
 
 .dashboard-content {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-direction: column;
 }
@@ -472,17 +484,34 @@ onUnmounted(() => {
 .topbar-left,
 .topbar-actions {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
 }
 
+.topbar-left {
+  flex: 1 1 auto;
+}
+
+.topbar-actions {
+  flex: 0 0 auto;
+}
+
 .breadcrumb {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   color: #7b889a;
   font-size: 13px;
   font-weight: 800;
+}
+
+.breadcrumb span,
+.breadcrumb strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .breadcrumb strong {
@@ -500,7 +529,10 @@ onUnmounted(() => {
   border-radius: 12px;
   background: rgb(255 255 255 / 0.03);
   color: #d7e1ed;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
 }
 
 .mobile-menu-button:hover,
@@ -550,8 +582,7 @@ onUnmounted(() => {
   min-width: 220px;
   border: 1px solid rgb(148 163 184 / 0.14);
   border-radius: 16px;
-  background:
-    linear-gradient(180deg, rgb(17 24 39 / 0.96), rgb(10 14 20 / 0.98));
+  background: linear-gradient(180deg, rgb(17 24 39 / 0.96), rgb(10 14 20 / 0.98));
   box-shadow: 0 24px 70px rgb(0 0 0 / 0.38);
   padding: 14px;
   color: #d4d8dd;
@@ -581,21 +612,42 @@ onUnmounted(() => {
 }
 
 .main-panel {
+  width: 100%;
   min-width: 0;
+  overflow: hidden;
   padding: 24px;
 }
 
 .main-panel-shell {
+  width: 100%;
   min-height: calc(100dvh - 128px);
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid rgb(148 163 184 / 0.12);
   border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.72), rgb(10 13 20 / 0.72));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.72), rgb(10 13 20 / 0.72));
   backdrop-filter: blur(18px);
   box-shadow:
     0 24px 80px rgb(0 0 0 / 0.25),
     inset 0 1px 0 rgb(255 255 255 / 0.04);
   padding: 24px;
+}
+
+.main-panel-shell :deep(> *) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.main-panel-shell :deep(.console-bar),
+.main-panel-shell :deep(.console-panel),
+.main-panel-shell :deep(.detail-header),
+.main-panel-shell :deep(.terminal-panel),
+.main-panel-shell :deep(.terminal-titlebar),
+.main-panel-shell :deep(.metric-strip),
+.main-panel-shell :deep(.chart-shell),
+.main-panel-shell :deep(.two-table-wrapper) {
+  max-width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 1023px) {
@@ -642,6 +694,31 @@ onUnmounted(() => {
 
   .topbar {
     min-height: 68px;
+  }
+
+  .breadcrumb span:not(:last-child),
+  .breadcrumb svg {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+
+  .main-panel {
+    padding: 10px;
+  }
+
+  .main-panel-shell {
+    border-radius: 18px;
+    padding: 12px;
   }
 }
 
@@ -751,7 +828,9 @@ onUnmounted(() => {
 
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .page-fade-enter-from {

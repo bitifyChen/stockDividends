@@ -19,7 +19,8 @@ const holdings = computed(() => {
       const item = stockStore.stockList[id]
       const marketValue = item.price ? multiply(item.price, item.buyNum) : 0
       const profit = item.price ? subtract(marketValue, item.buyPrice) : 0
-      const profitRate = item.buyPrice > 0 ? round(multiply(subtract(marketValue / item.buyPrice, 1), 100), 2) : 0
+      const profitRate =
+        item.buyPrice > 0 ? round(multiply(subtract(marketValue / item.buyPrice, 1), 100), 2) : 0
 
       return {
         id,
@@ -33,7 +34,9 @@ const holdings = computed(() => {
         profitRate
       }
     })
-    .filter((item) => !keyword || item.name?.toLowerCase().includes(keyword) || item.id.includes(keyword))
+    .filter(
+      (item) => !keyword || item.name?.toLowerCase().includes(keyword) || item.id.includes(keyword)
+    )
 })
 
 onMounted(() => {
@@ -69,8 +72,14 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="shareColumnLabel(dashboardSettingStore.shareUnit, '持有')" align="right" width="110">
-          <template #default="{ row }">{{ formatShare(row.shares, dashboardSettingStore.shareUnit) }}</template>
+        <el-table-column
+          :label="shareColumnLabel(dashboardSettingStore.shareUnit, '持有')"
+          align="right"
+          width="110"
+        >
+          <template #default="{ row }">{{
+            formatShare(row.shares, dashboardSettingStore.shareUnit)
+          }}</template>
         </el-table-column>
         <el-table-column label="平均成本" align="right" width="120">
           <template #default="{ row }">$ {{ row.avgCost.toLocaleString() }}</template>
@@ -104,27 +113,139 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.terminal-page { display: flex; flex-direction: column; gap: 18px; }
-.terminal-titlebar, .terminal-panel { border: 1px solid #2f3339; border-radius: 6px; background: #1b1d21; }
-.terminal-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; }
-.terminal-kicker { color: #7c858f; font-size: 12px; font-weight: 900; }
-h1, h2 { margin: 0; color: #f7fafc; letter-spacing: 0; }
-h1 { margin-top: 4px; font-size: 22px; font-weight: 900; }
-h2 { font-size: 16px; font-weight: 900; }
-.terminal-search { display: flex; width: min(320px, 100%); height: 38px; align-items: center; gap: 9px; border: 1px solid #30343a; border-radius: 6px; background: #111317; padding: 0 12px; color: #7c858f; }
-.terminal-search input { min-width: 0; width: 100%; border: 0; background: transparent; color: #d4d8dd; font-size: 13px; outline: none; }
-.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 16px; border-bottom: 1px solid #2f3339; }
-.panel-head span { color: #94a3b8; font-size: 13px; font-weight: 900; }
-.stock-cell, .profit-cell { display: grid; gap: 3px; }
-.stock-cell strong { color: #f7fafc; }
-.stock-cell span { color: #7c858f; font-size: 12px; }
-.profit-cell { justify-items: end; }
-.profit-cell span { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 900; }
-.value-up { color: var(--stock-rise-color) !important; }
-.value-down { color: var(--stock-fall-color) !important; }
-.terminal-empty { padding: 42px 16px; color: #7c858f; text-align: center; font-size: 13px; }
-:deep(.terminal-el-table) { .el-table__header th { font-size: 12px; font-weight: 900; } }
-@media (max-width: 760px) { .terminal-titlebar { align-items: stretch; flex-direction: column; } }
+.terminal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.terminal-titlebar,
+.terminal-panel {
+  border: 1px solid #2f3339;
+  border-radius: 6px;
+  background: #1b1d21;
+}
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+}
+.terminal-kicker {
+  color: #7c858f;
+  font-size: 12px;
+  font-weight: 900;
+}
+h1,
+h2 {
+  margin: 0;
+  color: #f7fafc;
+  letter-spacing: 0;
+}
+h1 {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 900;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 900;
+}
+.terminal-search {
+  display: flex;
+  width: min(320px, 100%);
+  height: 38px;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #30343a;
+  border-radius: 6px;
+  background: #111317;
+  padding: 0 12px;
+  color: #7c858f;
+}
+.terminal-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #d4d8dd;
+  font-size: 13px;
+  outline: none;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px;
+  border-bottom: 1px solid #2f3339;
+}
+.panel-head span {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 900;
+}
+.stock-cell,
+.profit-cell {
+  display: grid;
+  gap: 3px;
+}
+.stock-cell strong {
+  color: #f7fafc;
+}
+.stock-cell span {
+  color: #7c858f;
+  font-size: 12px;
+}
+.profit-cell {
+  justify-items: end;
+}
+.profit-cell span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.value-up {
+  color: var(--stock-rise-color) !important;
+}
+.value-down {
+  color: var(--stock-fall-color) !important;
+}
+.terminal-empty {
+  padding: 42px 16px;
+  color: #7c858f;
+  text-align: center;
+  font-size: 13px;
+}
+
+.terminal-panel {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+:deep(.terminal-el-table) {
+  min-width: 760px;
+
+  .el-table__header th {
+    font-size: 12px;
+    font-weight: 900;
+  }
+}
+@media (max-width: 760px) {
+  .terminal-titlebar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .terminal-search {
+    width: 100%;
+  }
+
+  .terminal-panel {
+    border-radius: 12px;
+  }
+}
 </style>
 
 <route>

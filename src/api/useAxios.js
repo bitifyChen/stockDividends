@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { useCookies } from '@vueuse/integrations/useCookies'
 
-
 // create an axios instance
 const instance = axios.create({
   withCredentials: false,

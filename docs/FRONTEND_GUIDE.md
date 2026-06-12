@@ -1,3 +1,47 @@
+# 2026-06-12
+
+## Subject
+納入被動式 ETF `0050`，前端沿用既有 ETF / 個股觀測 API
+
+## Owner
+Backend
+
+## Affected APIs
+
+- `GET /etf/list`
+- `GET /etf/holdings?etfCode=0050`
+- `GET /etf/available-dates?etfCode=0050`
+- `GET /etf/stocks/{stockCode}`
+- `GET /etf/stocks/{stockCode}/series?range=1w|1m|6m|1y|max`
+- `GET /etf/0050/{stockCode}`
+- `GET /etf/0050/{stockCode}/series?range=1w|1m|6m|1y|max`
+- `GET /etf/yuanta?sourceCode=0050&save=0`
+
+## Change
+
+- 新增元大來源 `yuanta`，第一檔為 `0050`。
+- `0050` 設定為 `etf_type=passive`，不同於主動式 ETF。
+- `0050` 每日仍會抓取，但只有成分股組合變更時才新增 holdings snapshot 與 Google Drive xlsx。
+- `GET /etf/list` 會回傳：
+  - `etf_type`
+  - `snapshot_policy`
+  - `backup_policy`
+- `GET /etf/holdings` 與股票觀測 API 也會帶出 `etf_type` 等欄位。
+- 被動式 ETF 的 series 可能包含 `is_carried_forward=true` 的點位，用於讓圖表在區間內沒有新 snapshot 時仍顯示水平線。
+
+## Frontend Handling
+
+- ETF list / selector 不要只假設都是主動式 ETF，可用 `etf_type` 顯示或篩選。
+- 個股觀測頁查 `2330` 時，`0050` 會正常出現在 holders 內。
+- 若畫線遇到 `is_carried_forward=true`，可視為後端補上的延展點，不需當作實際抓取日。
+- 目前前端一般畫面不需要呼叫 `/etf/yuanta`；該 API 是後端手動測試/抓取 endpoint。
+- 若要顯示可用日期，仍使用 `GET /etf/available-dates?etfCode=0050`，目前只會列出有保存 snapshot 的日期。
+
+## Notes
+
+- 0050 的持股曲線通常會是水平線，因為被動 ETF 不會每天新增 snapshot。
+- 若未來加入更多大型被動 ETF，前端可沿用同一套 `etf_type=passive` 行為。
+
 # 2026-06-11
 
 ## Subject
@@ -201,7 +245,7 @@ Frontend
   - 新增 ETF 內單一個股詳情 API wrapper。
   - 新增個股觀測列表與個股觀測詳情 API wrapper。
 - [src/router/SidebarData.js](/src/router/SidebarData.js)
-  - 主動 ETF 新增「個股觀測」。
+  - ETF 新增「個股觀測」。
   - 修正側邊欄可見中文。
 - [src/layouts/dashboard.vue](/src/layouts/dashboard.vue)
   - 修正 Dashboard layout 可見中文與 breadcrumb。
@@ -216,7 +260,7 @@ Frontend
   - 支援搜尋、分頁、詳情入口。
 - [src/pages/dashboard/etf/stocks/[stockCode].vue](/src/pages/dashboard/etf/stocks/[stockCode].vue)
   - 新增「個股觀測詳情」獨立頁。
-  - 從個股角度查看所有主動 ETF 對該股的持有與變化。
+  - 從個股角度查看所有ETF 對該股的持有與變化。
 - [src/utils/etfDashboard.js](/src/utils/etfDashboard.js)
   - 新增 ETF Dashboard 共用 formatter 與資料 normalize helper。
 
@@ -236,10 +280,10 @@ Frontend
 
 ## 2026-06-08
 ### 任務
-修正 Dashboard 主動 ETF 子頁資料流與顯示欄位，使頁面符合目前後端 ETF API 定義。
+修正 Dashboard ETF 子頁資料流與顯示欄位，使頁面符合目前後端 ETF API 定義。
 
 ### 重點
-- 主動 ETF 項目：每日進出、目前持股、首次買入。
+- ETF 項目：每日進出、目前持股、首次買入。
 - 我的項目：持股管理、股利記錄。
 - ETF 頁面不要預設查今天，未指定日期時以最新 `snapshot_date` 為準。
 - events 頁面使用後端新欄位：`previous_shares`、`current_shares`、`delta_shares`、`is_first_buy`、`is_buy_increase`、`is_sell_decrease`、`is_sell_out`。

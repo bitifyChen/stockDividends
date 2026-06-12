@@ -5,11 +5,14 @@ const apiBaseUrl = 'https://stockdividends.onrender.com'
 const cleanParams = (params = {}) => {
   if (!params) return {}
   return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== null && value !== undefined && value !== '')
+    Object.entries(params).filter(
+      ([, value]) => value !== null && value !== undefined && value !== ''
+    )
   )
 }
 
-const get = (path, params = null) => request('get', `${apiBaseUrl}${path}`, null, cleanParams(params))
+const get = (path, params = null) =>
+  request('get', `${apiBaseUrl}${path}`, null, cleanParams(params))
 
 export const getEtfHealth = () => get('/etf/health')
 export const getEtfList = (params = {}) => get('/etf/list', params)

@@ -39,7 +39,9 @@ const loginMethod = async () => {
       type: 'success',
       plain: true
     })
-    router.push((route.query.redirect && String(route.query.redirect)) || { name: 'Dashboard_Home' })
+    router.push(
+      (route.query.redirect && String(route.query.redirect)) || { name: 'Dashboard_Home' }
+    )
   } catch (err) {
     ElMessage({
       message: err.message || '登入失敗',
@@ -66,8 +68,6 @@ const loginMethod = async () => {
               <strong>Stock Dividends</strong>
             </div>
           </div>
-
-        
         </div>
 
         <div class="form-side">
@@ -85,7 +85,12 @@ const loginMethod = async () => {
             @submit.prevent="loginMethod"
           >
             <el-form-item label="Email" prop="email">
-              <el-input v-model.trim="form.email" type="email" autocomplete="email" placeholder="name@example.com" />
+              <el-input
+                v-model.trim="form.email"
+                type="email"
+                autocomplete="email"
+                placeholder="name@example.com"
+              />
             </el-form-item>
 
             <el-form-item label="Password" prop="password">
@@ -119,8 +124,7 @@ const loginMethod = async () => {
   min-height: 100dvh;
   width: 100%;
   color: #e5eef7;
-  background:
-    radial-gradient(circle at 14% 18%, rgb(34 211 238 / 0.14), transparent 24%),
+  background: radial-gradient(circle at 14% 18%, rgb(34 211 238 / 0.14), transparent 24%),
     radial-gradient(circle at 86% 12%, rgb(16 185 129 / 0.1), transparent 20%),
     linear-gradient(180deg, #05070b 0%, #090c13 100%);
 }
@@ -139,8 +143,7 @@ const loginMethod = async () => {
   overflow: hidden;
   border: 1px solid rgb(148 163 184 / 0.14);
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.94));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.94));
   box-shadow:
     0 24px 80px rgb(0 0 0 / 0.32),
     inset 0 1px 0 rgb(255 255 255 / 0.04);
@@ -156,8 +159,7 @@ const loginMethod = async () => {
   align-content: space-between;
   gap: 40px;
   border-right: 1px solid rgb(148 163 184 / 0.12);
-  background:
-    linear-gradient(135deg, rgb(34 211 238 / 0.08), transparent 36%),
+  background: linear-gradient(135deg, rgb(34 211 238 / 0.08), transparent 36%),
     rgb(255 255 255 / 0.02);
 }
 

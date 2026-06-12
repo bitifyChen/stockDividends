@@ -6,7 +6,13 @@ import { getEtfAvailableDates, getEtfHoldings, getEtfList } from '@/api/etf.js'
 import TwoSparkline from '@/components/Two/TwoSparkline.vue'
 import TwoTable from '@/components/Two/TwoTable.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
-import { formatRatio, formatShare, normalizeArray, shareColumnLabel, toShareUnitValue } from '@/utils/etfDashboard.js'
+import {
+  formatRatio,
+  formatShare,
+  normalizeArray,
+  shareColumnLabel,
+  toShareUnitValue
+} from '@/utils/etfDashboard.js'
 
 const TREND_DAYS = 30
 const dashboardSettingStore = useDashboardSettingStore()
@@ -26,9 +32,19 @@ const errorMessage = ref('')
 const columns = computed(() => [
   { label: '排名', prop: 'source_rank', width: '70', align: 'center' },
   { label: '股票', slot: 'stock', minWidth: '180' },
-  { label: shareColumnLabel(dashboardSettingStore.shareUnit, '持有'), prop: 'holding_shares', formatter: (row) => formatShare(row.holding_shares, dashboardSettingStore.shareUnit), minWidth: '140' },
+  {
+    label: shareColumnLabel(dashboardSettingStore.shareUnit, '持有'),
+    prop: 'holding_shares',
+    formatter: (row) => formatShare(row.holding_shares, dashboardSettingStore.shareUnit),
+    minWidth: '140'
+  },
   { label: '30日走勢', slot: 'trend', minWidth: '140' },
-  { label: '權重', prop: 'holding_ratio', formatter: (row) => formatRatio(row.holding_ratio), minWidth: '100' },
+  {
+    label: '權重',
+    prop: 'holding_ratio',
+    formatter: (row) => formatRatio(row.holding_ratio),
+    minWidth: '100'
+  },
   { label: '資料日期', prop: 'snapshot_date', width: '120' },
   { label: '操作', slot: 'actions', width: '96', align: 'center' }
 ])
@@ -49,9 +65,15 @@ const toNumber = (value) => {
 const trendItems = (row) =>
   normalizeArray(row?.trend)
     .filter((item) => item?.snapshot_date || item?.date)
-    .sort((a, b) => dayjs(a.snapshot_date || a.date).valueOf() - dayjs(b.snapshot_date || b.date).valueOf())
+    .sort(
+      (a, b) =>
+        dayjs(a.snapshot_date || a.date).valueOf() - dayjs(b.snapshot_date || b.date).valueOf()
+    )
 
-const trendPoints = (row) => trendItems(row).map((item) => toShareUnitValue(item.holding_shares, dashboardSettingStore.shareUnit))
+const trendPoints = (row) =>
+  trendItems(row).map((item) =>
+    toShareUnitValue(item.holding_shares, dashboardSettingStore.shareUnit)
+  )
 const rowEtfCode = (row) => row.etf_code || selectedEtfCode.value
 const canOpenDetail = (row) => Boolean(rowEtfCode(row) && row.stock_code)
 
@@ -131,10 +153,18 @@ const loadHoldings = async () => {
   }
 }
 
-const selectedEtf = computed(() => etfOptions.value.find((item) => item.etf_code === selectedEtfCode.value) || null)
-const latestSnapshotDate = computed(() => rows.value.find((row) => row?.snapshot_date)?.snapshot_date || '-')
-const totalWeight = computed(() => rows.value.reduce((total, item) => total + toNumber(item.holding_ratio), 0))
-const sortedRows = computed(() => [...rows.value].sort((a, b) => toNumber(a.source_rank) - toNumber(b.source_rank)))
+const selectedEtf = computed(
+  () => etfOptions.value.find((item) => item.etf_code === selectedEtfCode.value) || null
+)
+const latestSnapshotDate = computed(
+  () => rows.value.find((row) => row?.snapshot_date)?.snapshot_date || '-'
+)
+const totalWeight = computed(() =>
+  rows.value.reduce((total, item) => total + toNumber(item.holding_ratio), 0)
+)
+const sortedRows = computed(() =>
+  [...rows.value].sort((a, b) => toNumber(a.source_rank) - toNumber(b.source_rank))
+)
 
 watch(selectedEtfCode, async () => {
   switchingEtf.value = true
@@ -158,7 +188,7 @@ onMounted(async () => {
   <div class="etf-console">
     <section class="console-bar">
       <div>
-        <div class="breadcrumb">主動 ETF / 目前持股</div>
+        <div class="breadcrumb">ETF / 目前持股</div>
         <h1>目前持股</h1>
       </div>
 
@@ -217,7 +247,10 @@ onMounted(async () => {
         </div>
         <div class="metric-box">
           <span>可用日期</span>
-          <strong>{{ availableRange.firstSeenDate || '-' }} - {{ availableRange.lastSnapshotDate || '-' }}</strong>
+          <strong
+            >{{ availableRange.firstSeenDate || '-' }} -
+            {{ availableRange.lastSnapshotDate || '-' }}</strong
+          >
         </div>
       </div>
 
@@ -235,7 +268,9 @@ onMounted(async () => {
           </div>
         </template>
         <template #actions="{ row }">
-          <router-link v-if="canOpenDetail(row)" class="detail-link" :to="detailRoute(row)">詳情</router-link>
+          <router-link v-if="canOpenDetail(row)" class="detail-link" :to="detailRoute(row)"
+            >詳情</router-link
+          >
           <span v-else class="detail-disabled">-</span>
         </template>
         <template #empty>{{ loadingData ? '資料讀取中' : '目前沒有持股資料' }}</template>
@@ -440,6 +475,15 @@ h1 {
   .refresh-button,
   .date-picker-control :deep(.el-date-editor) {
     width: 100%;
+  }
+
+  .summary-line > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .console-panel {
+    padding: 12px;
   }
 
   .metric-strip {

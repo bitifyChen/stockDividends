@@ -12,7 +12,6 @@ const stockName = computed(() => currentStock?.value?.name)
 const currentStock = computed(() => ({ id: stockId, ...piniaStock?.stockList[stockId] }))
 </script>
 
-
 <template>
   <teleport to="#header-slot" v-if="piniaBase?.menuOnMount && !piniaBase?.menuIsOpen">
     <div class="w-full font-black justify-between items-center flex text-[48px] text-[white]">
@@ -30,7 +29,6 @@ const currentStock = computed(() => ({ id: stockId, ...piniaStock?.stockList[sto
   </div>
 </template>
 
-
 <style scoped>
 .card {
   border-radius: 0.75rem;
@@ -41,7 +39,6 @@ const currentStock = computed(() => ({ id: stockId, ...piniaStock?.stockList[sto
 }
 </style>
 
-
 <route>
     {
       name: "StockDetailPage",
@@ -50,4 +47,3 @@ const currentStock = computed(() => ({ id: stockId, ...piniaStock?.stockList[sto
       }
     }
     </route>
-    

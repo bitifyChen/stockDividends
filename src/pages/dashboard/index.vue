@@ -18,7 +18,8 @@ const holdingRows = computed(() =>
   Object.entries(stockList.value).map(([id, stock]) => {
     const marketValue = stock.price && stock.buyNum ? multiply(stock.price, stock.buyNum) : 0
     const profit = subtract(marketValue, stock.buyPrice || 0)
-    const profitRate = stock.buyPrice > 0 ? round(multiply(subtract(marketValue / stock.buyPrice, 1), 100), 2) : 0
+    const profitRate =
+      stock.buyPrice > 0 ? round(multiply(subtract(marketValue / stock.buyPrice, 1), 100), 2) : 0
 
     return {
       id,
@@ -31,7 +32,9 @@ const holdingRows = computed(() =>
   })
 )
 
-const totalMarketValue = computed(() => holdingRows.value.reduce((total, stock) => add(total, stock.marketValue), 0))
+const totalMarketValue = computed(() =>
+  holdingRows.value.reduce((total, stock) => add(total, stock.marketValue), 0)
+)
 const unrealizedProfit = computed(() => subtract(totalMarketValue.value, totalCost.value))
 const profitRate = computed(() => {
   if (totalCost.value === 0) return 0
@@ -46,7 +49,9 @@ const ytdDividend = computed(() =>
 )
 
 const recentDividends = computed(() => dividendList.value.slice(0, 6))
-const topHoldings = computed(() => [...holdingRows.value].sort((a, b) => b.marketValue - a.marketValue).slice(0, 6))
+const topHoldings = computed(() =>
+  [...holdingRows.value].sort((a, b) => b.marketValue - a.marketValue).slice(0, 6)
+)
 const holdingSharePercent = (row) => {
   if (!totalMarketValue.value) return '0.0'
   return ((row.marketValue / totalMarketValue.value) * 100).toFixed(1)
@@ -87,31 +92,6 @@ onMounted(() => {
 
 <template>
   <div class="dashboard-home" v-loading="loading">
-    <section class="hero-card">
-      <div class="hero-copy">
-        <div class="eyebrow">Portfolio Intelligence</div>
-        <h1>投資組合的即時指揮中心</h1>
-        <p>
-          以霓虹光暈包裹數據密度，讓持股、股利與主動 ETF 的動態不再像傳統金融網站那樣擁擠與壓迫。
-          你現在看到的是一個更像 SaaS 控制台的投資視覺。
-        </p>
-      </div>
-      <div class="hero-badges">
-        <div class="badge-card">
-          <span>顯示單位</span>
-          <strong>{{ dashboardSettingStore.shareUnit === 'lot' ? '張' : '股' }}</strong>
-        </div>
-        <div class="badge-card">
-          <span>最新更新</span>
-          <strong>{{ currentYear }} / 06</strong>
-        </div>
-        <div class="badge-card accent">
-          <span>主色調</span>
-          <strong>Neon Cyan</strong>
-        </div>
-      </div>
-    </section>
-
     <section class="metric-grid">
       <article v-for="item in stats" :key="item.label" class="metric-card">
         <div class="metric-head">
@@ -156,7 +136,11 @@ onMounted(() => {
           </div>
         </div>
         <div class="activity-list">
-          <div v-for="item in recentDividends" :key="item.payDate + item.stockId" class="activity-row">
+          <div
+            v-for="item in recentDividends"
+            :key="item.payDate + item.stockId"
+            class="activity-row"
+          >
             <div>
               <strong>{{ item.stockName }}</strong>
               <span>{{ item.stockId }} / {{ item.payDate }}</span>
@@ -181,8 +165,7 @@ onMounted(() => {
 .panel {
   border: 1px solid rgb(148 163 184 / 0.12);
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
+  background: linear-gradient(180deg, rgb(15 18 26 / 0.92), rgb(10 13 20 / 0.92));
   box-shadow:
     0 18px 48px rgb(0 0 0 / 0.18),
     inset 0 1px 0 rgb(255 255 255 / 0.03);
@@ -257,7 +240,9 @@ h1 {
 
 .badge-card.accent {
   border-color: rgb(34 211 238 / 0.22);
-  box-shadow: 0 0 0 1px rgb(34 211 238 / 0.05) inset, 0 18px 40px rgb(34 211 238 / 0.08);
+  box-shadow:
+    0 0 0 1px rgb(34 211 238 / 0.05) inset,
+    0 18px 40px rgb(34 211 238 / 0.08);
 }
 
 .metric-grid {

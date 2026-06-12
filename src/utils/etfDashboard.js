@@ -28,7 +28,8 @@ export const formatNumber = (value) => {
 
 export const shareUnitLabel = (unit) => (unit === 'lot' ? '張' : '股')
 
-export const shareColumnLabel = (unit, prefix = '') => `${prefix}${unit === 'lot' ? '張數' : '股數'}`
+export const shareColumnLabel = (unit, prefix = '') =>
+  `${prefix}${unit === 'lot' ? '張數' : '股數'}`
 
 export const toShareUnitValue = (value, unit = 'share') => {
   const numberValue = toNumber(value)
@@ -59,6 +60,10 @@ export const formatDateTime = (value) => {
 export const getSeriesItems = (value) =>
   normalizeArray(value?.series || value?.holders || value?.data || value)
     .filter((item) => item?.snapshot_date || item?.date)
-    .sort((a, b) => dayjs(a.snapshot_date || a.date).valueOf() - dayjs(b.snapshot_date || b.date).valueOf())
+    .sort(
+      (a, b) =>
+        dayjs(a.snapshot_date || a.date).valueOf() - dayjs(b.snapshot_date || b.date).valueOf()
+    )
 
-export const getSeriesPoints = (value, key = 'holding_shares') => getSeriesItems(value).map((item) => item[key])
+export const getSeriesPoints = (value, key = 'holding_shares') =>
+  getSeriesItems(value).map((item) => item[key])

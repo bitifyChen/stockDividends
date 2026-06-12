@@ -26,7 +26,11 @@ onMounted(() => {
   <teleport to="#header-slot" v-if="isMounted && piniaBase?.menuOnMount && !piniaBase?.menuIsOpen">
     <div class="w-full justify-center">
       <div class="text-[24px] font-black text-[white] mb-[10px] text-center">Stock!</div>
-      <IndexSummary :data="dividendDataList" v-loading="piniaStockLoading" :year="new Date().getFullYear()" />
+      <IndexSummary
+        :data="dividendDataList"
+        v-loading="piniaStockLoading"
+        :year="new Date().getFullYear()"
+      />
     </div>
   </teleport>
   <div class="p-[10px] h-full flex flex-col">
