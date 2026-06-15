@@ -411,10 +411,14 @@
             "schema": {
               "type": "string",
               "enum": [
-                "first_buy"
+                "first_buy",
+                "buy_increase",
+                "first_sell",
+                "sell_decrease",
+                "sell_out"
               ]
             },
-            "description": "Use type=first_buy to list first-buy events across all tracked ETFs. etfCode, stockCode, and date are optional filters."
+            "description": "List ETF-stock events across all tracked ETFs. Supported values: first_buy, buy_increase, first_sell, sell_decrease, sell_out. etfCode, stockCode, and date are optional filters."
           },
           {
             "$ref": "#/components/parameters/StockCode"
@@ -2620,6 +2624,17 @@
           "is_currently_held"
         ],
         "properties": {
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "first_buy",
+              "buy_increase",
+              "first_sell",
+              "sell_decrease",
+              "sell_out"
+            ],
+            "description": "Event type requested by /etf/events?type=..."
+          },
           "stock_code": {
             "type": "string",
             "example": "3363"
@@ -2649,7 +2664,31 @@
               "null"
             ],
             "example": 300000,
-            "description": "First-build shares on the first-buy event date."
+            "description": "Positive bought shares for first_buy or buy_increase. Returns 0 for sell events."
+          },
+          "sell_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 120000,
+            "description": "Positive sold shares for first_sell, sell_decrease, or sell_out. Returns 0 for buy events."
+          },
+          "change_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": -120000,
+            "description": "Signed share change. Positive means buy/increase; negative means sell/decrease/sell_out."
+          },
+          "delta_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": -120000,
+            "description": "Backward-compatible alias for change_shares when available."
           },
           "current_shares": {
             "type": [
@@ -2781,7 +2820,13 @@
         "properties": {
           "type": {
             "type": "string",
-            "const": "first_buy"
+            "enum": [
+              "first_buy",
+              "buy_increase",
+              "first_sell",
+              "sell_decrease",
+              "sell_out"
+            ]
           },
           "snapshot_date": {
             "type": [

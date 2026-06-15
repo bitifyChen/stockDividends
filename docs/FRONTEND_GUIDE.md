@@ -1,3 +1,82 @@
+# 2026-06-15
+### 主旨
+OHLC K 線頁面只保留 candles 依賴，Supabase 維持列表與標記欄位
+### 填寫人
+Backend
+### 前端必要 API
+- `GET /ohlc/stocks/{stockCode}/candles?range=1w|1m|6m|1y|max&interval=daily|week|month`
+### 後端可選 API
+- `GET /ohlc/stocks/{stockCode}`
+- `GET /ohlc/stocks/{stockCode}/available-dates`
+- `POST /ohlc/fetch`
+- `POST /ohlc/backup-drive`
+### 前端建議流程
+- K 線圖預設放在 `/dashboard/etf/stocks/{stockCode}` 這類個股詳情頁
+- 頁面主要資料仍由 Supabase 的股票 / ETF 頁面資料提供
+- 進圖表頁時，只打 `GET /ohlc/stocks/{stockCode}/candles?...`
+- 使用者切換區間或週期時，只需重打 candles，不必重打其他 OHLC API
+- 若未來前端要 disable 日期選擇器，再視需加打 `GET /ohlc/stocks/{stockCode}/available-dates`
+### 設計說明
+- 前端不需要再把 OHLC 當成第二個列表資料來源
+- 股票列表、標記欄位、歷史資料存在與否，應回寫到 Supabase，讓前端仍只讀 Supabase 來畫列表與 badge
+- Turso 只負責儲存 OHLC 與供應 candles
+- `candles` API 是唯一前端圖表主依賴
+### 備註
+- 日常 fetch 只抓當天
+- 建構期補歷史資料時，才會明確帶日期區間
+- `has_history`、`ohlc_start_date`、`ohlc_last_date`、`ohlc_point_count` 建議同步回 Supabase，供列表頁使用
+# 2026-06-12
+
+## Subject
+ETF events API 補齊五種事件，並修正被動 ETF 曲線延展
+
+## Owner
+Backend
+
+## Affected APIs
+
+- `GET /etf/events?type=first_buy&page=1&pageSize=20`
+- `GET /etf/events?type=buy_increase&page=1&pageSize=20`
+- `GET /etf/events?type=first_sell&page=1&pageSize=20`
+- `GET /etf/events?type=sell_decrease&page=1&pageSize=20`
+- `GET /etf/events?type=sell_out&page=1&pageSize=20`
+- `GET /etf/stocks/{stockCode}`
+- `GET /etf/stocks/{stockCode}/series?range=1w|1m|6m|1y|max`
+- `GET /etf/{etfCode}/{stockCode}/series?range=1w|1m|6m|1y|max`
+
+## Change
+
+- `/etf/events` 現在支援五種 `type`：
+  - `first_buy`：單一 ETF 對單一股票首次建倉
+  - `buy_increase`：加碼
+  - `first_sell`：第一次賣出，包含第一次減碼或第一次直接清倉
+  - `sell_decrease`：減碼但仍持有
+  - `sell_out`：清倉，股票在下一個快照中消失
+- event item 新增：
+  - `event_type`
+  - `change_shares`
+  - `buy_shares`
+  - `sell_shares`
+  - `delta_shares`
+- `buy_shares` 只在買入事件為正數，賣出事件為 `0`。
+- `sell_shares` 只在賣出事件為正數，買入事件為 `0`。
+- `change_shares` 是有正負號的變動量，買入為正、賣出為負。
+- `event_shares` 是事件當天 ETF 對該股票的持股數；`current_shares` 是目前最新持股數。
+- 被動 ETF 若當日 fetch 成功但因 holdings 沒變而未新增 snapshot，series 會補 `is_carried_forward=true` 的水平延展點。
+
+## Frontend Handling
+
+- 事件頁可以用同一張 table 切換五種 `type`，不需要換 endpoint。
+- 賣出事件請優先顯示 `sell_shares`，不要自己用 `change_shares` 取絕對值。
+- 買入事件請優先顯示 `buy_shares`。
+- 曲線圖遇到 `is_carried_forward=true` 時，視為後端為了畫水平線補上的顯示點，不要當作實際新增 snapshot。
+- `0050` 這類 `etf_type=passive` 的 ETF，若 6/12 已抓取但成分股沒變，曲線仍會在 6/12 顯示水平延展。
+
+## Notes
+
+- `first_buy` 的判斷維持原規則：排除 ETF 本身第一天被匯入的初始持股，避免初始資料被誤判成新買入。
+- 群益 `00982A` / `00992A` 的展示日期已改為與來源 API 日期一致，不再做 `-1 day`。
+
 # 2026-06-12
 
 ## Subject
