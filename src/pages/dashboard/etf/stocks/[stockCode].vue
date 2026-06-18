@@ -3,8 +3,14 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import Chart from 'chart.js/auto'
 import 'chartjs-adapter-moment'
+import { ColorType, CrosshairMode, createChart, CandlestickSeries } from 'lightweight-charts'
+import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
-import { getEtfObservedStockDetail, getEtfObservedStockSeries } from '@/api/etf.js'
+import {
+  getEtfObservedStockDetail,
+  getEtfObservedStockSeries,
+  getEtfStockCandles
+} from '@/api/etf.js'
 import TwoSparkline from '@/components/Two/TwoSparkline.vue'
 import TwoTable from '@/components/Two/TwoTable.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
@@ -22,23 +28,107 @@ import {
 const route = useRoute()
 const dashboardSettingStore = useDashboardSettingStore()
 const rangeOptions = ['1w', '1m', '6m', '1y', 'max']
+const technicalRangeOptions = ['1w', '1m', '6m', '1y', 'max']
+const technicalIntervalOptions = [
+  { label: '日K', value: 'daily' },
+  { label: '周K', value: 'week' },
+  { label: '月K', value: 'month' }
+]
+const technicalUnitMap = {
+  daily: 'day',
+  week: 'week',
+  month: 'month'
+}
 const chartColors = ['#10bfae', '#d75455', '#5aa9e6', '#f5b84b', '#b784f7', '#f97316', '#22c55e']
 
 const loadingSummary = ref(false)
 const loadingSeries = ref(false)
+const loadingTechnical = ref(false)
 const summary = ref({})
 const series = ref({})
+const technicalSeries = ref({})
 const selectedRange = ref('1m')
+const technicalRange = ref('1m')
+const technicalInterval = ref('daily')
 const errorMessage = ref('')
+const technicalErrorMessage = ref('')
 const chartCanvas = ref(null)
+const technicalCanvas = ref(null)
 const activeEtfCodes = ref(new Set())
 let chartInstance = null
+let technicalChartInstance = null
+let technicalChartSeries = null
 
 const stockCode = computed(() => String(route.params.stockCode || ''))
 const stockSummary = computed(() => normalizeObject(summary.value.summary))
 const holdersRows = computed(() => normalizeArray(summary.value.holders))
 const seriesHolders = computed(() => normalizeArray(series.value.holders))
 const stockName = computed(() => summary.value.stock_name || stockSummary.value.stock_name || '')
+const technicalItems = computed(() =>
+  normalizeArray(
+    technicalSeries.value.candles ||
+      technicalSeries.value.items ||
+      technicalSeries.value.series ||
+      technicalSeries.value.data
+  )
+)
+const technicalChartData = computed(() =>
+  technicalItems.value
+    .map((item) => normalizeCandlePoint(item))
+    .filter(Boolean)
+    .sort((left, right) => dayjs(left.time).valueOf() - dayjs(right.time).valueOf())
+)
+const technicalChartDataset = computed(() => ({ data: technicalChartData.value }))
+const technicalScaleUnit = computed(() =>
+  technicalInterval.value === 'daily' ? 'day' : technicalInterval.value
+)
+
+const firstDefined = (...values) =>
+  values.find((value) => value !== null && value !== undefined && value !== '')
+
+const toFiniteNumber = (value) => {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+const normalizeCandlePoint = (item) => {
+  const rawDate = firstDefined(
+    item.snapshot_date,
+    item.date,
+    item.trade_date,
+    item.datetime,
+    item.time,
+    item.x
+  )
+  if (rawDate === null || rawDate === undefined || rawDate === '') return null
+
+  const xValue =
+    typeof rawDate === 'number'
+      ? rawDate
+      : Number.isFinite(Number(rawDate))
+        ? Number(rawDate)
+        : dayjs(rawDate).valueOf()
+
+  if (!Number.isFinite(xValue)) return null
+
+  const openValue = toFiniteNumber(firstDefined(item.open, item.o, item.open_price, item.openPrice))
+  const highValue = toFiniteNumber(firstDefined(item.high, item.h, item.high_price, item.highPrice))
+  const lowValue = toFiniteNumber(firstDefined(item.low, item.l, item.low_price, item.lowPrice))
+  const closeValue = toFiniteNumber(
+    firstDefined(item.close, item.c, item.close_price, item.closePrice)
+  )
+
+  if ([openValue, highValue, lowValue, closeValue].some((value) => value === null)) return null
+
+  return {
+    time: dayjs(xValue).format('YYYY-MM-DD'),
+    open: openValue,
+    high: highValue,
+    low: lowValue,
+    close: closeValue,
+    timestamp: xValue
+  }
+}
 
 const etfFilterOptions = computed(() => {
   const options = new Map()
@@ -230,6 +320,163 @@ const renderChart = async () => {
   chartInstance.update()
 }
 
+const renderTechnicalChart = async () => {
+  await nextTick()
+  if (!technicalCanvas.value) return
+
+  const dataset = technicalChartDataset.value
+  if (!dataset.data.length) {
+    if (technicalChartInstance) {
+      technicalChartInstance.destroy()
+      technicalChartInstance = null
+    }
+    return
+  }
+
+  if (!technicalChartInstance) {
+    technicalChartInstance = new Chart(technicalCanvas.value, {
+      type: 'candlestick',
+      data: {
+        datasets: [dataset]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'nearest',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#cbd5e1',
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const raw = context.raw || {}
+                const dateText = raw.x ? dayjs(raw.x).format('YYYY-MM-DD') : '-'
+                return `${dateText} 開 ${formatNumber(raw.o)} 高 ${formatNumber(raw.h)} 低 ${formatNumber(raw.l)} 收 ${formatNumber(raw.c)}`
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: technicalScaleUnit.value,
+              tooltipFormat: 'YYYY-MM-DD'
+            },
+            ticks: {
+              color: '#8b949e',
+              maxRotation: 0
+            },
+            grid: {
+              color: '#2f3339'
+            }
+          },
+          y: {
+            ticks: {
+              color: '#8b949e',
+              callback: (value) => formatNumber(value)
+            },
+            grid: {
+              color: '#2f3339'
+            }
+          }
+        }
+      }
+    })
+    return
+  }
+
+  technicalChartInstance.data.datasets = [dataset]
+  technicalChartInstance.options.scales.x.time.unit = technicalScaleUnit.value
+  technicalChartInstance.update()
+}
+
+const renderTechnicalChartLwc = async () => {
+  await nextTick()
+  const container = technicalCanvas.value
+  if (!container) return
+
+  const data = technicalChartData.value
+  if (!data.length) {
+    if (technicalChartInstance) {
+      technicalChartInstance.remove()
+      technicalChartInstance = null
+      technicalChartSeries = null
+    }
+    return
+  }
+
+  const isDaily = technicalInterval.value === 'daily'
+  const chartOptions = {
+    autoSize: true,
+    layout: {
+      background: { type: ColorType.Solid, color: '#202328' },
+      textColor: '#cbd5e1',
+      fontFamily:
+        'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    },
+    grid: {
+      vertLines: { color: '#2f3339' },
+      horzLines: { color: '#2f3339' }
+    },
+    rightPriceScale: {
+      borderVisible: false,
+      scaleMargins: {
+        top: 0.15,
+        bottom: 0.1
+      }
+    },
+    timeScale: {
+      borderVisible: false,
+      timeVisible: !isDaily,
+      secondsVisible: false,
+      barSpacing: technicalRange.value === '1w' ? 12 : technicalRange.value === '1m' ? 9 : 7,
+      fixLeftEdge: true,
+      fixRightEdge: false
+    },
+    crosshair: {
+      mode: CrosshairMode.Normal
+    },
+    handleScroll: {
+      mouseWheel: true,
+      pressedMouseMove: true,
+      horzTouchDrag: true,
+      vertTouchDrag: false
+    },
+    handleScale: {
+      axisPressedMouseMove: true,
+      mouseWheel: true,
+      pinch: true
+    }
+  }
+
+  if (!technicalChartInstance) {
+    technicalChartInstance = createChart(container, chartOptions)
+    technicalChartSeries = technicalChartInstance.addSeries(CandlestickSeries, {
+      upColor: '#d75455',
+      downColor: '#24936e',
+      borderVisible: false,
+      wickUpColor: '#d75455',
+      wickDownColor: '#24936e'
+    })
+  } else {
+    technicalChartInstance.applyOptions(chartOptions)
+  }
+
+  technicalChartSeries?.setData(data)
+  technicalChartInstance.timeScale().fitContent()
+}
+
 const loadSummary = async () => {
   if (!stockCode.value) return
   loadingSummary.value = true
@@ -264,8 +511,29 @@ const loadSeries = async () => {
   }
 }
 
+const loadTechnical = async () => {
+  if (!stockCode.value) return
+  loadingTechnical.value = true
+  technicalErrorMessage.value = ''
+
+  try {
+    const response = await getEtfStockCandles({
+      stockCode: stockCode.value,
+      range: technicalRange.value,
+      interval: technicalInterval.value
+    })
+
+    technicalSeries.value = Array.isArray(response) ? { data: response } : normalizeObject(response)
+  } catch (error) {
+    technicalErrorMessage.value = error?.message || '讀取個股 K 線失敗'
+    technicalSeries.value = {}
+  } finally {
+    loadingTechnical.value = false
+  }
+}
+
 const reload = async () => {
-  await Promise.all([loadSummary(), loadSeries()])
+  await Promise.all([loadSummary(), loadSeries(), loadTechnical()])
   resetActiveEtfs()
 }
 
@@ -320,12 +588,20 @@ watch(selectedRange, () => {
   loadSeries()
 })
 
+watch([technicalRange, technicalInterval], () => {
+  loadTechnical()
+})
+
 watch(stockCode, () => {
   reload()
 })
 
 watch(chartDatasets, () => {
   renderChart()
+})
+
+watch(technicalChartData, () => {
+  renderTechnicalChartLwc()
 })
 
 onMounted(() => {
@@ -337,6 +613,11 @@ onBeforeUnmount(() => {
     chartInstance.destroy()
     chartInstance = null
   }
+  if (technicalChartInstance) {
+    technicalChartInstance.remove()
+    technicalChartInstance = null
+  }
+  technicalChartSeries = null
 })
 </script>
 
@@ -389,6 +670,48 @@ onBeforeUnmount(() => {
     </section>
 
     <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+    <section class="console-panel">
+      <div class="panel-heading panel-heading-stack">
+        <div>
+          <h2>技術分析</h2>
+          <span>顯示個股價格走勢</span>
+        </div>
+        <div class="control-stack">
+          <div class="range-tabs">
+            <button
+              v-for="item in technicalRangeOptions"
+              :key="item"
+              type="button"
+              :class="{ active: item === technicalRange }"
+              @click="technicalRange = item"
+            >
+              {{ item }}
+            </button>
+          </div>
+          <div class="interval-tabs">
+            <button
+              v-for="item in technicalIntervalOptions"
+              :key="item.value"
+              type="button"
+              :class="{ active: item.value === technicalInterval }"
+              @click="technicalInterval = item.value"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-shell" v-loading="loadingTechnical">
+        <div v-show="technicalChartData.length" ref="technicalCanvas" class="lw-chart"></div>
+        <div v-if="!technicalChartData.length && !loadingTechnical" class="chart-empty">
+          目前沒有可繪製的 K 線資料
+        </div>
+      </div>
+
+      <div v-if="technicalErrorMessage" class="chart-hint">{{ technicalErrorMessage }}</div>
+    </section>
 
     <section class="console-panel">
       <div class="panel-heading">
@@ -737,6 +1060,16 @@ h2 {
   margin-bottom: 14px;
 }
 
+.panel-heading-stack {
+  align-items: flex-start;
+}
+
+.control-stack {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
 .range-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -754,6 +1087,27 @@ h2 {
 }
 
 .range-tabs button.active {
+  border-color: #10bfae;
+  color: #10bfae;
+}
+
+.interval-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.interval-tabs button {
+  min-height: 30px;
+  border: 1px solid #30343a;
+  border-radius: 4px;
+  padding: 0 10px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.interval-tabs button.active {
   border-color: #10bfae;
   color: #10bfae;
 }
@@ -807,6 +1161,7 @@ h2 {
 
 .chart-shell {
   position: relative;
+  display: flex;
   max-width: 100%;
   min-width: 0;
   min-height: 340px;
@@ -815,6 +1170,12 @@ h2 {
   border-radius: 4px;
   background: #202328;
   padding: 18px;
+}
+
+.lw-chart {
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
 }
 
 .chart-shell canvas {
@@ -831,6 +1192,13 @@ h2 {
   justify-content: center;
   color: #7c858f;
   font-size: 13px;
+  font-weight: 800;
+}
+
+.chart-hint {
+  margin-top: 10px;
+  color: #7c858f;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -895,6 +1263,11 @@ h2 {
     flex-direction: column;
   }
 
+  .panel-heading-stack,
+  .control-stack {
+    justify-items: stretch;
+  }
+
   .detail-header {
     padding: 18px;
   }
@@ -929,6 +1302,11 @@ h2 {
     max-width: 100%;
   }
 
+  .interval-tabs button {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
   .metric-strip {
     grid-template-columns: 1fr;
   }
@@ -936,6 +1314,10 @@ h2 {
   .chart-shell {
     min-height: 280px;
     padding: 12px;
+  }
+
+  .lw-chart {
+    min-height: 240px;
   }
 
   .chart-shell canvas {

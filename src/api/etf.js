@@ -61,3 +61,6 @@ export const getEtfObservedStockDetail = ({ stockCode }) => get(`/etf/stocks/${s
 
 export const getEtfObservedStockSeries = ({ stockCode, range = '1m' }) =>
   get(`/etf/stocks/${stockCode}/series`, { range })
+
+export const getEtfStockCandles = ({ stockCode, range = '1m', interval = 'daily' }) =>
+  get(`/ohlc/stocks/${stockCode}/candles`, { range, interval })
