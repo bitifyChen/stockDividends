@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Stock Dividends Backend API",
-    "version": "2026-06-05",
+    "version": "2026-06-22",
     "description": "前台可串接的 stockDividendsPy API 規格。後端部署位置為 https://stockdividends.onrender.com。"
   },
   "servers": [
@@ -478,6 +478,228 @@
                         "$ref": "#/components/schemas/EtfHoldingChange"
                       }
                     }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/events/overview": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "All ETF daily event overview",
+        "description": "Returns tracked ETFs as the pagination unit, with each ETF's mutually exclusive holding events nested in events. When date is omitted, the latest available display date is selected. An explicitly requested date is never replaced.",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-18"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "first_buy",
+                "buy_increase",
+                "first_sell",
+                "sell_decrease",
+                "sell_out"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/StockCode"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          },
+          {
+            "name": "limitPerEtf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            },
+            "description": "Maximum number of nested events returned for each ETF."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily event page and ETF update coverage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "requestedDate": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "availableDates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    },
+                    "nextPage": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "coverage": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "notUpdatedEtfs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "etf_code": {
+                            "type": "string"
+                          },
+                          "etf_name": {
+                            "type": "string"
+                          },
+                          "etf_type": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "updated",
+                              "not_updated",
+                              "not_started",
+                              "fetch_failed"
+                            ]
+                          },
+                          "display_date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "latest_available_date": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date"
+                          },
+                          "error": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "eventCount": {
+                            "type": "integer"
+                          },
+                          "eventsHasMore": {
+                            "type": "boolean"
+                          },
+                          "events": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/FirstBuyEvent"
+                            }
+                          }
+                        },
+                        "required": [
+                          "etf_code",
+                          "status",
+                          "display_date",
+                          "eventCount",
+                          "eventsHasMore",
+                          "events"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "requestedDate",
+                    "availableDates",
+                    "limitPerEtf",
+                    "page",
+                    "pageSize",
+                    "totalCount",
+                    "hasMore",
+                    "coverage",
+                    "items"
                   ]
                 }
               }
@@ -969,6 +1191,203 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/etf/holdings/overview": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "All ETF top holdings overview",
+        "description": "Returns one page of tracked ETFs and each ETF's top holdings. When date is omitted, the latest available display date is selected. ETFs without data for an explicitly requested date remain in the response with an empty holdings array and an explicit status.",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-18"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            },
+            "description": "Number of ETFs per page."
+          },
+          {
+            "name": "limitPerEtf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ETF page with same-display-date holdings and coverage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "requestedDate": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "availableDates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "limitPerEtf": {
+                    "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    },
+                    "nextPage": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "coverage": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "etf_code": {
+                            "type": "string"
+                          },
+                          "etf_name": {
+                            "type": "string"
+                          },
+                          "etf_type": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "updated",
+                              "not_updated",
+                              "not_started",
+                              "fetch_failed"
+                            ]
+                          },
+                          "display_date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "latest_available_date": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date"
+                          },
+                          "holdings": {
+                            "type": "array",
+                            "items": {
+                              "allOf": [
+                                {
+                                  "$ref": "#/components/schemas/EtfHolding"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "holdings_snapshot_date": {
+                                      "type": "string",
+                                      "format": "date"
+                                    },
+                                    "display_date": {
+                                      "type": "string",
+                                      "format": "date"
+                                    },
+                                    "is_carried_forward": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "etf_code",
+                          "status",
+                          "display_date",
+                          "holdings"
+                        ]
+                      }
+                    }
+                  },
+                "required": [
+                  "date",
+                  "requestedDate",
+                  "availableDates",
+                  "page",
+                    "pageSize",
+                    "totalCount",
+                    "hasMore",
+                    "coverage",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }

@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "8b0ae0761ad18b33",
+        "id": "7785f60f0f58e2eb",
         "type": "tabs",
         "children": [
           {
-            "id": "142cf965ddbb1b14",
+            "id": "62ec51ee4ce388e5",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -183,8 +183,11 @@
       "bases:建立新的 base": false
     }
   },
-  "active": "142cf965ddbb1b14",
+  "active": "62ec51ee4ce388e5",
   "lastOpenFiles": [
+    "docs/etfedge-analysis.md",
+    "docs/firebase-structure.md",
+    "docs/FRONTEND_GUIDE.md",
     "dist/workbox-3e911b1d.js",
     "dist/sw.js",
     "dist/index.html",
@@ -195,12 +198,10 @@
     "dist/assets/_stockCode_-C7a2gl8n.css",
     "dist/assets/_stockCode_-BmSZbRRG.css",
     "dist/assets/_id_-xiNJ_c-M.css",
-    "dist/assets/_id_-CPAZordA.js",
     "dist/assets/avatar-B7OQw3Tg.png",
     "node_modules/chartjs-chart-financial/README.md",
     "node_modules/chartjs-chart-financial/LICENSE.md",
     "docs/project.md",
-    "docs/FRONTEND_GUIDE.md",
     "docs/dashboard-design-style.md",
     "docs/mockup/original-31c429cc7f5f9e7a174057a988a16f8e.webp",
     "docs/mockup/original-c8f9f5928fafd42573d9ec6f943b41d2.webp"

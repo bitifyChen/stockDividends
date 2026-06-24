@@ -30,8 +30,34 @@ export const getEtfHoldings = ({
   includeTrendDays = null
 }) => get('/etf/holdings', { etfCode, stockCode, date, mode, dateRange, includeTrendDays })
 
+export const getEtfHoldingsOverview = ({
+  date = null,
+  page = 1,
+  pageSize = 12,
+  limitPerEtf = 10
+} = {}) => get('/etf/holdings/overview', { date, page, pageSize, limitPerEtf })
+
 export const getEtfEvents = ({ mode = 'stock', stockCode = null, etfCode = null, date = null }) =>
   get('/etf/events', { mode, stockCode, etfCode, date })
+
+export const getEtfEventsOverview = ({
+  date = null,
+  type = 'all',
+  stockCode = null,
+  etfCode = null,
+  page = 1,
+  pageSize = 12,
+  limitPerEtf = 100
+} = {}) =>
+  get('/etf/events/overview', {
+    date,
+    type,
+    stockCode,
+    etfCode,
+    page,
+    pageSize,
+    limitPerEtf
+  })
 
 export const getEtfFirstBuyEvents = ({
   page = 1,

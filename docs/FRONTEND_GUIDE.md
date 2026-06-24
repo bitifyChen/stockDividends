@@ -1,3 +1,84 @@
+# 2026-06-22
+
+### 主旨
+ETF overview 改為 ETF 分組，日期預設採最新可用資料日
+
+### 填寫人
+Backend
+
+### 影響 API
+- 調整 `GET /etf/events/overview`
+- 調整 `GET /etf/holdings/overview`
+
+### 改動內容
+- 兩支 API 的 `date` 均改為選填；首次進頁可不帶日期，後端會回傳最新有資料的 `display_date`
+- response 新增：
+  - `date`：本次實際採用的資料日
+  - `requestedDate`：前端原本指定的日期；未指定時為 `null`
+  - `availableDates`：所有有資料的日期，由新至舊排列
+- `GET /etf/events/overview?page=1&pageSize=12&limitPerEtf=100&type=all`
+  - 分頁單位改為 ETF，不再是單筆 event
+  - 每個 `items[]` 是一檔 ETF，內含 `status`、`eventCount`、`eventsHasMore`、`events[]`
+  - 當日已更新但沒有進出事件的 ETF 仍會出現，且 `events=[]`
+  - `type` 仍支援 `all`、`first_buy`、`buy_increase`、`first_sell`、`sell_decrease`、`sell_out`
+- `GET /etf/holdings/overview?page=1&pageSize=12&limitPerEtf=10`
+  - 原本 ETF 分組結構不變
+  - 新增自動日期與 `availableDates`
+
+### 對應角色處理
+- 首次載入不要自行計算「昨天」或「上周五」，直接省略 `date`
+- 收到 response 後，以 `date` 設定目前畫面日期，並以 `availableDates` 控制日期選擇器可選狀態
+- 使用者切換日期後，再明確傳入 `date=YYYY-MM-DD`
+- events 頁面的 infinite scroll 需依 ETF page 載入；`totalCount`、`pageSize` 都代表 ETF 數量
+
+### 其他必要補充
+- 明確指定沒有資料的休市日時，後端不會自動改日期；ETF 會回 `not_updated` 與空資料
+- 目前最新可用資料日為 `2026-06-18`，`2026-06-19` 為休市日
+- 詳細 response schema 以 `docs/openapi.json` 為準
+
+# 2026-06-22
+
+### 主旨
+ETF 當日進出與前十大持股改接跨 ETF overview API
+
+### 填寫人
+Backend
+
+### 影響 API
+- 新增 `GET /etf/events/overview`
+- 新增 `GET /etf/holdings/overview`
+- 既有 `GET /etf/events` 與 `GET /etf/holdings` 不變
+
+### 改動內容
+- `/dashboard/etf/events` 改為所有追蹤 ETF 的指定日進出總覽：
+  - `GET /etf/events/overview?date=2026-06-18&type=all&page=1&pageSize=50`
+  - `date` 必填，使用已正規化的 `display_date`
+  - `type` 支援 `all`、`first_buy`、`buy_increase`、`first_sell`、`sell_decrease`、`sell_out`
+  - 可選擇傳入 `etfCode` 或 `stockCode` 過濾
+  - response 提供 `totalCount`、`hasMore`、`nextPage`，可供 infinite scroll 使用
+  - `coverage` 顯示追蹤 ETF、已更新、未更新、抓取失敗與尚未成立數量
+  - `notUpdatedEtfs` 提供當日未完成更新的 ETF 清單
+- ETF 前十大持股總覽改接：
+  - `GET /etf/holdings/overview?date=2026-06-18&page=1&pageSize=12&limitPerEtf=10`
+  - 分頁單位是 ETF，不是持股列
+  - 每個 ETF item 會回傳 `status`、`display_date`、`latest_available_date` 與 `holdings`
+  - `status` 支援 `updated`、`not_updated`、`not_started`、`fetch_failed`
+  - 未更新 ETF 仍保留 item，但 `holdings=[]`，不可拿前一日資料替代
+  - 被動 ETF 若指定日已抓取成功但依政策未新增 snapshot，會回傳最近一次已確認持股，並標示 `is_carried_forward=true`
+
+### 對應角色處理
+- `/dashboard/etf/events` 初次載入 page 1，捲動到底且 `hasMore=true` 時使用 `nextPage` 載入下一頁
+- ETF 前十大持股頁同樣採動態載入，但每頁新增的是 ETF 區塊
+- 使用者切換日期、事件類型或 filter 時，需清空目前列表並從 page 1 重新載入
+- 畫面上方顯示 `coverage.updated_etf_count / coverage.tracked_etf_count`
+- `not_updated` 與 `fetch_failed` 必須明確顯示，避免被誤認為當日沒有交易或沒有持股
+
+### 其他必要補充
+- 兩支 overview API 都強制使用同一個 `date`，不會混用各 ETF 的最新日期
+- `nextPage=null` 或 `hasMore=false` 時停止載入
+- 前端不需先取得 ETF list 再逐檔呼叫 holdings，避免 N+1 request
+- 完整 response schema 已更新至 `docs/openapi.json`
+
 # 2026-06-15
 ### 主旨
 OHLC K 線頁面只保留 candles 依賴，Supabase 維持列表與標記欄位

@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
 import { getEtfAvailableDates, getEtfEvents, getEtfHoldings, getEtfList } from '@/api/etf.js'
 import TwoTable from '@/components/Two/TwoTable.vue'
+import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { formatShare, normalizeArray, shareColumnLabel } from '@/utils/etfDashboard.js'
 
@@ -184,6 +185,8 @@ onMounted(async () => {
 
 <template>
   <div class="etf-console">
+    <EtfEventsViewSwitcher active-mode="list" />
+
     <section class="console-bar">
       <div>
         <div class="breadcrumb">ETF / 每日進出</div>

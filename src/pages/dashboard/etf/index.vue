@@ -6,13 +6,13 @@ const cards = [
   {
     title: '每日進出',
     description: '觀察ETF 每個交易日對持股的加碼、減碼與首次買入變化。',
-    to: '/dashboard/etf/events',
+    to: '/dashboard/etf/events/overview',
     icon: TrendingUp
   },
   {
     title: '目前持股',
     description: '以 ETF 為出發點，查看最新持股排行、權重與曲線變化。',
-    to: '/dashboard/etf/holdings',
+    to: '/dashboard/etf/holdings/overview',
     icon: Layers3
   },
   {

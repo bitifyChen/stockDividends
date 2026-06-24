@@ -7,11 +7,13 @@ export const navGroups = [
       {
         title: '每日進出',
         path: 'Dashboard_Etf_Events',
+        to: '/dashboard/etf/events/overview',
         icon: Activity
       },
       {
         title: '目前持股',
         path: 'Dashboard_Etf_Holdings',
+        to: '/dashboard/etf/holdings/overview',
         icon: Briefcase
       },
       {

@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-vue-next'
 import { getEtfAvailableDates, getEtfHoldings, getEtfList } from '@/api/etf.js'
 import TwoSparkline from '@/components/Two/TwoSparkline.vue'
 import TwoTable from '@/components/Two/TwoTable.vue'
+import EtfHoldingsViewSwitcher from '@/components/dashboard/EtfHoldingsViewSwitcher.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import {
   formatRatio,
@@ -186,6 +187,7 @@ onMounted(async () => {
 
 <template>
   <div class="etf-console">
+    <EtfHoldingsViewSwitcher active-mode="list" />
     <section class="console-bar">
       <div>
         <div class="breadcrumb">ETF / 目前持股</div>
@@ -221,7 +223,6 @@ onMounted(async () => {
         </button>
       </div>
     </section>
-
     <section class="console-panel">
       <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
 
