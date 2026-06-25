@@ -59,6 +59,29 @@ export const getEtfEventsOverview = ({
     limitPerEtf
   })
 
+export const getEtfEventsStockOverview = ({
+  date = null,
+  type = 'all',
+  side = 'all',
+  etfType = 'active',
+  stockCode = null,
+  sort = 'net_shares_abs',
+  page = 1,
+  pageSize = 12,
+  limitPerStock = 50
+} = {}) =>
+  get('/etf/events/stock-overview', {
+    date,
+    type,
+    side,
+    etfType,
+    stockCode,
+    sort,
+    page,
+    pageSize,
+    limitPerStock
+  })
+
 export const getEtfFirstBuyEvents = ({
   page = 1,
   pageSize = 50,

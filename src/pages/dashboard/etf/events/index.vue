@@ -195,11 +195,20 @@ onMounted(async () => {
       <div class="console-tools">
         <label class="field">
           <span>ETF</span>
-          <select v-model="selectedEtfCode" :disabled="loadingList || !etfOptions.length">
-            <option v-for="item in etfOptions" :key="item.etf_code" :value="item.etf_code">
-              {{ item.etf_code }} {{ item.etf_name }}
-            </option>
-          </select>
+          <el-select
+            v-model="selectedEtfCode"
+            class="dashboard-select"
+            filterable
+            :disabled="loadingList || !etfOptions.length"
+            :loading="loadingList"
+          >
+            <el-option
+              v-for="item in etfOptions"
+              :key="item.etf_code"
+              :label="`${item.etf_code} ${item.etf_name}`"
+              :value="item.etf_code"
+            />
+          </el-select>
         </label>
         <label class="date-picker-control">
           <span>日期</span>
@@ -270,183 +279,6 @@ onMounted(async () => {
     </section>
   </div>
 </template>
-
-<style scoped>
-.etf-console {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  color: #cbd5e1;
-}
-.console-bar,
-.console-panel {
-  border: 1px solid #2f3339;
-  border-radius: 6px;
-  background: #1b1d21;
-}
-.console-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-}
-.breadcrumb {
-  color: #7c858f;
-  font-size: 12px;
-  font-weight: 900;
-}
-h1 {
-  margin: 4px 0 0;
-  color: #f7fafc;
-  font-size: 22px;
-  font-weight: 900;
-}
-.console-tools {
-  display: flex;
-  align-items: end;
-  gap: 10px;
-}
-.field,
-.date-picker-control {
-  display: grid;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 900;
-}
-.field select,
-.date-picker-control :deep(.el-date-editor) {
-  height: 36px;
-  min-width: 170px;
-}
-.refresh-button,
-.detail-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #30343a;
-  border-radius: 6px;
-  background: #111317;
-  color: #d4d8dd;
-}
-.refresh-button {
-  width: 36px;
-  height: 36px;
-}
-.refresh-button:disabled {
-  opacity: 0.5;
-}
-.detail-link {
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: 900;
-  text-decoration: none;
-}
-.detail-link:hover {
-  border-color: #10bfae;
-  color: #10bfae;
-}
-.detail-disabled {
-  color: var(--stock-neutral-color);
-}
-.console-panel {
-  padding: 16px;
-}
-.summary-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 14px;
-  color: #94a3b8;
-  font-size: 13px;
-}
-.summary-line > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.summary-line strong {
-  color: #e2e8f0;
-}
-.metric-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.metric-box {
-  border: 1px solid #2f3339;
-  border-radius: 4px;
-  background: #181b1f;
-  padding: 12px;
-}
-.metric-box span {
-  display: block;
-  color: #7c8794;
-  font-size: 12px;
-  font-weight: 900;
-}
-.metric-box strong {
-  display: block;
-  margin-top: 7px;
-  color: #f7fafc;
-  font-size: 15px;
-  font-weight: 900;
-}
-.stock-cell {
-  display: grid;
-  gap: 2px;
-}
-.stock-cell strong {
-  color: #f7fafc;
-}
-.stock-cell span {
-  color: #7c858f;
-  font-size: 12px;
-}
-.value-up {
-  color: var(--stock-rise-color);
-  font-weight: 900;
-}
-.value-down {
-  color: var(--stock-fall-color);
-  font-weight: 900;
-}
-.error-banner {
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border: 1px solid #7f1d1d;
-  border-radius: 4px;
-  background: #2a1717;
-  color: #fecaca;
-  font-size: 13px;
-  font-weight: 800;
-}
-@media (max-width: 900px) {
-  .console-bar,
-  .summary-line,
-  .console-tools {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .field select,
-  .refresh-button,
-  .date-picker-control :deep(.el-date-editor) {
-    width: 100%;
-  }
-
-  .console-panel {
-    padding: 12px;
-  }
-
-  .metric-strip {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
 
 <route>
 {

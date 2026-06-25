@@ -2,8 +2,9 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
-import { getEtfEventsOverview } from '@/api/etf.js'
+import { getEtfEventsOverview, getEtfEventsStockOverview } from '@/api/etf.js'
 import EtfEventsOverviewCard from '@/components/dashboard/EtfEventsOverviewCard.vue'
+import EtfEventsStockOverviewCard from '@/components/dashboard/EtfEventsStockOverviewCard.vue'
 import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
 import EtfOverviewCardSkeleton from '@/components/dashboard/EtfOverviewCardSkeleton.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
@@ -25,6 +26,17 @@ const totalCount = ref(0)
 const hasMore = ref(false)
 const nextPage = ref(null)
 const errorMessage = ref('')
+const stockLoadingData = ref(false)
+const stockLoadingMore = ref(false)
+const stockPage = ref(1)
+const stockPageSize = ref(12)
+const stockLimitPerStock = ref(50)
+const stockItems = ref([])
+const stockTotalCount = ref(0)
+const stockHasMore = ref(false)
+const stockNextPage = ref(null)
+const stockErrorMessage = ref('')
+const selectedSort = ref('net_shares_abs')
 
 const typeOptions = [
   { label: '全部', value: 'all' },
@@ -33,6 +45,17 @@ const typeOptions = [
   { label: '首賣', value: 'first_sell' },
   { label: '減碼', value: 'sell_decrease' },
   { label: '出清', value: 'sell_out' }
+]
+
+const sortOptions = [
+  { label: '淨變動絕對值', value: 'net_shares_abs' },
+  { label: '淨買超', value: 'net_shares' },
+  { label: '買進合計', value: 'buy_shares' },
+  { label: '賣出合計', value: 'sell_shares' },
+  { label: '買進 ETF 數', value: 'buy_etf_count' },
+  { label: '賣出 ETF 數', value: 'sell_etf_count' },
+  { label: '事件 ETF 數', value: 'event_etf_count' },
+  { label: '股票代號', value: 'stock_code' }
 ]
 
 const availableDateSet = computed(() => new Set(availableDates.value))
@@ -85,14 +108,64 @@ const loadEvents = async ({ append = false } = {}) => {
   }
 }
 
+const loadStockOverview = async ({ append = false, date = selectedDate.value } = {}) => {
+  if (append) {
+    stockLoadingMore.value = true
+  } else {
+    stockLoadingData.value = true
+    stockErrorMessage.value = ''
+    stockPage.value = 1
+    stockItems.value = []
+  }
+
+  try {
+    const response = await getEtfEventsStockOverview({
+      date: date || null,
+      type: selectedType.value,
+      etfType: 'active',
+      sort: selectedSort.value,
+      page: stockPage.value,
+      pageSize: stockPageSize.value,
+      limitPerStock: stockLimitPerStock.value
+    })
+
+    const nextItems = normalizeArray(response?.items)
+    stockItems.value = append ? [...stockItems.value, ...nextItems] : nextItems
+    stockTotalCount.value = Number(response?.totalCount || 0)
+    stockHasMore.value = Boolean(response?.hasMore)
+    stockNextPage.value = response?.nextPage ?? null
+    stockPage.value = Number(response?.page || stockPage.value)
+    stockPageSize.value = Number(response?.pageSize || stockPageSize.value)
+    stockLimitPerStock.value = Number(response?.limitPerStock || stockLimitPerStock.value)
+  } catch (error) {
+    stockErrorMessage.value = error?.message || '載入個股彙總失敗'
+    if (!append) stockItems.value = []
+    stockHasMore.value = false
+    stockNextPage.value = null
+  } finally {
+    stockLoadingData.value = false
+    stockLoadingMore.value = false
+  }
+}
+
+const loadOverview = async () => {
+  await Promise.all([loadEvents(), loadStockOverview()])
+}
+
 const reload = async () => {
-  await loadEvents()
+  await loadOverview()
 }
 
 const loadMore = async () => {
   if (!hasMore.value || loadingMore.value) return
   page.value = Number(nextPage.value || page.value + 1)
   await loadEvents({ append: true })
+}
+
+const loadMoreStocks = async () => {
+  if (!stockHasMore.value || stockLoadingMore.value) return
+  stockPage.value = Number(stockNextPage.value || stockPage.value + 1)
+  await loadStockOverview({ append: true })
 }
 
 const groupedCards = computed(() =>
@@ -107,6 +180,7 @@ const displayedEventCount = computed(() =>
   groupedCards.value.reduce((total, card) => total + card.events.length, 0)
 )
 const skeletonCards = computed(() => Array.from({ length: Math.min(pageSize.value, 8) }))
+const stockSkeletonCards = computed(() => Array.from({ length: Math.min(stockPageSize.value, 8) }))
 const updatedEtfCount = computed(() => Number(coverage.value.updated_etf_count || 0))
 const trackedEtfCount = computed(() => Number(coverage.value.tracked_etf_count || 0))
 const notUpdatedEtfCount = computed(() => Number(coverage.value.not_updated_etf_count || 0))
@@ -115,11 +189,15 @@ const failedEtfCount = computed(() => Number(coverage.value.fetch_failed_etf_cou
 
 watch([selectedDate, selectedType], () => {
   if (syncingDate.value) return
-  loadEvents()
+  loadOverview()
+})
+
+watch(selectedSort, () => {
+  loadStockOverview()
 })
 
 onMounted(() => {
-  loadEvents()
+  loadOverview()
 })
 </script>
 
@@ -139,11 +217,14 @@ onMounted(() => {
       <div class="console-tools">
         <label class="field">
           <span>類型</span>
-          <select v-model="selectedType">
-            <option v-for="item in typeOptions" :key="item.value" :value="item.value">
-              {{ item.label }}
-            </option>
-          </select>
+          <el-select v-model="selectedType" class="dashboard-select">
+            <el-option
+              v-for="item in typeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </label>
 
         <label class="date-picker-control">
@@ -225,234 +306,160 @@ onMounted(() => {
           {{ loadingMore ? '載入中' : '載入更多' }}
         </button>
       </div>
+
+      <section class="stock-overview-section" aria-labelledby="stock-overview-title">
+        <div class="stock-overview-head">
+          <div>
+            <span>STOCK FLOW</span>
+            <h2 id="stock-overview-title">個股總買賣行為</h2>
+            <p>以股票為單位彙總同日所有主動 ETF 的買進、賣出與淨變動。</p>
+          </div>
+
+          <div class="stock-overview-tools">
+            <label class="field compact">
+              <span>排序</span>
+              <el-select v-model="selectedSort" class="dashboard-select">
+                <el-option
+                  v-for="item in sortOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </label>
+          </div>
+        </div>
+
+        <div v-if="stockErrorMessage" class="error-banner">{{ stockErrorMessage }}</div>
+
+        <div class="stock-summary-line">
+          <span>{{ selectedDate || '最新資料日' }}</span>
+          <strong>{{ stockTotalCount }} 檔股票</strong>
+          <span>僅統計主動 ETF</span>
+        </div>
+
+        <div class="stock-card-grid">
+          <template v-if="stockLoadingData && !stockItems.length">
+            <EtfOverviewCardSkeleton
+              v-for="(_, index) in stockSkeletonCards"
+              :key="`stock-event-skeleton-${index}`"
+              :rows="5"
+            />
+          </template>
+
+          <EtfEventsStockOverviewCard
+            v-for="stock in stockItems"
+            :key="`${stock.stock_code}-${selectedDate}`"
+            :stock="stock"
+            :share-unit="dashboardSettingStore.shareUnit"
+          />
+        </div>
+
+        <div v-if="!stockItems.length && !stockLoadingData" class="empty-state">
+          目前沒有符合條件的個股彙總資料
+        </div>
+
+        <div class="footer-actions" v-if="stockHasMore">
+          <button
+            class="load-more-button"
+            type="button"
+            :disabled="stockLoadingMore"
+            @click="loadMoreStocks"
+          >
+            {{ stockLoadingMore ? '載入中' : '載入更多個股' }}
+          </button>
+        </div>
+      </section>
     </section>
   </div>
 </template>
 
 <style scoped>
-.etf-console {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  color: #cbd5e1;
+.stock-overview-section {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--main-border-color, rgb(148 163 184 / 0.16));
 }
 
-.console-bar,
-.console-panel {
-  border: 1px solid #2f3339;
-  border-radius: 6px;
-  background: #1b1d21;
-}
-
-.console-bar {
+.stock-overview-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 20px;
 }
 
-.breadcrumb {
-  color: #7c858f;
+.stock-overview-head span {
+  color: var(--dashboard-text-muted, #7c8794);
   font-size: 12px;
   font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
-h1 {
+.stock-overview-head h2 {
   margin: 4px 0 0;
-  color: #f7fafc;
-  font-size: 22px;
+  color: var(--dashboard-text-primary, #f8fbff);
+  font-size: 20px;
   font-weight: 900;
 }
 
-.console-bar p {
-  max-width: 68ch;
-  margin: 8px 0 0;
-  color: #94a3b8;
+.stock-overview-head p {
+  max-width: 58ch;
+  margin: 7px 0 0;
+  color: var(--dashboard-text-muted, #94a3b8);
   font-size: 13px;
   line-height: 1.7;
 }
 
-.console-tools {
+.stock-overview-tools {
   display: flex;
   align-items: end;
   gap: 10px;
 }
 
-.field,
-.date-picker-control {
-  display: grid;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.field select,
-.date-picker-control :deep(.el-date-editor) {
-  height: 36px;
-  min-width: 170px;
-}
-
-.refresh-button,
-.load-more-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #30343a;
-  border-radius: 6px;
-  background: #111317;
-  color: #d4d8dd;
-}
-
-.refresh-button {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-
-.refresh-button:disabled,
-.load-more-button:disabled {
-  opacity: 0.5;
-}
-
-.load-more-button {
-  min-height: 30px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.load-more-button:hover {
-  border-color: #10bfae;
-  color: #10bfae;
-}
-
-.console-panel {
-  padding: 16px;
-}
-
-.summary-line {
+.stock-summary-line {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 14px;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-.summary-line > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.summary-line strong {
-  color: #e2e8f0;
-}
-
-.metric-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.metric-box {
-  border: 1px solid #2f3339;
-  border-radius: 4px;
-  background: #181b1f;
-  padding: 12px;
-}
-
-.metric-box span {
-  display: block;
-  color: #7c8794;
+  gap: 8px 12px;
+  color: var(--dashboard-text-muted, #94a3b8);
   font-size: 12px;
   font-weight: 900;
 }
 
-.metric-box strong {
-  display: block;
-  margin-top: 7px;
-  color: #f7fafc;
-  font-size: 15px;
-  font-weight: 900;
+.stock-summary-line strong {
+  color: var(--dashboard-text-primary, #f8fbff);
 }
 
-.card-grid {
+.stock-card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
-.empty-state {
-  display: grid;
-  place-items: center;
-  min-height: 180px;
-  border: 1px dashed #4b5563;
-  border-radius: 8px;
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.footer-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 14px;
-}
-
-.error-banner {
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border: 1px solid #7f1d1d;
-  border-radius: 4px;
-  background: #2a1717;
-  color: #fecaca;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-@media (max-width: 900px) {
-  .console-bar,
-  .summary-line,
-  .console-tools {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .field select,
-  .refresh-button,
-  .date-picker-control :deep(.el-date-editor) {
-    width: 100%;
-  }
-
-  .console-panel {
-    padding: 12px;
-  }
-
-  .metric-strip {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 1500px) {
-  .card-grid {
+  .stock-card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1180px) {
-  .card-grid {
+  .stock-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+@media (max-width: 900px) {
+  .stock-overview-head,
+  .stock-overview-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 680px) {
-  .card-grid {
+  .stock-card-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -1,0 +1,542 @@
+.dashboard-shell .main-panel {
+  :where(.etf-console, .stocks-page) {
+    --filter-control-height: 38px;
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex-direction: column;
+    gap: 16px;
+    color: #cbd5e1;
+  }
+
+  .stocks-page {
+    display: grid;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.console-bar, .console-panel) {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid rgb(148 163 184 / 0.14);
+    border-radius: 18px;
+    background: radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.075), transparent 34%),
+      linear-gradient(135deg, rgb(255 255 255 / 0.058), rgb(255 255 255 / 0.018)),
+      rgb(8 11 16 / 0.58);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 22px 70px rgb(0 0 0 / 0.18);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+  }
+
+  :where(.etf-console, .stocks-page) :where(.console-bar, .console-panel)::before {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.045), transparent 28%),
+      radial-gradient(circle at 100% 0%, rgb(16 191 174 / 0.06), transparent 32%);
+    content: '';
+    pointer-events: none;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.console-bar, .console-panel) > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  :where(.etf-console, .stocks-page) .console-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+  }
+
+  :where(.etf-console, .stocks-page) .console-panel {
+    padding: 16px;
+  }
+
+  :where(.etf-console, .stocks-page) .breadcrumb {
+    color: #7c858f;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) h1 {
+    margin: 4px 0 0;
+    color: #f7fafc;
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .console-bar p {
+    max-width: 68ch;
+    margin: 8px 0 0;
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  :where(.etf-console, .stocks-page) .console-tools {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  :where(.etf-console, .stocks-page) .console-tools > * {
+    min-width: 0;
+  }
+
+  .stocks-page .console-tools {
+    align-items: center;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.field, .date-picker-control) {
+    display: grid;
+    align-content: end;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.field select, .field .el-select) {
+    width: 170px;
+    min-width: 170px;
+  }
+
+  :where(.etf-console, .stocks-page) .field .dashboard-select {
+    display: block;
+    max-width: 100%;
+    height: var(--filter-control-height);
+  }
+
+  :where(.etf-console, .stocks-page) .date-picker-control .el-date-editor {
+    width: 220px;
+    min-width: 220px;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.field select, .date-picker-control .el-date-editor),
+  :where(.etf-console, .stocks-page)
+    :where(.field .el-select .el-input, .date-picker-control .el-input) {
+    height: var(--filter-control-height);
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(
+      .field .el-select__wrapper,
+      .field .el-select .el-input__wrapper,
+      .date-picker-control .el-input__wrapper
+    ) {
+    box-sizing: border-box;
+    height: var(--filter-control-height);
+    min-height: var(--filter-control-height);
+    border-radius: 10px;
+    background: #111317;
+    box-shadow: 0 0 0 1px #30343a inset;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(.field .el-select__selection, .field .el-select__placeholder) {
+    min-height: var(--filter-control-height);
+    line-height: var(--filter-control-height);
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(.field .el-select .el-input__inner, .date-picker-control .el-input__inner) {
+    height: var(--filter-control-height);
+    line-height: var(--filter-control-height);
+    color: #e2e8f0;
+  }
+
+  :where(.etf-console, .stocks-page) .field select {
+    border: 1px solid #30343a;
+    border-radius: 10px;
+    background: #111317;
+    color: #e2e8f0;
+    padding: 0 12px;
+  }
+
+  :where(.etf-console, .stocks-page) .search-field {
+    display: flex;
+    height: var(--filter-control-height);
+    min-width: 260px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #30343a;
+    border-radius: 10px;
+    background: #111317;
+    padding: 0 10px;
+    color: #7c858f;
+  }
+
+  :where(.etf-console, .stocks-page) .search-field input {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #d4d8dd;
+    outline: 0;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(
+      .refresh-button,
+      .action-button,
+      .load-more-button,
+      .detail-link,
+      .pagination-bar button
+    ) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #30343a;
+    border-radius: 6px;
+    background: #111317;
+    color: #d4d8dd;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .refresh-button {
+    box-sizing: border-box;
+    width: var(--filter-control-height);
+    height: var(--filter-control-height);
+    padding: 0;
+  }
+
+  :where(.etf-console, .stocks-page) .action-button {
+    box-sizing: border-box;
+    height: var(--filter-control-height);
+    padding: 0 14px;
+  }
+
+  :where(.etf-console, .stocks-page) .detail-link {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+    text-decoration: none;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.detail-link, .load-more-button):hover {
+    border-color: #10bfae;
+    color: #10bfae;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(.refresh-button, .load-more-button, .pagination-bar button):disabled {
+    opacity: 0.5;
+  }
+
+  :where(.etf-console, .stocks-page) .detail-disabled {
+    color: var(--stock-neutral-color);
+  }
+
+  :where(.etf-console, .stocks-page) .load-more-button {
+    min-height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+    text-decoration: none;
+  }
+
+  :where(.etf-console, .stocks-page) .summary-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  :where(.etf-console, .stocks-page) .summary-line > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  :where(.etf-console, .stocks-page) .summary-line strong {
+    color: #e2e8f0;
+  }
+
+  :where(.etf-console, .stocks-page) .metric-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  :where(.etf-console, .stocks-page) .metric-box {
+    border: 1px solid rgb(148 163 184 / 0.13);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.052), rgb(255 255 255 / 0.014)),
+      rgb(7 10 15 / 0.38);
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+
+  :where(.etf-console, .stocks-page) .metric-box span {
+    display: block;
+    color: #7c8794;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .metric-box strong {
+    display: block;
+    margin-top: 7px;
+    color: #f7fafc;
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  :where(.etf-console, .stocks-page) .stock-cell {
+    display: grid;
+    gap: 2px;
+  }
+
+  :where(.etf-console, .stocks-page) .stock-cell strong {
+    color: #f7fafc;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.stock-cell span, .trend-caption) {
+    color: #7c858f;
+    font-size: 12px;
+  }
+
+  :where(.etf-console, .stocks-page) .trend-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  :where(.etf-console, .stocks-page) .value-up {
+    color: var(--stock-rise-color);
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .value-down {
+    color: var(--stock-fall-color);
+    font-weight: 900;
+  }
+
+  :where(.etf-console, .stocks-page) .empty-state {
+    display: grid;
+    min-height: 180px;
+    place-items: center;
+    border: 1px dashed #4b5563;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  :where(.etf-console, .stocks-page) .footer-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  :where(.etf-console, .stocks-page) .pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 14px;
+    color: #7c858f;
+    font-size: 13px;
+  }
+
+  :where(.etf-console, .stocks-page) .pagination-bar div {
+    display: flex;
+    gap: 8px;
+  }
+
+  :where(.etf-console, .stocks-page) .pagination-bar button {
+    min-height: 32px;
+    padding: 0 12px;
+  }
+
+  :where(.etf-console, .stocks-page) .error-banner {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #7f1d1d;
+    border-radius: 4px;
+    background: #2a1717;
+    color: #fecaca;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  @media (max-width: 900px) {
+    :where(.etf-console, .stocks-page)
+      :where(.console-bar, .summary-line, .console-tools, .pagination-bar) {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    :where(.etf-console, .stocks-page)
+      :where(
+        .field select,
+        .field .el-select,
+        .field .dashboard-select,
+        .field .el-select__wrapper,
+        .field .el-select .el-input,
+        .refresh-button,
+        .action-button,
+        .load-more-button,
+        .date-picker-control .el-date-editor
+      ) {
+      width: 100%;
+    }
+
+    :where(.etf-console, .stocks-page) .summary-line > div {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    :where(.etf-console, .stocks-page) .console-panel {
+      padding: 12px;
+    }
+
+    :where(.etf-console, .stocks-page) .metric-strip {
+      grid-template-columns: 1fr;
+    }
+
+    :where(.etf-console, .stocks-page) .search-field {
+      width: 100%;
+      min-width: 0;
+    }
+
+    :where(.etf-console, .stocks-page) .pagination-bar div {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 1500px) {
+    :where(.etf-console, .stocks-page) .card-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 1180px) {
+    :where(.etf-console, .stocks-page) .card-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    :where(.etf-console, .stocks-page) .card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.dashboard-shell.theme-light .main-panel {
+  :where(.etf-console, .stocks-page) {
+    color: #334155;
+  }
+
+  :where(.etf-console, .stocks-page) :where(.console-bar, .console-panel) {
+    border-color: rgb(71 85 105 / 0.13);
+    background: radial-gradient(circle at 0% 0%, rgb(14 165 233 / 0.11), transparent 34%),
+      linear-gradient(135deg, rgb(255 255 255 / 0.74), rgb(255 255 255 / 0.46)),
+      rgb(248 252 254 / 0.7);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.86),
+      0 22px 70px rgb(15 23 42 / 0.1);
+  }
+
+  :where(.etf-console, .stocks-page) :where(.console-bar, .console-panel)::before {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.6), transparent 30%),
+      radial-gradient(circle at 100% 0%, rgb(16 185 129 / 0.08), transparent 32%);
+  }
+
+  :where(.etf-console, .stocks-page) :where(.breadcrumb, .field, .date-picker-control) {
+    color: #64748b;
+  }
+
+  :where(.etf-console, .stocks-page) h1,
+  :where(.etf-console, .stocks-page) .stock-cell strong,
+  :where(.etf-console, .stocks-page) .metric-box strong {
+    color: #102033;
+  }
+
+  :where(.etf-console, .stocks-page) .console-bar p,
+  :where(.etf-console, .stocks-page) .summary-line {
+    color: #64748b;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(
+      .search-field,
+      .refresh-button,
+      .action-button,
+      .load-more-button,
+      .detail-link,
+      .pagination-bar button
+    ) {
+    border-color: rgb(71 85 105 / 0.14);
+    background: rgb(255 255 255 / 0.7);
+    color: #334155;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(
+      .field select,
+      .field .el-select__wrapper,
+      .field .el-select .el-input__wrapper,
+      .date-picker-control .el-input__wrapper
+    ) {
+    background: rgb(255 255 255 / 0.72);
+    box-shadow: 0 0 0 1px rgb(71 85 105 / 0.14) inset;
+  }
+
+  :where(.etf-console, .stocks-page)
+    :where(.field .el-select .el-input__inner, .date-picker-control .el-input__inner) {
+    color: #102033;
+  }
+
+  :where(.etf-console, .stocks-page) .search-field input {
+    color: #102033;
+  }
+
+  :where(.etf-console, .stocks-page) .summary-line strong {
+    color: #102033;
+  }
+
+  :where(.etf-console, .stocks-page) .metric-box {
+    border-color: rgb(71 85 105 / 0.12);
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.84), rgb(255 255 255 / 0.42)),
+      rgb(248 252 254 / 0.72);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  }
+
+  :where(.etf-console, .stocks-page) .metric-box span,
+  :where(.etf-console, .stocks-page) :where(.stock-cell span, .trend-caption),
+  :where(.etf-console, .stocks-page) .pagination-bar {
+    color: #64748b;
+  }
+
+  :where(.etf-console, .stocks-page) .empty-state {
+    border-color: rgb(71 85 105 / 0.24);
+    color: #64748b;
+    background: rgb(255 255 255 / 0.34);
+  }
+
+  :where(.etf-console, .stocks-page) .error-banner {
+    border-color: rgb(220 38 38 / 0.2);
+    background: rgb(254 242 242 / 0.72);
+    color: #991b1b;
+  }
+}

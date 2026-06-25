@@ -425,12 +425,37 @@ onMounted(async () => {
 
 .console-bar,
 .console-panel {
+  position: relative;
+  overflow: hidden;
   max-width: 100%;
   min-width: 0;
-  border: 1px solid #2f3339;
+  border: 1px solid rgb(148 163 184 / 0.14);
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(18, 22, 28, 0.96), rgba(13, 16, 20, 0.96)), #1b1d21;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  background: radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.075), transparent 34%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.058), rgb(255 255 255 / 0.018)), rgb(8 11 16 / 0.58);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 22px 70px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.console-bar::before,
+.console-panel::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.045), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgb(16 191 174 / 0.06), transparent 32%);
+  content: '';
+  pointer-events: none;
+}
+
+.console-bar > *,
+.console-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .console-bar {
@@ -619,10 +644,12 @@ h1 {
 }
 
 .metric-box {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(148 163 184 / 0.13);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.052), rgb(255 255 255 / 0.014)),
+    rgb(7 10 15 / 0.38);
   padding: 14px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 
 .metric-box span {
