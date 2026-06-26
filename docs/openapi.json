@@ -501,6 +501,56 @@
         }
       }
     },
+    "/etf/jpm": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "手動抓取 JPM ETF 資料",
+        "description": "依 `sourceCode` 下載摩根投信官方 PCF xlsx，解析後可選擇是否寫入 Supabase。此來源的 source snapshot date 取 xlsx `Valuation Date`，目前 provider 以 `display_date_offset_days=-1` 正規化顯示日期。",
+        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "00401A"
+            },
+            "description": "JPM fund ticker；00401A=00401A"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否寫入 Supabase"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "解析或匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EzmoneyImportResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events": {
       "get": {
         "tags": [

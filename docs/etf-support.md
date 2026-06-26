@@ -20,6 +20,6 @@
 | 00995A | 是    | 主動中信台灣卓越  | 中信投信           | https://www.ctbcinvestments.com/Etf/00653201/Combination                                                                                   | 是        | 否      |
 | 00994A | 是    | 主動第一金台股優  | 第一金投信          | https://www.fsitc.com.tw/FundDetail.aspx?ID=182#TabLinkdivEditTab9                                                                         | 是        | 否      |
 | 00996A | 是    | 主動兆豐台灣豐收  | 兆豐投信           | https://www.megafunds.com.tw/MEGA/etf/etf_product.aspx?id=23                                                                               | 否        | 否      |
-| 00401A | 否    | 主動摩根台灣鑫收  | 摩根投信           | https://am.jpmorgan.com/tw/zh/asset-management/twetf/products/jpmorgan-taiwan-taiwan-equity-high-income-active-etf-tw00000401a1#/portfolio | 是        | 否      |
+| 00401A | 是    | 主動摩根台灣鑫收  | 摩根投信           | https://am.jpmorgan.com/tw/zh/asset-management/twetf/products/jpmorgan-taiwan-taiwan-equity-high-income-active-etf-tw00000401a1#/portfolio | 是        | 否      |
 | 00404A | 否    | 主動聯博動能50  | 聯博證券投資信託股份有限公司 | https://www.abfunds.com.tw/zh-tw/etf/active/equities/abitl-taiwan-momentum-equity-premium-income-50-active-etf.-.TW00000404A5.html         | 是        | 否      |
 | 00987A | 是    | 主動台新優勢成長  | 台新投信           | https://www.tsit.com.tw/ETF/Home/ETFSeriesDetail/00987A                                                                                    | 是<br>    | 否      |

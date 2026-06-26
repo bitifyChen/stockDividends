@@ -1,10 +1,10 @@
 # 2026-06-26
 
-## 新增 00994A、00406A、00995A ETF 追蹤資料
+## 新增 00994A、00406A、00995A、00401A ETF 追蹤資料
 
 ### 主旨
 
-後端新增第一金與中信投信來源，並已先寫入 `2026-06-25` 快照。前端正式畫面不需要新增專屬 API，照既有 ETF 與個股觀測 API 顯示即可。
+後端新增第一金、中信投信與摩根投信來源，並已先寫入 `2026-06-25` 快照。前端正式畫面不需要新增專屬 API，照既有 ETF 與個股觀測 API 顯示即可。
 
 ### 填寫人
 
@@ -30,26 +30,30 @@ Backend
   - `00994A`：主動第一金台股優，provider=`first`
   - `00406A`：主動中信台灣收益，provider=`ctbc`
   - `00995A`：主動中信台灣卓越，provider=`ctbc`
+  - `00401A`：主動摩根台灣鑫收，provider=`jpm`
 - 已先寫入 `2026-06-25` 資料：
   - `00994A`：36 筆
   - `00406A`：50 筆
   - `00995A`：53 筆
+  - `00401A`：65 筆
 - 三支 ETF 都納入 `/etf/fetch-all?save=1` 每日批次。
 - 新增 Internal 手動測試入口：
   - `GET /etf/first?sourceCode=182&save=0|1`
   - `GET /etf/ctbc?sourceCode=00682450&save=0|1`
   - `GET /etf/ctbc?sourceCode=00653201&save=0|1`
+  - `GET /etf/jpm?sourceCode=00401A&save=0|1`
 
 ### 對應角色處理
 
 - 前端 ETF list、持股頁、個股詳情頁、事件總覽頁照既有 API 顯示即可。
 - `/etf/first`、`/etf/ctbc` 是後端手動測試入口，前端正式畫面不需要直接呼叫。
-- 若日期選擇器需要禁用無資料日，仍使用 `GET /etf/available-dates?etfCode=00994A|00406A|00995A`。
+- 若日期選擇器需要禁用無資料日，仍使用 `GET /etf/available-dates?etfCode=00994A|00406A|00995A|00401A`。
 
 ### 其他必要補充
 
 - 這三支目前只建立每日抓取與最新快照；歷史回補等所有 ETF provider 建立完成後再批次處理。
-- `docs/openapi.json` 已補上 `/etf/first` 與 `/etf/ctbc` Internal endpoint 說明。
+- 摩根來源 xlsx 的 `Valuation Date` 為 `2026-06-26`，後端依 provider 規則正規化為 display date `2026-06-25`。
+- `docs/openapi.json` 已補上 `/etf/first`、`/etf/ctbc`、`/etf/jpm` Internal endpoint 說明。
 
 # 2026-06-25
 
