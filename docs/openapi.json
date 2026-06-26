@@ -379,6 +379,128 @@
         }
       }
     },
+    "/etf/ctbc": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "手動抓取 CTBC ETF 資料",
+        "description": "依 `sourceCode` 抓取中信投信官方 ETFHoldingWeight API，解析後可選擇是否寫入 Supabase。若未指定 `date`，後端會以今日查詢來源 API，並以 API 回傳的資料日期作為實際 snapshot date。",
+        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "00682450"
+            },
+            "description": "CTBC CNO 來源代碼；00406A=00682450，00995A=00653201"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-25"
+            },
+            "description": "指定抓取日期；也可使用 `snapshotDate`"
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否寫入 Supabase"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "解析或匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EzmoneyImportResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/first": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "手動抓取 First ETF 資料",
+        "description": "依 `sourceCode` 抓取第一金投信 `Get_hd` API，解析後可選擇是否寫入 Supabase。實際 snapshot date 以 API 回傳的 `sdate` 為準。",
+        "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "182"
+            },
+            "description": "第一金 fund ID；00994A=182"
+          },
+          {
+            "$ref": "#/components/parameters/EtfCode"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-06-25"
+            },
+            "description": "指定抓取日期；也可使用 `snapshotDate`"
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否寫入 Supabase"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "解析或匯入結果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EzmoneyImportResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events": {
       "get": {
         "tags": [
