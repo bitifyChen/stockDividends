@@ -46,7 +46,7 @@ export const getEtfEventsOverview = ({
   stockCode = null,
   etfCode = null,
   page = 1,
-  pageSize = 12,
+  pageSize = 20,
   limitPerEtf = 100
 } = {}) =>
   get('/etf/events/overview', {
@@ -63,7 +63,7 @@ export const getEtfEventsStockOverview = ({
   date = null,
   type = 'all',
   side = 'all',
-  etfType = 'active',
+  etfType = null,
   stockCode = null,
   sort = 'net_shares_abs',
   page = 1,

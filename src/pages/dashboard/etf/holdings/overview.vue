@@ -132,7 +132,7 @@ onMounted(() => {
       </div>
 
       <label class="date-picker-control">
-        <span>資料日</span>
+        <span>資料日期</span>
         <el-date-picker
           v-model="selectedDate"
           class="dashboard-date-picker"

@@ -51,7 +51,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 20px;
+    padding: 22px 24px;
   }
 
   :where(.etf-console, .stocks-page) .console-panel {
@@ -65,9 +65,9 @@
   }
 
   :where(.etf-console, .stocks-page) h1 {
-    margin: 4px 0 0;
+    margin: 6px 0 0;
     color: #f7fafc;
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 900;
   }
 
@@ -121,6 +121,7 @@
   :where(.etf-console, .stocks-page) .date-picker-control .el-date-editor {
     width: 220px;
     min-width: 220px;
+    height: 38px;
   }
 
   :where(.etf-console, .stocks-page) :where(.field select, .date-picker-control .el-date-editor),

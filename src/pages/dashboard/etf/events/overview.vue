@@ -17,7 +17,7 @@ const syncingDate = ref(false)
 const selectedDate = ref('')
 const selectedType = ref('all')
 const page = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(20)
 const limitPerEtf = ref(100)
 const items = ref([])
 const availableDates = ref([])
@@ -37,6 +37,7 @@ const stockHasMore = ref(false)
 const stockNextPage = ref(null)
 const stockErrorMessage = ref('')
 const selectedSort = ref('net_shares_abs')
+const selectedEtfType = ref('')
 
 const typeOptions = [
   { label: '全部', value: 'all' },
@@ -56,6 +57,12 @@ const sortOptions = [
   { label: '賣出 ETF 數', value: 'sell_etf_count' },
   { label: '事件 ETF 數', value: 'event_etf_count' },
   { label: '股票代號', value: 'stock_code' }
+]
+
+const etfTypeOptions = [
+  { label: '全部 ETF', value: '' },
+  { label: '主動 ETF', value: 'active' },
+  { label: '被動 ETF', value: 'passive' }
 ]
 
 const availableDateSet = computed(() => new Set(availableDates.value))
@@ -122,7 +129,7 @@ const loadStockOverview = async ({ append = false, date = selectedDate.value } =
     const response = await getEtfEventsStockOverview({
       date: date || null,
       type: selectedType.value,
-      etfType: 'active',
+      etfType: selectedEtfType.value || null,
       sort: selectedSort.value,
       page: stockPage.value,
       pageSize: stockPageSize.value,
@@ -186,13 +193,16 @@ const trackedEtfCount = computed(() => Number(coverage.value.tracked_etf_count |
 const notUpdatedEtfCount = computed(() => Number(coverage.value.not_updated_etf_count || 0))
 const notStartedEtfCount = computed(() => Number(coverage.value.not_started_etf_count || 0))
 const failedEtfCount = computed(() => Number(coverage.value.fetch_failed_etf_count || 0))
+const selectedEtfTypeLabel = computed(
+  () => etfTypeOptions.find((option) => option.value === selectedEtfType.value)?.label || '全部 ETF'
+)
 
 watch([selectedDate, selectedType], () => {
   if (syncingDate.value) return
   loadOverview()
 })
 
-watch(selectedSort, () => {
+watch([selectedSort, selectedEtfType], () => {
   loadStockOverview()
 })
 
@@ -228,7 +238,7 @@ onMounted(() => {
         </label>
 
         <label class="date-picker-control">
-          <span>資料日</span>
+          <span>資料日期</span>
           <el-date-picker
             v-model="selectedDate"
             class="dashboard-date-picker"
@@ -236,6 +246,7 @@ onMounted(() => {
             value-format="YYYY-MM-DD"
             placeholder="最新可用日期"
             :clearable="false"
+            placement="bottom-end"
             popper-class="dashboard-date-popper"
             :disabled-date="isDateDisabled"
           />
@@ -317,6 +328,18 @@ onMounted(() => {
 
           <div class="stock-overview-tools">
             <label class="field compact">
+              <span>ETF 類型</span>
+              <el-select v-model="selectedEtfType" class="dashboard-select">
+                <el-option
+                  v-for="item in etfTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </label>
+
+            <label class="field compact">
               <span>排序</span>
               <el-select v-model="selectedSort" class="dashboard-select">
                 <el-option
@@ -333,9 +356,9 @@ onMounted(() => {
         <div v-if="stockErrorMessage" class="error-banner">{{ stockErrorMessage }}</div>
 
         <div class="stock-summary-line">
-          <span>{{ selectedDate || '最新資料日' }}</span>
+          <span>{{ selectedDate || '最新資料日期' }}</span>
           <strong>{{ stockTotalCount }} 檔股票</strong>
-          <span>僅統計主動 ETF</span>
+          <span>{{ selectedEtfTypeLabel }}</span>
         </div>
 
         <div class="stock-card-grid">
