@@ -1367,6 +1367,100 @@
         }
       }
     },
+    "/etf/events/summary-notify": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Send or preview ETF daily event summary notification",
+        "description": "Builds the daily ETF event summary by taking the top stocks for first_buy, buy_increase, first_sell, sell_decrease and sell_out. By default this endpoint sends the summary to Telegram; use send=0 to preview without sending.",
+        "x-frontend-purpose": "後台維運按鈕使用，可補發或預覽每日 ETF 事件摘要通知。",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-07-02"
+            },
+            "description": "指定摘要資料日期；不帶時使用最新可用 ETF event display date。"
+          },
+          {
+            "name": "send",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "default": "1"
+            },
+            "description": "1 會發送 Telegram；0 只回傳預覽訊息。"
+          },
+          {
+            "name": "etfType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "active",
+                "passive"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "topN",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification send or preview result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sent": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "summary": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events/stock-overview": {
       "get": {
         "tags": [

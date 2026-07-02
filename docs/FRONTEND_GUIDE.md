@@ -1,3 +1,66 @@
+# 2026-07-02
+
+## 後台維運操作 API：ETF 批次、股利、摘要通知
+
+### 主旨
+
+後端提供後台可手動觸發的維運 API，前端可在管理畫面新增按鈕或表單，用於重跑 ETF 批次、重跑股利資料，以及補發 ETF 今日事件摘要 Telegram 通知。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/fetch-all?save=1`
+- `GET /etf/fetch-all?save=1&force=1`
+- `GET /dividend?mode=all`
+- `GET /dividend?stockId={stockCode}`
+- `GET /etf/events/summary-notify`
+
+### 建議接法
+
+- 重跑 ETF 每日批次：
+  - `GET /etf/fetch-all?save=1`
+  - 會依 provider 規則抓取 ETF 持股、寫入 Supabase、備份 xlsx，並執行 OHLC 日更新
+  - 成功後會發出原本 ETF 批次 Telegram 通知，並額外發一則 `ETF 今日事件摘要`
+- 強制重跑 ETF 每日批次：
+  - `GET /etf/fetch-all?save=1&force=1`
+  - 用於超過一般 release 時間判斷或需要強制重抓時；前端建議加確認視窗
+- 預覽 ETF 今日事件摘要，不發 Telegram：
+  - `GET /etf/events/summary-notify?date=YYYY-MM-DD&send=0`
+- 補發 ETF 今日事件摘要 Telegram：
+  - `GET /etf/events/summary-notify?date=YYYY-MM-DD&send=1`
+  - 若不帶 `date`，後端會使用最新可用 ETF event display date
+- 重跑全部股利資料：
+  - `GET /dividend?mode=all`
+  - 會逐一跑目前 Firebase `stocks` collection 內所有股票
+- 重跑單一股利資料：
+  - `GET /dividend?stockId=00919`
+
+### 支援參數
+
+- `/etf/events/summary-notify`
+  - `date`：指定摘要日期，格式 `YYYY-MM-DD`
+  - `send`：`1` 發送 Telegram，`0` 只預覽 message
+  - `etfType`：`all | active | passive`，預設 `all`
+  - `topN`：每個 type 取前幾檔，預設 `5`，最大 `20`
+- `/etf/fetch-all`
+  - `save`：`1` 寫入，`0` dry-run
+  - `force`：`1` 強制執行，預設 `0`
+
+### 對應角色處理
+
+- 後台按鈕建議區分「預覽」與「送出」，尤其是 Telegram 補發通知。
+- 這些是維運操作，不建議放在一般使用者可見頁面。
+- 前端不需要解析 ETF 批次通知內容；若要顯示結果，可直接呈現 API response 的 `results`、`ohlc`、`eventSummary`。
+
+### 其他必要補充
+
+- `/etf/events/summary-notify` 是新 API，已同步寫入 `docs/openapi.json`。
+- `/dividend?mode=all` 目前是既有 API，可能執行較久，前端應顯示 loading 與錯誤訊息。
+- `/etf/fetch-all?save=1` 會真的寫入資料與發通知，前端操作需加二次確認。
+
 # 2026-06-26
 
 ## 新增 00994A、00406A、00995A、00401A ETF 追蹤資料
