@@ -1367,6 +1367,70 @@
         }
       }
     },
+    "/maintenance/batch-status": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Get backend batch maintenance status",
+        "description": "Returns the latest known run and success status for backend maintenance jobs such as ETF fetch-all, dividend batch, ETF event summary notification, and OHLC daily fetch.",
+        "x-frontend-purpose": "後台維運頁使用，讓使用者在手動重跑前確認各功能最近成功時間。",
+        "parameters": [
+          {
+            "name": "includeDetails",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "default": "0"
+            },
+            "description": "1 時額外彙總 Firebase stocks 股利更新狀態；預設 0 以維持輕量。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch maintenance status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "etfFetchAll": {
+                          "type": "object"
+                        },
+                        "dividendFetchAll": {
+                          "type": "object"
+                        },
+                        "etfEventSummaryNotify": {
+                          "type": "object"
+                        },
+                        "ohlcDailyFetch": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events/summary-notify": {
       "get": {
         "tags": [

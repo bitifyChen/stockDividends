@@ -17,6 +17,7 @@ Backend
 - `GET /dividend?mode=all`
 - `GET /dividend?stockId={stockCode}`
 - `GET /etf/events/summary-notify`
+- `GET /maintenance/batch-status`
 
 ### 建議接法
 
@@ -32,6 +33,9 @@ Backend
 - 補發 ETF 今日事件摘要 Telegram：
   - `GET /etf/events/summary-notify?date=YYYY-MM-DD&send=1`
   - 若不帶 `date`，後端會使用最新可用 ETF event display date
+- 查詢批次狀態：
+  - `GET /maintenance/batch-status`
+  - 回傳 ETF 批次、股利批次、ETF 摘要通知、OHLC 日更新的上次狀態與最近成功資訊
 - 重跑全部股利資料：
   - `GET /dividend?mode=all`
   - 會逐一跑目前 Firebase `stocks` collection 內所有股票
@@ -48,10 +52,17 @@ Backend
 - `/etf/fetch-all`
   - `save`：`1` 寫入，`0` dry-run
   - `force`：`1` 強制執行，預設 `0`
+- `/maintenance/batch-status`
+  - `includeDetails`：`1` 時會額外彙總 Firebase stocks 股利更新狀態，預設不帶以維持輕量
+  - `items.etfFetchAll.status.lastSuccessAt`：ETF 批次最近完整成功時間
+  - `items.dividendFetchAll.status.lastSuccessAt`：股利批次最近完整成功時間
+  - `items.etfEventSummaryNotify.status.lastSuccessAt`：ETF 摘要通知最近成功發送時間
+  - `items.ohlcDailyFetch.latestSuccessRun.finished_at`：OHLC 日更新最近成功時間
 
 ### 對應角色處理
 
 - 後台按鈕建議區分「預覽」與「送出」，尤其是 Telegram 補發通知。
+- 前端進入維運頁時可先打 `/maintenance/batch-status`，顯示各功能最近成功時間，再讓使用者判斷是否需要重跑。
 - 這些是維運操作，不建議放在一般使用者可見頁面。
 - 前端不需要解析 ETF 批次通知內容；若要顯示結果，可直接呈現 API response 的 `results`、`ohlc`、`eventSummary`。
 
