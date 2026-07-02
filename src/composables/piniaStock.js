@@ -117,6 +117,8 @@ export const getDividendList = (state) => {
             return add(total, stock.buyNum)
           }, 0)
 
+        if (stockNum <= 0) return
+
         const _data = {
           year: new Date(i.CashDividendPaymentDate).getFullYear(),
           month: new Date(i.CashDividendPaymentDate).getMonth() + 1,
