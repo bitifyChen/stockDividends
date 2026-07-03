@@ -1367,6 +1367,124 @@
         }
       }
     },
+    "/ohlc/daily-fetch": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Manually run official daily OHLC fetch",
+        "description": "Triggers the TWSE/TPEx official daily OHLC update without running ETF fetch-all. If date is omitted, backend resolves the latest official trade date available from TWSE and TPEx.",
+        "x-frontend-purpose": "後台維運頁 OHLC 手動重跑按鈕使用；一般 K 線圖仍使用 `/ohlc/stocks/{stockCode}/candles`。",
+        "parameters": [
+          {
+            "name": "tradeDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-07-02"
+            },
+            "description": "指定交易日；不帶時使用官方來源最近可取得的交易日。也可使用 `date`。"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "default": "0"
+            },
+            "description": "1 時即使該交易日已有足量資料，也重新寫入。"
+          },
+          {
+            "name": "syncWatchlistFirst",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "default": "1"
+            },
+            "description": "1 時先同步 OHLC watchlist。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OHLC daily fetch result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OHLCDailyFetchResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Manually run official daily OHLC fetch",
+        "description": "POST version for the dashboard maintenance button. If `tradeDate` is omitted, backend resolves the latest official trade date available from TWSE and TPEx.",
+        "x-frontend-purpose": "後台維運頁 OHLC 手動重跑按鈕使用。",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tradeDate": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-07-02",
+                    "description": "指定交易日；不帶時使用官方來源最近可取得的交易日。"
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "true 時即使該交易日已有足量資料，也重新寫入。"
+                  },
+                  "syncWatchlistFirst": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "是否先同步 OHLC watchlist。"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OHLC daily fetch result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OHLCDailyFetchResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/maintenance/batch-status": {
       "get": {
         "tags": [
@@ -1407,16 +1525,16 @@
                       "type": "object",
                       "properties": {
                         "etfFetchAll": {
-                          "type": "object"
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
                         "dividendFetchAll": {
-                          "type": "object"
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
                         "etfEventSummaryNotify": {
-                          "type": "object"
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
                         "ohlcDailyFetch": {
-                          "type": "object"
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
                         }
                       }
                     }
@@ -3279,6 +3397,175 @@
             }
           }
         }
+      },
+      "MaintenanceJobStatus": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "category",
+          "enabled",
+          "lastStatus",
+          "successCount",
+          "failedCount",
+          "skippedCount",
+          "waitingCount",
+          "rowCount",
+          "payload",
+          "updatedAt"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "etf_fetch_all"
+          },
+          "label": {
+            "type": "string",
+            "example": "ETF 每日批次"
+          },
+          "category": {
+            "type": "string",
+            "example": "etf"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "lastStatus": {
+            "type": "string",
+            "enum": [
+              "running",
+              "success",
+              "partial_success",
+              "failed",
+              "skipped",
+              "waiting",
+              "unknown"
+            ],
+            "example": "success"
+          },
+          "lastRunAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastFinishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastSuccessAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "最近一次執行結束後的錯誤；本次成功、正常略過或正常等待時為 null。"
+          },
+          "lastDataDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "實際處理的資料日，例如 ETF display date 或 OHLC trade date。"
+          },
+          "lastSourceDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "來源資料日，例如 ETF source snapshot date。"
+          },
+          "successCount": {
+            "type": "integer"
+          },
+          "failedCount": {
+            "type": "integer"
+          },
+          "skippedCount": {
+            "type": "integer"
+          },
+          "waitingCount": {
+            "type": "integer"
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": true
+      },
+      "OHLCDailyFetchResponse": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "example": "backup"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "description": "實際寫入的交易日。未指定 tradeDate 時，由後端依官方資料可用性決定。",
+            "example": "2026-07-02"
+          },
+          "watchlist_count": {
+            "type": "integer",
+            "example": 2300
+          },
+          "official_row_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 2400
+          },
+          "written_count": {
+            "type": "integer",
+            "example": 2309
+          },
+          "existing_count": {
+            "type": "integer",
+            "example": 2309
+          },
+          "skipped": {
+            "type": "boolean",
+            "example": false
+          },
+          "skip_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "existing_daily_rows"
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
       },
       "FetchAllResponse": {
         "type": "object",

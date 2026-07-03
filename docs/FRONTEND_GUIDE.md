@@ -1,5 +1,185 @@
 # 2026-07-02
 
+## `/maintenance/batch-status` 改為標準 job status schema
+
+### 主旨
+
+後端統一 Firebase `maintenance_status` schema，前端設定頁不需要再針對 ETF / OHLC / 股利 / 通知寫不同欄位 mapping。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /maintenance/batch-status`
+- `GET /maintenance/batch-status?includeDetails=1`
+
+### 改動內容
+
+- 預設 response 只讀 Firebase `maintenance_status`，不再每次都查 Supabase / Turso / Firebase stocks 詳情。
+- `items` 底下每個 job 直接是標準欄位，不再包一層 `status`。
+- 標準欄位：
+  - `key`
+  - `label`
+  - `category`
+  - `enabled`
+  - `lastStatus`
+  - `lastRunAt`
+  - `lastFinishedAt`
+  - `lastSuccessAt`
+  - `lastError`
+  - `lastDataDate`
+  - `lastSourceDate`
+  - `successCount`
+  - `failedCount`
+  - `skippedCount`
+  - `waitingCount`
+  - `rowCount`
+  - `payload`
+  - `updatedAt`
+- `includeDetails=1` 時才額外附加 debug/detail 資訊：
+  - `items.etfFetchAll.latestSuccessLog`
+  - `items.ohlcDailyFetch.latestSuccessRun`
+  - `items.dividendFetchAll.firebaseSummary`
+
+### 前端接法
+
+- 取得 job：
+
+```js
+const job = response.items.etfFetchAll
+```
+
+- 狀態：
+
+```js
+job.lastStatus
+```
+
+- 前次成功時間：
+
+```js
+job.lastSuccessAt
+```
+
+- 本次實際資料日：
+
+```js
+job.lastDataDate
+```
+
+- 錯誤摘要：
+
+```js
+job.lastError
+```
+
+### 對應角色處理
+
+- `/dashboard/setting` 可移除舊 fallback mapping：
+  - `record.status`
+  - `record.latestSuccessRun`
+  - `record.latestSuccessLog`
+- 狀態卡片統一讀 `lastStatus`、`lastSuccessAt`、`lastDataDate`。
+- 若要顯示進階 debug，再使用 `includeDetails=1`；一般進頁不要帶，避免多查資料庫。
+
+### 其他必要補充
+
+- 既有 Firebase 舊欄位不需要手動刪除；後端下次寫入同一 job 時會覆寫成標準 schema。
+- 在任務尚未重新寫入前，後端會把舊格式 normalize 成標準 response，避免過渡期前端壞掉。
+- `lastError` 代表最近一次執行結束後的錯誤；若本次成功、正常等待或正常略過，會清為 `null`。
+
+# 2026-07-02
+
+## 新增 OHLC 官方日更新手動重跑 API
+
+### 主旨
+
+後端新增獨立 OHLC 日更新 API，前端設定頁可單獨重跑 K 線日資料，不需要連同 ETF 批次一起執行。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- 新增 `POST /ohlc/daily-fetch`
+- 新增 `GET /ohlc/daily-fetch`
+- 既有 `GET /maintenance/batch-status`
+
+### 建議接法
+
+- 後台設定頁的 OHLC 卡片可新增「重跑 OHLC 日線」按鈕：
+  - `POST /ohlc/daily-fetch`
+- 若只是一般重跑，不需要帶參數：
+
+```json
+{}
+```
+
+- 若要指定交易日：
+
+```json
+{
+  "tradeDate": "2026-07-02"
+}
+```
+
+- 若要強制重寫指定交易日：
+
+```json
+{
+  "tradeDate": "2026-07-02",
+  "force": true
+}
+```
+
+### 支援參數
+
+- `tradeDate`：選填，指定交易日，格式 `YYYY-MM-DD`
+- `force`：選填，`true` 時即使該交易日已有足量資料，也會重新寫入
+- `syncWatchlistFirst`：選填，預設 `true`，是否先同步 OHLC watchlist
+
+### 日期規則
+
+- 未帶 `tradeDate` 時，後端不會直接使用系統日期。
+- 後端會檢查 TWSE / TPEx 官方資料，使用「最近可取得的交易日」。
+- 因此若明早執行，而官方來源已揭露今天交易資料，會寫入今天交易日。
+- 若官方尚未揭露，會自動退回最近有資料的交易日，避免寫入空資料或錯誤日期。
+
+### 對應角色處理
+
+- `/dashboard/setting` 的 OHLC 卡片可改接 `POST /ohlc/daily-fetch`。
+- 執行完成後重新打 `GET /maintenance/batch-status`，讀取 `items.ohlcDailyFetch.latestSuccessRun.finished_at` 顯示前次成功時間。
+- `POST /ohlc/fetch` 仍是 FinMind 指定股票歷史補資料用途，不建議當作每日全市場 OHLC 重跑按鈕。
+
+### `/dashboard/setting` 重跑與強制重跑差異
+
+- ETF 批次更新：
+  - `重跑 ETF 批次`：呼叫 `GET /etf/fetch-all?save=1`，依各 provider 的 release 時間與既有保護規則執行；若來源尚未到公布時間，可能回 `waiting`。
+  - `強制重跑`：呼叫 `GET /etf/fetch-all?save=1&force=1`，略過 release 時間判斷，適合已確認資料已公布但一般重跑仍被擋住時使用。
+  - 強制重跑可能重新寫入同一資料日、重新備份檔案，並重新發送批次通知，前端必須保留二次確認。
+- OHLC 日線批次：
+  - `重跑 OHLC 日線`：呼叫 `POST /ohlc/daily-fetch`，後端會解析最近官方可取得交易日；若該日已有足量資料，會略過重寫並回傳 `skipped=true`。
+  - `強制重跑`：呼叫 `POST /ohlc/daily-fetch` 並帶 `{ "force": true }`，即使該交易日已有資料也會重新寫入。
+  - 未指定 `tradeDate` 時，後端以官方 TWSE / TPEx 可取得資料決定實際 `trade_date`，不是單純用今天日期。
+- 股利資料更新：
+  - `更新全部股利`：呼叫 `GET /dividend?mode=all`，跑全市場既有 Firebase stocks 清單。
+  - `更新單一股票`：呼叫 `GET /dividend?stockId={stockCode}`，只補指定股票。
+  - 股利目前沒有 `force` 參數，前端不需要做「強制重跑」按鈕。
+- ETF 摘要通知：
+  - `預覽通知`：呼叫 `GET /etf/events/summary-notify?send=0`，只回傳 message，不發 Telegram。
+  - `發送 Telegram`：呼叫 `GET /etf/events/summary-notify?send=1`，會真的送出通知；前端需保留二次確認。
+
+### 其他必要補充
+
+- 此 API 不發 Telegram。
+- 此 API 不會抓 ETF 持股，也不會觸發 `/etf/fetch-all`。
+- response 的 `trade_date` 是實際寫入的交易日，前端若要提示使用者，應顯示此欄位。
+
+# 2026-07-02
+
 ## 後台維運操作 API：ETF 批次、股利、摘要通知
 
 ### 主旨

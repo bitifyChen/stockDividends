@@ -5,12 +5,15 @@ import { RefreshCw } from 'lucide-vue-next'
 import { getEtfAvailableDates, getEtfHoldings, getEtfList } from '@/api/etf.js'
 import TwoSparkline from '@/components/Two/TwoSparkline.vue'
 import TwoTable from '@/components/Two/TwoTable.vue'
+import DashboardTechnicalCandles from '@/components/dashboard/DashboardTechnicalCandles.vue'
 import EtfHoldingsViewSwitcher from '@/components/dashboard/EtfHoldingsViewSwitcher.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import {
+  formatNumber,
   formatRatio,
   formatShare,
   normalizeArray,
+  normalizeObject,
   shareColumnLabel,
   toShareUnitValue
 } from '@/utils/etfDashboard.js'
@@ -21,6 +24,7 @@ const dashboardSettingStore = useDashboardSettingStore()
 const loadingList = ref(false)
 const loadingDates = ref(false)
 const loadingData = ref(false)
+const loadingTechnical = ref(false)
 const switchingEtf = ref(false)
 const etfOptions = ref([])
 const selectedEtfCode = ref('')
@@ -28,7 +32,10 @@ const snapshotDate = ref('')
 const availableDates = ref([])
 const availableRange = ref({ firstSeenDate: '', lastSnapshotDate: '' })
 const rows = ref([])
+const technicalRange = ref('6m')
+const technicalInterval = ref('daily')
 const errorMessage = ref('')
+const technicalChartRef = ref(null)
 
 const columns = computed(() => [
   { label: '排名', prop: 'source_rank', width: '70', align: 'center' },
@@ -154,6 +161,13 @@ const loadHoldings = async () => {
   }
 }
 
+const reloadHoldingsPage = async () => {
+  await Promise.all([
+    loadHoldings(),
+    technicalChartRef.value?.reload({ force: true }) || Promise.resolve()
+  ])
+}
+
 const selectedEtf = computed(
   () => etfOptions.value.find((item) => item.etf_code === selectedEtfCode.value) || null
 )
@@ -170,8 +184,7 @@ const sortedRows = computed(() =>
 watch(selectedEtfCode, async () => {
   switchingEtf.value = true
   snapshotDate.value = ''
-  await loadAvailableDates()
-  await loadHoldings()
+  await Promise.all([loadAvailableDates(), loadHoldings()])
   switchingEtf.value = false
 })
 
@@ -227,11 +240,30 @@ onMounted(async () => {
           />
         </label>
 
-        <button class="refresh-button" type="button" :disabled="loadingData" @click="loadHoldings">
+        <button
+          class="refresh-button"
+          type="button"
+          :disabled="loadingData || loadingTechnical"
+          @click="reloadHoldingsPage"
+        >
           <RefreshCw :size="16" />
         </button>
       </div>
     </section>
+
+    <DashboardTechnicalCandles
+      ref="technicalChartRef"
+      v-model:range="technicalRange"
+      v-model:interval="technicalInterval"
+      :stock-code="selectedEtfCode"
+      title="ETF K 線"
+      :description="`${selectedEtfCode || '-'} 價格走勢`"
+      empty-text="目前沒有可繪製的 ETF K 線資料"
+      error-text="讀取 ETF K 線失敗"
+      panel-class="etf-candle-panel"
+      @loading-change="loadingTechnical = $event"
+    />
+
     <section class="console-panel">
       <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
 

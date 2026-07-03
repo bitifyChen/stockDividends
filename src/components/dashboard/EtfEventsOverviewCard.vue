@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
 import { formatShare, shareColumnLabel } from '@/utils/etfDashboard.js'
 
 const props = defineProps({
@@ -79,6 +78,7 @@ const isBuyEvent = (event) => {
 }
 
 const eventTone = (event) => (isBuyEvent(event) ? 'event-buy' : 'event-sell')
+const metricTone = (event) => (isBuyEvent(event) ? 'metric-buy' : 'metric-sell')
 
 const formatSignedShare = (event) => {
   const value = changeValue(event)
@@ -123,6 +123,9 @@ const detailRoute = (event) => ({
     stockCode: String(event.stock_code)
   }
 })
+
+const detailTooltip = (event) =>
+  `前往查看 ${props.group.etf_code || '-'} ${props.group.etf_name || 'ETF'} 的 ${event.stock_code || '-'} ${event.stock_name || '個股'} 歷史資料`
 </script>
 
 <template>
@@ -151,53 +154,56 @@ const detailRoute = (event) => ({
       :class="{ 'is-scrollable': hasScrollableEvents }"
     >
       <div class="event-list">
-        <div
+        <el-tooltip
           v-for="event in sortedEvents"
           :key="`${group.etf_code}-${event.stock_code}-${event.snapshot_date}-${event.event_type}`"
-          class="event-row"
+          :content="detailTooltip(event)"
+          :disabled="!event.stock_code"
+          placement="right"
+          effect="dark"
+          popper-class="event-row-tooltip"
+          trigger="hover focus"
+          :show-after="420"
+          :hide-after="80"
         >
-          <el-tag class="event-type" :class="eventTone(event)" effect="plain" round size="small">
-            {{ eventLabel(event) }}
-          </el-tag>
-
-          <div class="event-main">
-            <div class="stock-identity">
-              <strong>{{ event.stock_name || '-' }}</strong>
-              <span>{{ event.stock_code || '-' }}</span>
-            </div>
-          </div>
-
-          <div class="event-metrics">
-            <el-tooltip
-              :content="eventTooltip(event)"
-              placement="top"
-              effect="dark"
-              popper-class="event-share-tooltip"
+          <div class="event-tooltip-reference">
+            <component
+              :is="event.stock_code ? 'router-link' : 'div'"
+              :to="event.stock_code ? detailRoute(event) : undefined"
+              :class="['event-row', { 'event-row-link': event.stock_code }]"
+              :aria-label="event.stock_code ? detailTooltip(event) : undefined"
             >
-              <button
-                class="change-percent"
-                type="button"
+              <el-tag
+                class="event-type"
                 :class="eventTone(event)"
+                effect="plain"
+                round
+                size="small"
+              >
+                {{ eventLabel(event) }}
+              </el-tag>
+
+              <div class="event-main">
+                <div class="stock-identity">
+                  <strong>{{ event.stock_name || '-' }}</strong>
+                  <span>{{ event.stock_code || '-' }}</span>
+                </div>
+              </div>
+
+              <strong class="event-change" :class="metricTone(event)">
+                {{ formatSignedShare(event) }}
+              </strong>
+
+              <span
+                class="change-percent"
+                :class="metricTone(event)"
                 :aria-label="`${event.stock_name || event.stock_code}，${eventTooltip(event)}`"
               >
                 {{ formatPercentage(event) }}
-              </button>
-            </el-tooltip>
-
-            <strong class="event-change" :class="eventTone(event)">
-              {{ formatSignedShare(event) }}
-            </strong>
+              </span>
+            </component>
           </div>
-
-          <router-link
-            v-if="event.stock_code"
-            class="detail-link"
-            :to="detailRoute(event)"
-            :aria-label="`查看 ${event.stock_name || event.stock_code} 詳情`"
-          >
-            <ArrowUpRight :size="14" aria-hidden="true" />
-          </router-link>
-        </div>
+        </el-tooltip>
       </div>
     </el-scrollbar>
 
@@ -294,23 +300,43 @@ h2 {
   display: grid;
 }
 
+.event-tooltip-reference {
+  display: block;
+  min-width: 0;
+}
+
 .event-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) minmax(74px, auto) minmax(52px, auto);
+  gap: 12px;
   align-items: center;
   min-width: 0;
   padding: 8px 14px;
   border-bottom: 1px solid rgb(148 163 184 / 0.1);
-  transition: background-color 0.16s ease;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
-.event-row:last-child {
+.event-list > :last-child .event-row {
   border-bottom: 0;
 }
 
-.event-row:hover {
+.event-row-link {
+  cursor: pointer;
+}
+
+.event-row-link:hover,
+.event-row-link:focus-visible {
   background: rgb(34 211 238 / 0.035);
+  box-shadow: inset 2px 0 0 rgb(34 211 238 / 0.42);
+}
+
+.event-row-link:focus-visible {
+  outline: 2px solid rgb(34 211 238 / 0.55);
+  outline-offset: -2px;
 }
 
 .event-main {
@@ -342,13 +368,6 @@ h2 {
   font-weight: 800;
 }
 
-.event-metrics {
-  display: grid;
-  min-width: 76px;
-  justify-items: end;
-  gap: 3px;
-}
-
 .event-change,
 .change-percent {
   flex: 0 0 auto;
@@ -357,22 +376,25 @@ h2 {
 }
 
 .event-change {
-  font-size: 11px;
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .change-percent {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: help;
+  justify-self: end;
+  min-width: 48px;
+  text-align: right;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 950;
+  opacity: 0.88;
+  white-space: nowrap;
 }
 
-.change-percent:focus-visible {
-  outline: 2px solid rgb(34 211 238 / 0.75);
-  outline-offset: 3px;
-  border-radius: 4px;
+.event-row-link:hover .change-percent,
+.event-row-link:focus-visible .change-percent {
+  opacity: 1;
 }
 
 .event-buy {
@@ -387,33 +409,45 @@ h2 {
   color: var(--stock-fall-color);
 }
 
-.detail-link {
-  display: inline-flex;
-  min-height: 30px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-  border: 1px solid rgb(148 163 184 / 0.14);
-  border-radius: 7px;
-  background: rgb(255 255 255 / 0.025);
-  color: #9cabbc;
-  text-decoration: none;
-  transition:
-    border-color 0.16s ease,
-    color 0.16s ease,
-    background-color 0.16s ease;
+.metric-buy {
+  color: var(--stock-rise-color);
 }
 
-.detail-link:hover,
-.detail-link:focus-visible {
-  border-color: rgb(34 211 238 / 0.32);
-  background: rgb(34 211 238 / 0.08);
-  color: #67e8f9;
+.metric-sell {
+  color: var(--stock-fall-color);
 }
 
-.detail-link:focus-visible {
-  outline: 2px solid rgb(34 211 238 / 0.6);
-  outline-offset: 2px;
+:global(.event-row-tooltip.el-popper) {
+  max-width: 280px;
+  border: 1px solid rgb(71 85 105 / 0.14) !important;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.92), rgb(248 252 254 / 0.86)) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.88),
+    0 18px 44px rgb(15 23 42 / 0.16);
+  color: #334155 !important;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+:global(.event-row-tooltip.el-popper .el-popper__arrow::before) {
+  border-color: rgb(71 85 105 / 0.14) !important;
+  background: rgb(248 252 254 / 0.9) !important;
+}
+
+:global(html.dark .event-row-tooltip.el-popper) {
+  border-color: rgb(148 163 184 / 0.16) !important;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.025)), #161b28 !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 18px 44px rgb(0 0 0 / 0.24);
+  color: #cbd5e1 !important;
+}
+
+:global(html.dark .event-row-tooltip.el-popper .el-popper__arrow::before) {
+  border-color: rgb(148 163 184 / 0.16) !important;
+  background: #161b28 !important;
 }
 
 .card-empty {
@@ -473,7 +507,7 @@ h2 {
   }
 
   .event-row {
-    grid-template-columns: minmax(0, 1fr) auto 30px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 8px;
     padding-inline: 12px;
   }
@@ -483,16 +517,18 @@ h2 {
     justify-self: start;
   }
 
-  .detail-link {
-    width: 30px;
-    padding: 0;
+  .event-change {
+    grid-column: 2;
+  }
+
+  .change-percent {
+    grid-column: 3;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .overview-card,
-  .event-row,
-  .detail-link {
+  .event-row {
     transition: none;
   }
 

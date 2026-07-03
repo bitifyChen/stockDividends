@@ -3,6 +3,10 @@ defineProps({
   rows: {
     type: Number,
     default: 6
+  },
+  variant: {
+    type: String,
+    default: 'default'
   }
 })
 </script>
@@ -26,14 +30,20 @@ defineProps({
         </div>
 
         <div class="skeleton-list">
-          <div v-for="row in rows" :key="row" class="skeleton-row">
+          <div
+            v-for="row in rows"
+            :key="row"
+            class="skeleton-row"
+            :class="{ 'is-event-row': variant === 'events' }"
+          >
             <el-skeleton-item variant="button" class="rank-pill" />
             <div class="row-main">
               <el-skeleton-item variant="text" class="stock-line" />
               <el-skeleton-item variant="text" class="sub-line" />
             </div>
             <el-skeleton-item variant="text" class="metric-line" />
-            <el-skeleton-item variant="button" class="action-pill" />
+            <el-skeleton-item v-if="variant === 'events'" variant="text" class="percent-line" />
+            <el-skeleton-item v-else variant="button" class="action-pill" />
           </div>
         </div>
       </template>
@@ -110,6 +120,11 @@ defineProps({
   border-bottom: 1px solid rgb(148 163 184 / 0.1);
 }
 
+.skeleton-row.is-event-row {
+  grid-template-columns: 52px minmax(0, 1fr) minmax(74px, auto) minmax(52px, auto);
+  gap: 12px;
+}
+
 .rank-pill {
   width: 46px;
   height: 24px;
@@ -132,6 +147,12 @@ defineProps({
 
 .metric-line {
   width: 52px;
+  justify-self: end;
+}
+
+.percent-line {
+  width: 42px;
+  justify-self: end;
 }
 
 .action-pill {
@@ -155,8 +176,21 @@ defineProps({
     padding-inline: 12px;
   }
 
+  .skeleton-row.is-event-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+  }
+
   .rank-pill {
     grid-column: 1 / -1;
+  }
+
+  .skeleton-row.is-event-row .metric-line {
+    grid-column: 2;
+  }
+
+  .skeleton-row.is-event-row .percent-line {
+    grid-column: 3;
   }
 }
 </style>

@@ -5,10 +5,15 @@ import { getEtfHoldingsOverview } from '@/api/etf.js'
 import EtfHoldingsOverviewCard from '@/components/dashboard/EtfHoldingsOverviewCard.vue'
 import EtfHoldingsViewSwitcher from '@/components/dashboard/EtfHoldingsViewSwitcher.vue'
 import EtfOverviewCardSkeleton from '@/components/dashboard/EtfOverviewCardSkeleton.vue'
+import {
+  createDashboardCacheKey,
+  useDashboardDataCacheStore
+} from '@/stores/useDashboardDataCache.js'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { normalizeArray } from '@/utils/etfDashboard.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
+const dashboardDataCacheStore = useDashboardDataCacheStore()
 const loadingData = ref(false)
 const loadingMore = ref(false)
 const syncingDate = ref(false)
@@ -29,7 +34,23 @@ const isDateDisabled = (date) => {
   return !availableDateSet.value.has(dayjs(date).format('YYYY-MM-DD'))
 }
 
-const loadHoldings = async ({ append = false } = {}) => {
+const applyHoldingsResponse = async (response, { append = false } = {}) => {
+  const nextGroups = normalizeArray(response?.items)
+  groups.value = append ? [...groups.value, ...nextGroups] : nextGroups
+  syncingDate.value = true
+  selectedDate.value = response?.date || selectedDate.value
+  availableDates.value = normalizeArray(response?.availableDates)
+  await nextTick()
+  syncingDate.value = false
+  coverage.value = response?.coverage || {}
+  hasMore.value = Boolean(response?.hasMore)
+  nextPage.value = response?.nextPage ?? null
+  page.value = Number(response?.page || page.value)
+  pageSize.value = Number(response?.pageSize || pageSize.value)
+  limitPerEtf.value = Number(response?.limitPerEtf || limitPerEtf.value)
+}
+
+const loadHoldings = async ({ append = false, force = false } = {}) => {
   if (append) {
     loadingMore.value = true
   } else {
@@ -39,27 +60,30 @@ const loadHoldings = async ({ append = false } = {}) => {
     groups.value = []
   }
 
-  try {
-    const response = await getEtfHoldingsOverview({
-      date: selectedDate.value || null,
-      page: page.value,
-      pageSize: pageSize.value,
-      limitPerEtf: limitPerEtf.value
-    })
+  const query = {
+    date: selectedDate.value || null,
+    page: page.value,
+    pageSize: pageSize.value,
+    limitPerEtf: limitPerEtf.value
+  }
+  const cacheKey = createDashboardCacheKey('etfHoldingsOverview', query)
+  const cached = force ? null : dashboardDataCacheStore.getFresh(cacheKey)
 
-    const nextGroups = normalizeArray(response?.items)
-    groups.value = append ? [...groups.value, ...nextGroups] : nextGroups
-    syncingDate.value = true
-    selectedDate.value = response?.date || selectedDate.value
-    availableDates.value = normalizeArray(response?.availableDates)
-    await nextTick()
-    syncingDate.value = false
-    coverage.value = response?.coverage || {}
-    hasMore.value = Boolean(response?.hasMore)
-    nextPage.value = response?.nextPage ?? null
-    page.value = Number(response?.page || page.value)
-    pageSize.value = Number(response?.pageSize || pageSize.value)
-    limitPerEtf.value = Number(response?.limitPerEtf || limitPerEtf.value)
+  if (cached) {
+    await applyHoldingsResponse(cached, { append })
+    loadingData.value = false
+    loadingMore.value = false
+    return
+  }
+
+  try {
+    const response = await dashboardDataCacheStore.remember(
+      cacheKey,
+      () => getEtfHoldingsOverview(query),
+      { force }
+    )
+
+    await applyHoldingsResponse(response, { append })
   } catch (error) {
     errorMessage.value = error?.message || '載入 ETF 前十大持股失敗'
     if (!append) groups.value = []

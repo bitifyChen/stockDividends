@@ -21,6 +21,12 @@ router.beforeEach(async (to, from, next) => {
       const user = await checkUser()
       piniaUserInfo.setUserInfo(user)
       cookies.set('token', user.uid)
+
+      if (to?.meta?.requiresSuperuser && !piniaUserInfo.isSuperuser) {
+        next({ name: 'Dashboard_Home' })
+        return
+      }
+
       next()
     } catch (error) {
       next({

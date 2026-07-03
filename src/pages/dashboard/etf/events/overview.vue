@@ -3,14 +3,24 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
 import { getEtfEventsOverview, getEtfEventsStockOverview } from '@/api/etf.js'
+import {
+  etfEventStockSortOptions,
+  etfEventTypeOptions,
+  etfTypeOptions
+} from '@/data/dashboardDataMapping.js'
 import EtfEventsOverviewCard from '@/components/dashboard/EtfEventsOverviewCard.vue'
 import EtfEventsStockOverviewCard from '@/components/dashboard/EtfEventsStockOverviewCard.vue'
 import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
 import EtfOverviewCardSkeleton from '@/components/dashboard/EtfOverviewCardSkeleton.vue'
+import {
+  createDashboardCacheKey,
+  useDashboardDataCacheStore
+} from '@/stores/useDashboardDataCache.js'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { normalizeArray } from '@/utils/etfDashboard.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
+const dashboardDataCacheStore = useDashboardDataCacheStore()
 const loadingData = ref(false)
 const loadingMore = ref(false)
 const syncingDate = ref(false)
@@ -39,31 +49,8 @@ const stockErrorMessage = ref('')
 const selectedSort = ref('net_shares_abs')
 const selectedEtfType = ref('')
 
-const typeOptions = [
-  { label: '全部', value: 'all' },
-  { label: '首買', value: 'first_buy' },
-  { label: '加碼', value: 'buy_increase' },
-  { label: '首賣', value: 'first_sell' },
-  { label: '減碼', value: 'sell_decrease' },
-  { label: '出清', value: 'sell_out' }
-]
-
-const sortOptions = [
-  { label: '淨變動絕對值', value: 'net_shares_abs' },
-  { label: '淨買超', value: 'net_shares' },
-  { label: '買進合計', value: 'buy_shares' },
-  { label: '賣出合計', value: 'sell_shares' },
-  { label: '買進 ETF 數', value: 'buy_etf_count' },
-  { label: '賣出 ETF 數', value: 'sell_etf_count' },
-  { label: '事件 ETF 數', value: 'event_etf_count' },
-  { label: '股票代號', value: 'stock_code' }
-]
-
-const etfTypeOptions = [
-  { label: '全部 ETF', value: '' },
-  { label: '主動 ETF', value: 'active' },
-  { label: '被動 ETF', value: 'passive' }
-]
+const typeOptions = etfEventTypeOptions
+const sortOptions = etfEventStockSortOptions
 
 const availableDateSet = computed(() => new Set(availableDates.value))
 const isDateDisabled = (date) => {
@@ -71,7 +58,52 @@ const isDateDisabled = (date) => {
   return !availableDateSet.value.has(dayjs(date).format('YYYY-MM-DD'))
 }
 
-const loadEvents = async ({ append = false } = {}) => {
+const applyEventsResponse = async (response, { append = false } = {}) => {
+  const nextItems = normalizeArray(response?.items)
+  items.value = append ? [...items.value, ...nextItems] : nextItems
+  syncingDate.value = true
+  selectedDate.value = response?.date || selectedDate.value
+  availableDates.value = normalizeArray(response?.availableDates)
+  await nextTick()
+  syncingDate.value = false
+  coverage.value = response?.coverage || {}
+  totalCount.value = Number(response?.totalCount || 0)
+  hasMore.value = Boolean(response?.hasMore)
+  nextPage.value = response?.nextPage ?? null
+  page.value = Number(response?.page || page.value)
+  pageSize.value = Number(response?.pageSize || pageSize.value)
+  limitPerEtf.value = Number(response?.limitPerEtf || limitPerEtf.value)
+}
+
+const applyStockOverviewResponse = (response, { append = false } = {}) => {
+  const nextItems = normalizeArray(response?.items)
+  stockItems.value = append ? [...stockItems.value, ...nextItems] : nextItems
+  stockTotalCount.value = Number(response?.totalCount || 0)
+  stockHasMore.value = Boolean(response?.hasMore)
+  stockNextPage.value = response?.nextPage ?? null
+  stockPage.value = Number(response?.page || stockPage.value)
+  stockPageSize.value = Number(response?.pageSize || stockPageSize.value)
+  stockLimitPerStock.value = Number(response?.limitPerStock || stockLimitPerStock.value)
+}
+
+const loadEvents = async ({ append = false, force = false } = {}) => {
+  const requestParams = {
+    date: selectedDate.value || null,
+    type: selectedType.value,
+    page: append ? page.value : 1,
+    pageSize: pageSize.value,
+    limitPerEtf: limitPerEtf.value
+  }
+  const cacheKey = createDashboardCacheKey('etfEventsOverview', requestParams)
+  const cached = force ? null : dashboardDataCacheStore.getFresh(cacheKey)
+
+  if (cached) {
+    errorMessage.value = ''
+    if (!append) page.value = 1
+    await applyEventsResponse(cached, { append })
+    return
+  }
+
   if (append) {
     loadingMore.value = true
   } else {
@@ -82,28 +114,13 @@ const loadEvents = async ({ append = false } = {}) => {
   }
 
   try {
-    const response = await getEtfEventsOverview({
-      date: selectedDate.value || null,
-      type: selectedType.value,
-      page: page.value,
-      pageSize: pageSize.value,
-      limitPerEtf: limitPerEtf.value
-    })
+    const response = await dashboardDataCacheStore.remember(
+      cacheKey,
+      () => getEtfEventsOverview(requestParams),
+      { force }
+    )
 
-    const nextItems = normalizeArray(response?.items)
-    items.value = append ? [...items.value, ...nextItems] : nextItems
-    syncingDate.value = true
-    selectedDate.value = response?.date || selectedDate.value
-    availableDates.value = normalizeArray(response?.availableDates)
-    await nextTick()
-    syncingDate.value = false
-    coverage.value = response?.coverage || {}
-    totalCount.value = Number(response?.totalCount || 0)
-    hasMore.value = Boolean(response?.hasMore)
-    nextPage.value = response?.nextPage ?? null
-    page.value = Number(response?.page || page.value)
-    pageSize.value = Number(response?.pageSize || pageSize.value)
-    limitPerEtf.value = Number(response?.limitPerEtf || limitPerEtf.value)
+    await applyEventsResponse(response, { append })
   } catch (error) {
     errorMessage.value = error?.message || '載入 ETF 當日進出失敗'
     if (!append) items.value = []
@@ -115,7 +132,30 @@ const loadEvents = async ({ append = false } = {}) => {
   }
 }
 
-const loadStockOverview = async ({ append = false, date = selectedDate.value } = {}) => {
+const loadStockOverview = async ({
+  append = false,
+  date = selectedDate.value,
+  force = false
+} = {}) => {
+  const requestParams = {
+    date: date || null,
+    type: selectedType.value,
+    etfType: selectedEtfType.value || null,
+    sort: selectedSort.value,
+    page: append ? stockPage.value : 1,
+    pageSize: stockPageSize.value,
+    limitPerStock: stockLimitPerStock.value
+  }
+  const cacheKey = createDashboardCacheKey('etfEventsStockOverview', requestParams)
+  const cached = force ? null : dashboardDataCacheStore.getFresh(cacheKey)
+
+  if (cached) {
+    stockErrorMessage.value = ''
+    if (!append) stockPage.value = 1
+    applyStockOverviewResponse(cached, { append })
+    return
+  }
+
   if (append) {
     stockLoadingMore.value = true
   } else {
@@ -126,24 +166,13 @@ const loadStockOverview = async ({ append = false, date = selectedDate.value } =
   }
 
   try {
-    const response = await getEtfEventsStockOverview({
-      date: date || null,
-      type: selectedType.value,
-      etfType: selectedEtfType.value || null,
-      sort: selectedSort.value,
-      page: stockPage.value,
-      pageSize: stockPageSize.value,
-      limitPerStock: stockLimitPerStock.value
-    })
+    const response = await dashboardDataCacheStore.remember(
+      cacheKey,
+      () => getEtfEventsStockOverview(requestParams),
+      { force }
+    )
 
-    const nextItems = normalizeArray(response?.items)
-    stockItems.value = append ? [...stockItems.value, ...nextItems] : nextItems
-    stockTotalCount.value = Number(response?.totalCount || 0)
-    stockHasMore.value = Boolean(response?.hasMore)
-    stockNextPage.value = response?.nextPage ?? null
-    stockPage.value = Number(response?.page || stockPage.value)
-    stockPageSize.value = Number(response?.pageSize || stockPageSize.value)
-    stockLimitPerStock.value = Number(response?.limitPerStock || stockLimitPerStock.value)
+    applyStockOverviewResponse(response, { append })
   } catch (error) {
     stockErrorMessage.value = error?.message || '載入個股彙總失敗'
     if (!append) stockItems.value = []
@@ -155,12 +184,12 @@ const loadStockOverview = async ({ append = false, date = selectedDate.value } =
   }
 }
 
-const loadOverview = async () => {
-  await Promise.all([loadEvents(), loadStockOverview()])
+const loadOverview = async ({ force = false } = {}) => {
+  await Promise.all([loadEvents({ force }), loadStockOverview({ force })])
 }
 
 const reload = async () => {
-  await loadOverview()
+  await loadOverview({ force: true })
 }
 
 const loadMore = async () => {
@@ -295,6 +324,7 @@ onMounted(() => {
             v-for="(_, index) in skeletonCards"
             :key="`event-skeleton-${index}`"
             :rows="6"
+            variant="events"
           />
         </template>
 

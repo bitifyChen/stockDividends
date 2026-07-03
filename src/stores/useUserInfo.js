@@ -7,6 +7,9 @@ export const useUserInfoStore = defineStore('userInfo', {
   getters: {
     userName: (state) => {
       return state.userInfo.displayName
+    },
+    isSuperuser: (state) => {
+      return state.userInfo?.superuser === true
     }
   },
   actions: {

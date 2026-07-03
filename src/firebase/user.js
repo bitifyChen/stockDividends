@@ -7,10 +7,51 @@ import {
   signOut,
   updateProfile
 } from 'firebase/auth'
-import { getFirestore, doc } from 'firebase/firestore'
+import { getFirestore, doc, getDoc } from 'firebase/firestore'
 
 const auth = getAuth(app)
 const db = getFirestore(app)
+
+const getUserProfile = async (uid) => {
+  if (!uid) return {}
+
+  try {
+    const [userSnap, profileSnap] = await Promise.all([
+      getDoc(doc(db, 'users', uid)),
+      getDoc(doc(db, 'users', uid, 'settings', 'profile'))
+    ])
+
+    return {
+      ...(userSnap.exists() ? { id: userSnap.id, ...userSnap.data() } : {}),
+      ...(profileSnap.exists() ? profileSnap.data() : {})
+    }
+  } catch (error) {
+    console.warn('Firebase user profile read failed:', error)
+    return {}
+  }
+}
+
+const normalizeUser = async (user) => {
+  const profile = await getUserProfile(user?.uid)
+  const roles = Array.isArray(profile.roles) ? profile.roles : []
+  const superuser =
+    profile.superuser === true ||
+    profile.role === 'superuser' ||
+    profile.role === 'admin' ||
+    roles.includes('superuser') ||
+    roles.includes('admin')
+
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    emailVerified: user.emailVerified,
+    ...profile,
+    roles,
+    superuser
+  }
+}
 
 export const postUser = ({ email, password }) => {
   return new Promise((resolve, reject) => {
@@ -43,8 +84,8 @@ export const patchUser = (params) => {
 export const postUserLogin = ({ email, password }) => {
   return new Promise((resolve, reject) => {
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user
+      .then(async (userCredential) => {
+        const user = await normalizeUser(userCredential.user)
         resolve(user)
       })
       .catch((error) => {
@@ -67,9 +108,9 @@ export const postUserLogout = () => {
 
 export const checkUser = () => {
   return new Promise((resolve, reject) => {
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
-        resolve(user)
+        resolve(await normalizeUser(user))
       } else {
         reject(user)
       }

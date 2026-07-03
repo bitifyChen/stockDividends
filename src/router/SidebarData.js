@@ -1,4 +1,4 @@
-import { Activity, Briefcase, Coins, Eye, TrendingUp } from 'lucide-vue-next'
+import { Activity, Briefcase, Coins, Eye, Settings, TrendingUp } from 'lucide-vue-next'
 
 export const navGroups = [
   {
@@ -40,6 +40,17 @@ export const navGroups = [
         title: '股利記錄',
         path: 'Dashboard_My_Dividend',
         icon: Coins
+      }
+    ]
+  },
+  {
+    label: '系統',
+    items: [
+      {
+        title: '系統設定',
+        path: 'Dashboard_Setting',
+        icon: Settings,
+        requiresSuperuser: true
       }
     ]
   }

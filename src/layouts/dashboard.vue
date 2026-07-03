@@ -68,13 +68,17 @@ const resolvePath = (routeName) => {
 }
 
 const navGroups = computed(() =>
-  rawNavGroups.map((group) => ({
-    ...group,
-    items: group.items.map((item) => ({
-      ...item,
-      to: item.to || resolvePath(item.path)
+  rawNavGroups
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .filter((item) => !item.requiresSuperuser || userInfoStore.isSuperuser)
+        .map((item) => ({
+          ...item,
+          to: item.to || resolvePath(item.path)
+        }))
     }))
-  }))
+    .filter((group) => group.items.length > 0)
 )
 
 const navItems = computed(() => navGroups.value.flatMap((group) => group.items))

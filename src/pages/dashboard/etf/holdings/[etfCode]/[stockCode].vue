@@ -6,6 +6,7 @@ import 'chartjs-adapter-moment'
 import { ArrowUpRight, RefreshCw } from 'lucide-vue-next'
 import { getEtfStockDetail, getEtfStockSeries } from '@/api/etf.js'
 import TwoTable from '@/components/Two/TwoTable.vue'
+import { holdingSeriesRangeOptions } from '@/data/dashboardDataMapping.js'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import {
   formatNumber,
@@ -20,7 +21,7 @@ import {
 
 const route = useRoute()
 const dashboardSettingStore = useDashboardSettingStore()
-const rangeOptions = ['1w', '1m', '6m', '1y', 'max']
+const rangeOptions = holdingSeriesRangeOptions
 
 const loadingSummary = ref(false)
 const loadingSeries = ref(false)
