@@ -1,3 +1,170 @@
+# 2026-07-04
+
+## 股票資訊欄位統一改用 `stock` object，移除扁平欄位
+
+### 主旨
+
+後端 public API response 將股票識別資訊統一收斂到 `stock` 物件，前端需要一次性改吃 `stock.code / stock.name / stock.full_name / stock.market / stock.industry_code`。舊的 `stock_code`、`stock_name`、`stock_full_name`、`stock_market`、`industry_code` 扁平欄位不再保留，避免同一筆資料有兩套來源造成顯示混亂。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/events/stock-overview`
+- `GET /etf/events`
+- `GET /etf/holdings`
+- `GET /etf/holdings/overview`
+- `GET /etf/stocks`
+- `GET /etf/stocks/{stockCode}`
+- `GET /etf/stocks/{stockCode}/series`
+- `GET /etf/{etfCode}/{stockCode}`
+- `GET /etf/{etfCode}/{stockCode}/series`
+- `GET /ohlc/stocks`
+- `GET /ohlc/stocks/{stockCode}`
+- `GET /ohlc/stocks/{stockCode}/candles`
+- `GET /ohlc/stocks/{stockCode}/available-dates`
+
+### 改動內容
+
+- 後端 public response 統一回傳 nested stock object：
+
+```json
+{
+  "stock": {
+    "code": "2330",
+    "name": "台積電",
+    "full_name": "台灣積體電路製造股份有限公司",
+    "market": "listed",
+    "industry_code": "24"
+  }
+}
+```
+
+- API response 不再回傳下列扁平 identity 欄位：
+  - `full_name`
+  - `market`
+  - `aliases`
+  - `stock_code`
+  - `stock_name`
+  - `stock_full_name`
+  - `stock_market`
+  - `stock_aliases`
+  - `industry_code`
+- `source_stock_name` 若存在，仍只作為來源追蹤或 debug，不應作為正式顯示名稱。
+- URL path 或 query 仍維持 `stockCode` 參數，例如 `/etf/stocks/2330`、`/ohlc/stocks/2330/candles`，這不屬於 response 扁平欄位。
+
+### 前端處理
+
+- 前端請一次性改用：
+
+```js
+const stockCode = item.stock?.code
+const stockName = item.stock?.name
+const stockFullName = item.stock?.full_name
+const stockMarket = item.stock?.market
+const industryCode = item.stock?.industry_code
+```
+
+- 不要再寫 fallback 到舊欄位，例如不要使用 `item.stock?.code ?? item.stock_code`。
+- 共用顯示 helper 可以統一接受 `stock` 物件，避免各頁自行拼欄位。
+- `industry_code` 轉中文名稱時，沿用前端 `TW_INDUSTRY_CODE_MAP`，但資料來源改為 `item.stock?.industry_code`。
+
+### 對應角色處理
+
+- `/dashboard/etf/events/overview` 的「個股總買賣行為」請改讀 `item.stock`。
+- 股票詳情頁與 ETF 對單一股票詳情頁可使用同一套 stock display helper。
+- `industry_code` 轉中文名稱時，使用 `item.stock?.industry_code` 並沿用前端 `TW_INDUSTRY_CODE_MAP`。
+
+### 其他必要補充
+
+- 這是 intentional breaking change，目的是移除舊欄位歧義。
+- 若某一筆 response 缺少 `stock`，請視為後端資料或 API bug 回報，不要在前端補舊欄位 fallback。
+- provider 測試或匯入類 API 可能仍保留來源原始欄位，不應用於產品畫面顯示。
+
+# 2026-07-04
+
+## 個股產業大類先使用 `industry_code` 前端 mapping
+
+### 主旨
+
+目前先不建立 `sub_industry_code`，前端先用既有 `industry_code` 做台股官方產業大類顯示。細產業鏈如記憶體、玻璃纖維、IC 設計、晶圓代工，等後續確認正式資料源後再設計。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- 無新增 API
+- 既有股票主檔資料已有 `industry_code`
+- 若頁面資料尚未回傳 `industry_code`，前端先保留 mapping 檔，等後端後續在相關 API 補欄位
+
+### 改動內容
+
+- 前端可建立靜態 mapping，例如：
+
+```js
+export const TW_INDUSTRY_CODE_MAP = {
+  "01": "水泥工業",
+  "02": "食品工業",
+  "03": "塑膠工業",
+  "04": "紡織纖維",
+  "05": "電機機械",
+  "06": "電器電纜",
+  "08": "玻璃陶瓷",
+  "09": "造紙工業",
+  "10": "鋼鐵工業",
+  "11": "橡膠工業",
+  "12": "汽車工業",
+  "14": "建材營造",
+  "15": "航運業",
+  "16": "觀光餐旅",
+  "17": "金融保險",
+  "18": "貿易百貨",
+  "20": "綜合",
+  "21": "化學工業",
+  "22": "生技醫療業",
+  "23": "油電燃氣業",
+  "24": "半導體業",
+  "25": "電腦及週邊設備業",
+  "26": "光電業",
+  "27": "通信網路業",
+  "28": "電子零組件業",
+  "29": "電子通路業",
+  "30": "資訊服務業",
+  "31": "其他電子業",
+  "32": "綠能環保",
+  "33": "數位雲端",
+  "34": "運動休閒",
+  "35": "居家生活",
+  "80": "其他"
+}
+```
+
+- 建議前端 helper：
+
+```js
+export function getIndustryName(industryCode) {
+  if (!industryCode) return "未分類"
+  const code = String(industryCode).padStart(2, "0")
+  return TW_INDUSTRY_CODE_MAP[code] || `未知產業 ${code}`
+}
+```
+
+### 對應角色處理
+
+- 前端先新增 mapping JSON / JS 檔，不需要等待後端新增資料表。
+- 顯示股票產業時，使用 `industry_code` 轉中文名稱。
+- 不要先建立 `sub_industry_code` 的 UI 或假資料，避免之後與正式產業鏈資料源衝突。
+
+### 其他必要補充
+
+- `industry_code` 是官方大類，適合顯示「半導體業、電子零組件業、光電業」這種層級。
+- `industry_code` 無法表達「記憶體、玻璃纖維、IC 設計、晶圓代工」這類細產業鏈。
+- 若後續要做產業鏈流向圖，建議另行設計 `industry_chain / segment / upstream-midstream-downstream`，不要塞進單一 `industry_code`。
+
 # 2026-07-02
 
 ## `/maintenance/batch-status` 改為標準 job status schema
@@ -847,16 +1014,17 @@ Backend
 
 ## Change
 
-- `stock_code` is the unique key for stock identity.
-- `stock_name` is now normalized by backend canonical stock master.
+- This historical note is superseded by the 2026-07-04 `stock` object rule.
+- `stock.code` is the unique key for stock identity.
+- `stock.name` is normalized by backend canonical stock master.
 - Source-specific Excel/API names are no longer trusted as display names.
 - If source and canonical names differ, backend may include `source_stock_name`.
-- Backend may also include `stock_full_name`, `stock_market`, and `stock_aliases`.
+- Backend may also include `stock.full_name`, `stock.market`, and `stock_aliases`.
 
 ## Frontend Handling
 
-- Use `stock_code` for identity, routing, grouping, comparison, and de-duplication.
-- Use `stock_name` for normal display.
+- Use `stock.code` for identity, routing, grouping, comparison, and de-duplication.
+- Use `stock.name` for normal display.
 - Do not group by ETF source stock names such as `國巨*` or `國巨股份`.
 - `source_stock_name` is for debug/source trace only; do not use it as the product display name.
 - Example: `2327` should display as `國巨` across `00403A`, `00981A`, `00982A`, and `00991A`.
@@ -933,7 +1101,7 @@ Backend
 
 ## Suggested Table Columns
 
-- `stock_code` / `stock_name`: stock
+- `stock.code` / `stock.name`: stock
 - `etf_code` / `etf_name`: ETF
 - `buy_shares`: first-build shares
 - `current_shares`: latest current shares
@@ -955,8 +1123,13 @@ Response shape:
   "totalCount": 1,
   "items": [
     {
-      "stock_code": "3363",
-      "stock_name": "上詮",
+      "stock": {
+        "code": "3363",
+        "name": "上詮",
+        "full_name": null,
+        "market": "listed",
+        "industry_code": "27"
+      },
       "etf_code": "00992A",
       "etf_name": "主動群益科技創新",
       "buy_shares": 300000,

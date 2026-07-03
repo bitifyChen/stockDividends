@@ -1303,8 +1303,6 @@
                       {
                         "etf_code": "00403A",
                         "etf_name": "主動統一升級50",
-                        "stock_code": "2330",
-                        "stock_name": "台積電",
                         "holding_shares": 123000,
                         "holding_ratio": 8.5,
                         "snapshot_date": "2026-06-05",
@@ -1842,26 +1840,8 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "stock_code": {
-                            "type": "string"
-                          },
-                          "stock_name": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "stock_full_name": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "stock_market": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
+                          "stock": {
+                            "$ref": "#/components/schemas/StockIdentity"
                           },
                           "buy_etf_count": {
                             "type": "integer"
@@ -1969,27 +1949,27 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                "properties": {
-                  "date": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "requestedDate": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date"
-                  },
-                  "availableDates": {
-                    "type": "array",
-                    "items": {
+                  "properties": {
+                    "date": {
                       "type": "string",
                       "format": "date"
-                    }
-                  },
-                  "limitPerEtf": {
-                    "type": "integer"
+                    },
+                    "requestedDate": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "availableDates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    },
+                    "limitPerEtf": {
+                      "type": "integer"
                     },
                     "page": {
                       "type": "integer"
@@ -2083,11 +2063,11 @@
                       }
                     }
                   },
-                "required": [
-                  "date",
-                  "requestedDate",
-                  "availableDates",
-                  "page",
+                  "required": [
+                    "date",
+                    "requestedDate",
+                    "availableDates",
+                    "page",
                     "pageSize",
                     "totalCount",
                     "hasMore",
@@ -2778,6 +2758,48 @@
       }
     },
     "schemas": {
+      "StockIdentity": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2330"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "台積電"
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "台灣積體電路製造股份有限公司"
+          },
+          "market": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "listed"
+          },
+          "industry_code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Official Taiwan stock industry code from stock master.",
+            "example": "24"
+          }
+        },
+        "additionalProperties": false
+      },
       "HealthResponse": {
         "type": "object",
         "required": [
@@ -3116,6 +3138,9 @@
       "EtfHolding": {
         "type": "object",
         "properties": {
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
+          },
           "snapshot_date": {
             "type": "string",
             "format": "date"
@@ -3125,16 +3150,6 @@
           },
           "etf_name": {
             "type": "string"
-          },
-          "stock_code": {
-            "type": "string"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
           },
           "holding_shares": {
             "type": "number"
@@ -3158,34 +3173,6 @@
             ],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
-          },
-          "stock_full_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical full company name from Taiwan stock master.",
-            "example": "國巨股份有限公司"
-          },
-          "stock_market": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
-            "example": "listed"
-          },
-          "stock_aliases": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Known aliases from Taiwan stock master, including source/official variants.",
-            "example": [
-              "國巨",
-              "國巨*",
-              "國巨股份有限公司"
-            ]
           },
           "etf_type": {
             "type": "string",
@@ -3212,16 +3199,6 @@
       "StockEtfHolding": {
         "type": "object",
         "properties": {
-          "stock_code": {
-            "type": "string"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
-          },
           "etf_code": {
             "type": "string"
           },
@@ -3249,34 +3226,6 @@
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
           },
-          "stock_full_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical full company name from Taiwan stock master.",
-            "example": "國巨股份有限公司"
-          },
-          "stock_market": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
-            "example": "listed"
-          },
-          "stock_aliases": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Known aliases from Taiwan stock master, including source/official variants.",
-            "example": [
-              "國巨",
-              "國巨*",
-              "國巨股份有限公司"
-            ]
-          },
           "etf_type": {
             "type": "string",
             "enum": [
@@ -3302,6 +3251,9 @@
       "EtfHoldingChange": {
         "type": "object",
         "properties": {
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
+          },
           "snapshot_date": {
             "type": "string",
             "format": "date"
@@ -3311,16 +3263,6 @@
           },
           "etf_name": {
             "type": "string"
-          },
-          "stock_code": {
-            "type": "string"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
           },
           "holding_shares": {
             "type": "number"
@@ -3348,34 +3290,6 @@
             ],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
-          },
-          "stock_full_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical full company name from Taiwan stock master.",
-            "example": "國巨股份有限公司"
-          },
-          "stock_market": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
-            "example": "listed"
-          },
-          "stock_aliases": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Known aliases from Taiwan stock master, including source/official variants.",
-            "example": [
-              "國巨",
-              "國巨*",
-              "國巨股份有限公司"
-            ]
           }
         },
         "additionalProperties": true
@@ -3670,14 +3584,8 @@
               "null"
             ]
           },
-          "stock_code": {
-            "type": "string"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
           },
           "summary": {
             "type": "object",
@@ -3706,8 +3614,8 @@
           "etf_code": {
             "type": "string"
           },
-          "stock_code": {
-            "type": "string"
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
           },
           "range": {
             "type": "string"
@@ -3771,14 +3679,8 @@
       "StockObservationResponse": {
         "type": "object",
         "properties": {
-          "stock_code": {
-            "type": "string"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
           },
           "latest_snapshot_date": {
             "type": [
@@ -3804,8 +3706,8 @@
       "StockObservationSeriesResponse": {
         "type": "object",
         "properties": {
-          "stock_code": {
-            "type": "string"
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
           },
           "range": {
             "type": "string"
@@ -3917,7 +3819,6 @@
       "FirstBuyEvent": {
         "type": "object",
         "required": [
-          "stock_code",
           "etf_code",
           "buy_shares",
           "current_shares",
@@ -3938,17 +3839,8 @@
             ],
             "description": "Event type requested by /etf/events?type=..."
           },
-          "stock_code": {
-            "type": "string",
-            "example": "3363"
-          },
-          "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "上詮",
-            "description": "Canonical display stock name from Taiwan stock master. Use stock_code as the unique identity."
+          "stock": {
+            "$ref": "#/components/schemas/StockIdentity"
           },
           "etf_code": {
             "type": "string",
@@ -4080,34 +3972,6 @@
             ],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
-          },
-          "stock_full_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical full company name from Taiwan stock master.",
-            "example": "國巨股份有限公司"
-          },
-          "stock_market": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Canonical market from Taiwan stock master, e.g. listed, otc, emerging.",
-            "example": "listed"
-          },
-          "stock_aliases": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Known aliases from Taiwan stock master, including source/official variants.",
-            "example": [
-              "國巨",
-              "國巨*",
-              "國巨股份有限公司"
-            ]
           }
         }
       },
