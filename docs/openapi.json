@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Stock Dividends Backend API",
-    "version": "2026-06-22",
+    "version": "2026-07-05",
     "description": "前台可串接的 stockDividendsPy API 規格。後端部署位置為 https://stockdividends.onrender.com。"
   },
   "servers": [
@@ -12,6 +12,18 @@
     }
   ],
   "x-current-work-items": [
+    {
+      "id": "etf-event-ohlc-enrichment",
+      "title": "ETF event OHLC enrichment and estimated trading amount",
+      "status": "ready_for_frontend",
+      "frontendEntry": "ETF event APIs now include event.ohlc for reference price, estimated amount, and market volume/turnover ratios. Stock overview also returns aggregated amount coverage and estimated buy/sell/net amounts.",
+      "primaryApis": [
+        "GET /etf/events",
+        "GET /etf/events/overview",
+        "GET /etf/events/stock-overview",
+        "POST /etf/events/enrich-ohlc"
+      ]
+    },
     {
       "id": "yuanta-passive-etf-source",
       "title": "Yuanta passive ETF 0050 source integration",
@@ -1641,6 +1653,43 @@
         }
       }
     },
+    "/etf/events/enrich-ohlc": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Enrich ETF event rows with OHLC reference data",
+        "description": "Backfills Supabase etf_event_ohlc_refs from Turso stock_ohlc_daily. Daily fetch-all runs this after ETF snapshots and OHLC daily update. Normal frontend pages should not call this automatically.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EtfEventOhlcEnrichRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrichment summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtfEventOhlcEnrichResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events/stock-overview": {
       "get": {
         "tags": [
@@ -1872,9 +1921,83 @@
                             "items": {
                               "$ref": "#/components/schemas/EtfHoldingChange"
                             }
+                          },
+                          "estimated_buy_amount": {
+                            "type": "number",
+                            "description": "Sum of buy-side abs(delta_shares) * reference_price for this stock."
+                          },
+                          "estimated_sell_amount": {
+                            "type": "number",
+                            "description": "Sum of sell-side abs(delta_shares) * reference_price for this stock."
+                          },
+                          "estimated_net_amount": {
+                            "type": "number",
+                            "description": "Signed net estimated amount for this stock."
+                          },
+                          "reference_turnover": {
+                            "type": "number",
+                            "description": "Market turnover counted once per stock/date when OHLC enrichment is successful."
+                          },
+                          "reference_volume": {
+                            "type": "number",
+                            "description": "Market volume counted once per stock/date when OHLC enrichment is successful."
+                          },
+                          "ohlc_success_count": {
+                            "type": "integer"
+                          },
+                          "ohlc_missing_count": {
+                            "type": "integer"
+                          },
+                          "ohlc_failed_count": {
+                            "type": "integer"
+                          },
+                          "amount_coverage_rate": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "amount_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "(estimated_buy_amount + estimated_sell_amount) / reference_turnover."
+                          },
+                          "volume_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "(buy_shares + sell_shares) / reference_volume."
                           }
                         }
                       }
+                    },
+                    "amountCoverage": {
+                      "type": "object",
+                      "description": "OHLC enrichment coverage for all event rows in this response scope.",
+                      "properties": {
+                        "eventCount": {
+                          "type": "integer"
+                        },
+                        "successCount": {
+                          "type": "integer"
+                        },
+                        "missingCount": {
+                          "type": "integer"
+                        },
+                        "failedCount": {
+                          "type": "integer"
+                        },
+                        "coverageRate": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": true
                     }
                   }
                 }
@@ -3290,6 +3413,37 @@
             ],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
+          },
+          "ohlc": {
+            "$ref": "#/components/schemas/EtfEventOhlcRef"
+          },
+          "buy_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Positive bought shares for buy-side events. Returns 0 for sell-side events."
+          },
+          "sell_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Positive sold shares for sell-side events. Returns 0 for buy-side events."
+          },
+          "change_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Signed share change. Positive means buy/increase; negative means sell/decrease/sell_out."
+          },
+          "delta_shares": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Alias for signed share change when available."
           }
         },
         "additionalProperties": true
@@ -3972,6 +4126,9 @@
             ],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
+          },
+          "ohlc": {
+            "$ref": "#/components/schemas/EtfEventOhlcRef"
           }
         }
       },
@@ -4136,6 +4293,215 @@
           "summary": {
             "type": "object",
             "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "EtfEventOhlcEnrichStatus": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "example": 1
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "success",
+              "missing",
+              "failed"
+            ],
+            "example": "success"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EtfEventOhlcRef": {
+        "type": "object",
+        "description": "OHLC-derived reference data for one ETF-stock event. Estimated amounts are calculated by the API view layer and are not stored in Supabase.",
+        "properties": {
+          "reference_price": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Average reference price calculated as reference_turnover / reference_volume for the event display date.",
+            "example": 178.58149
+          },
+          "reference_volume": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total market traded shares for the stock on the event display date.",
+            "example": 397685486
+          },
+          "reference_turnover": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total market turnover for the stock on the event display date.",
+            "example": 71019266736
+          },
+          "enrich_status": {
+            "$ref": "#/components/schemas/EtfEventOhlcEnrichStatus"
+          },
+          "estimated_amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "abs(delta_shares) * reference_price.",
+            "example": 71432596.09529728
+          },
+          "estimated_net_amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "delta_shares * reference_price. Positive means buy/increase; negative means sell/decrease.",
+            "example": 71432596.09529728
+          },
+          "volume_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "abs(delta_shares) / reference_volume.",
+            "example": 0.00100581996
+          },
+          "amount_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "estimated_amount / reference_turnover.",
+            "example": 0.00100581996
+          }
+        },
+        "additionalProperties": false
+      },
+      "EtfEventOhlcEnrichRequest": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Single display date to enrich.",
+            "example": "2026-06-25"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Inclusive start date for range enrichment.",
+            "example": "2026-06-01"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Inclusive end date for range enrichment.",
+            "example": "2026-06-25"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "missing",
+              "all"
+            ],
+            "default": "missing",
+            "description": "missing only processes non-success rows; all processes every matching event row."
+          },
+          "force": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, re-enrich rows even if they already have success status."
+          }
+        },
+        "additionalProperties": true
+      },
+      "EtfEventOhlcEnrichResponse": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "missing",
+              "all"
+            ]
+          },
+          "force": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "processed": {
+            "type": "integer"
+          },
+          "success": {
+            "type": "integer"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "skippedSuccess": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "total": {
+                  "type": "integer"
+                },
+                "processed": {
+                  "type": "integer"
+                },
+                "success": {
+                  "type": "integer"
+                },
+                "missing": {
+                  "type": "integer"
+                },
+                "failed": {
+                  "type": "integer"
+                },
+                "skippedSuccess": {
+                  "type": "integer"
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": true
+            }
           }
         },
         "additionalProperties": true

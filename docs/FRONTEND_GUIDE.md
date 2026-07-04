@@ -1,3 +1,107 @@
+# 2026-07-05
+
+## ETF 事件補上 OHLC 參考價、估算交易金額與量能占比
+
+### 主旨
+
+後端已將 ETF 每日進出事件與 Turso OHLC 日線資料串接。前端在事件列表、ETF 當日進出總覽、個股總買賣行為區塊，可以直接讀取 `ohlc` 物件顯示參考價、估算交易金額、成交量占比與成交金額占比。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/events`
+- `GET /etf/events/overview`
+- `GET /etf/events/stock-overview`
+- `POST /etf/events/enrich-ohlc`
+- `GET /etf/fetch-all?save=1`
+
+### 改動內容
+
+- ETF event item 新增 `ohlc` 物件：
+
+```json
+{
+  "ohlc": {
+    "reference_price": 178.58149,
+    "reference_volume": 397685486,
+    "reference_turnover": 71019266736,
+    "enrich_status": {
+      "code": 1,
+      "label": "success"
+    },
+    "estimated_amount": 71432596.09529728,
+    "estimated_net_amount": 71432596.09529728,
+    "volume_ratio": 0.00100581996,
+    "amount_ratio": 0.00100581996
+  }
+}
+```
+
+- `reference_price` 使用同一個 display date 的 `reference_turnover / reference_volume` 計算，不使用收盤價。
+- `estimated_amount = abs(delta_shares) * reference_price`。
+- `estimated_net_amount = delta_shares * reference_price`，買進為正、賣出為負。
+- `volume_ratio = abs(delta_shares) / reference_volume`。
+- `amount_ratio = estimated_amount / reference_turnover`。
+- `enrich_status` mapping：
+  - `0 / pending`：尚未補 OHLC。
+  - `1 / success`：已補到同日 OHLC，可以顯示金額與占比。
+  - `2 / missing`：該日沒有可用 OHLC 或成交量、成交金額無法計算。
+  - `3 / failed`：補資料流程失敗。
+
+### `GET /etf/events/stock-overview` 額外欄位
+
+- 每個 `items[]` 會新增：
+  - `estimated_buy_amount`
+  - `estimated_sell_amount`
+  - `estimated_net_amount`
+  - `reference_turnover`
+  - `reference_volume`
+  - `ohlc_success_count`
+  - `ohlc_missing_count`
+  - `ohlc_failed_count`
+  - `amount_coverage_rate`
+  - `amount_ratio`
+  - `volume_ratio`
+- response root 新增 `amountCoverage`：
+
+```json
+{
+  "amountCoverage": {
+    "eventCount": 106,
+    "successCount": 106,
+    "missingCount": 0,
+    "failedCount": 0,
+    "coverageRate": 1
+  }
+}
+```
+
+### 前端處理
+
+- `/dashboard/etf/events/overview` 的「個股總買賣行為」可優先顯示：
+  - 買進股數 / 賣出股數 / 淨股數。
+  - 估算買進金額 / 估算賣出金額 / 估算淨金額。
+  - 成交量占比 `volume_ratio`。
+  - 成交金額占比 `amount_ratio`。
+- 若 `ohlc.enrich_status.code !== 1`，前端應顯示「尚無成交價資料」或隱藏金額欄位，不要自行用收盤價補算。
+- `POST /etf/events/enrich-ohlc` 是後端管理與補資料 API，產品頁面不需要自動呼叫。
+- 每日 `GET /etf/fetch-all?save=1` 流程已在 ETF 抓取與 OHLC 日更新後，自動執行 event OHLC enrichment。
+
+### 對應角色處理
+
+- 前端只需要改接 response 欄位與畫面呈現。
+- 後端負責 enrichment、cache table 與每日批次整合。
+- 若前端看到 `amountCoverage.coverageRate < 1`，代表該日仍有事件缺 OHLC，可在後台或內部工具再手動補跑，不需要產品頁面重試。
+
+### 其他必要補充
+
+- 估算金額沒有存進資料庫，是 API view layer 依 `delta_shares` 與 OHLC reference 即時計算。
+- Supabase 只儲存事件對應的 OHLC 參考值與 enrichment 狀態。
+- 正式站 Render 使用 `TURSO_DEFAULT_TARGET=backup`，本地測試若要對齊正式 OHLC 資料，需在本地環境設定同樣目標。
+
 # 2026-07-04
 
 ## 股票資訊欄位統一改用 `stock` object，移除扁平欄位
