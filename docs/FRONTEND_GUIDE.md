@@ -1,5 +1,55 @@
 # 2026-07-05
 
+## ETF Supabase schema 整併：改以 `etf_configs` 與股票主檔為 canonical source
+
+### 主旨
+
+後端已完成 ETF 相關 Supabase schema 收斂。舊的 `active_etf_*` 與 `etf_ingestion_runs` 已移除，ETF 設定表由 `etf_source_configs` 更名為 `etf_configs`。產品 API 會透過後端 view 補齊前端需要的顯示欄位，但前端文件與後續開發請以 `etf_configs`、`stock` object 作為唯一語意來源。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/list`
+- `GET /etf/source-configs`
+- `GET /etf/holdings`
+- `GET /etf/holdings/overview`
+- `GET /etf/events`
+- `GET /etf/events/overview`
+- `GET /etf/events/stock-overview`
+- `GET /etf/stocks/{stockCode}`
+
+### 改動內容
+
+- `etf_source_configs` 已更名為 `etf_configs`。
+- `active_etf_master`、`active_etf_daily_snapshots`、`etf_ingestion_runs` 已移除。
+- `etf_holding_snapshots` 實體表不再存：
+  - `etf_name`
+  - `stock_name`
+  - `holding_value`
+  - `source_name`
+  - `source_payload`
+- 後端新增/重建 enriched views，API response 仍會提供畫面需要的 ETF 名稱與股票名稱。
+- `source_name` 語意改以 `source_provider` 表達。
+
+### 前端處理
+
+- 前端 API URL 暫時不需要因本次 schema 整併調整。
+- 文件或 UI 說明若提到資料來源表，請改寫為 `etf_configs`。
+- 前端不要假設 Supabase 存在 `active_etf_*` 或 `etf_source_configs`。
+- 股票名稱、產業、上市櫃等資訊仍以 API 回傳的 `stock` object 為主。
+- 若 response 仍有 `etf_name`，可作為顯示欄位使用；其來源已由後端從 `etf_configs` 補齊，不是 snapshot 實體表欄位。
+
+### 其他必要補充
+
+- `/etf/source-configs` 仍保留為 `/etf/list` 的相容路由，但新畫面建議優先使用 `/etf/list`。
+- 這次是資料庫結構收斂與容量治理，不是新畫面功能。
+- 後端仍保留 `get_etf_source_configs` 這類內部函式名稱作為程式相容層；前端不需要關心。
+
+# 2026-07-05
+
 ## ETF 持股快照移除每列 `source_payload`
 
 ### 主旨

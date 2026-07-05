@@ -13,6 +13,22 @@
   ],
   "x-current-work-items": [
     {
+      "id": "etf-schema-consolidation",
+      "title": "Consolidate ETF Supabase schema around etf_configs and canonical stock master",
+      "status": "ready_for_frontend",
+      "frontendEntry": "ETF config source table is now etf_configs. Legacy active_etf_* and etf_ingestion_runs tables were removed. Product APIs continue to return ETF/stock display fields through backend views, but frontend should treat etf_configs and stock object as canonical sources.",
+      "primaryApis": [
+        "GET /etf/list",
+        "GET /etf/source-configs",
+        "GET /etf/holdings",
+        "GET /etf/holdings/overview",
+        "GET /etf/events",
+        "GET /etf/events/overview",
+        "GET /etf/events/stock-overview",
+        "GET /etf/stocks/{stockCode}"
+      ]
+    },
+    {
       "id": "drop-etf-holding-source-payload",
       "title": "Remove etf_holding_snapshots.source_payload from product data path",
       "status": "ready_for_frontend",
@@ -1037,7 +1053,7 @@
           "Internal"
         ],
         "summary": "批次抓取所有已啟用 ETF 來源",
-        "description": "讀取 `etf_source_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。 Includes ezmoney, capitalfund, fhtrust, and yuanta providers.",
+        "description": "讀取 `etf_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。 Includes ezmoney, capitalfund, fhtrust, and yuanta providers.",
         "x-frontend-purpose": "給外部排程工具使用，例如每日 16:35 後定時呼叫；一般使用者頁面不直接串接。",
         "parameters": [
           {
@@ -2230,7 +2246,7 @@
           "ETF"
         ],
         "summary": "取得已設定可觀測 ETF 清單",
-        "description": "回傳 `etf_source_configs`，代表目前系統已設定 crawler 的 ETF 清單。",
+        "description": "回傳 `etf_configs`，代表目前系統已設定 crawler 的 ETF 清單。",
         "x-frontend-purpose": "前台 ETF selector 與 API 文件頁的主要清單來源。",
         "parameters": [
           {
@@ -2297,8 +2313,8 @@
           "ETF"
         ],
         "summary": "取得已設定可觀測 ETF 清單",
-        "description": "`/etf/list` 的同義路由，回傳相同資料。",
-        "x-frontend-purpose": "保留給內部語意清楚的呼叫；前端第一階段建議優先使用 `/etf/list`。",
+        "description": "`/etf/list` 的同義路由，回傳相同資料。路由名稱保留舊語意，但後端實際讀取的是 `etf_configs`。",
+        "x-frontend-purpose": "保留相容舊呼叫；前端建議優先使用 `/etf/list`。",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceProvider"
@@ -2968,6 +2984,7 @@
       },
       "EtfSourceConfig": {
         "type": "object",
+        "description": "ETF crawler/config record. Backing table is `etf_configs`; older docs or routes that mention source-configs are compatibility naming only.",
         "properties": {
           "id": {
             "type": "string",
