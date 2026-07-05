@@ -13,6 +13,20 @@
   ],
   "x-current-work-items": [
     {
+      "id": "drop-etf-holding-source-payload",
+      "title": "Remove etf_holding_snapshots.source_payload from product data path",
+      "status": "ready_for_frontend",
+      "frontendEntry": "ETF holding snapshot APIs no longer expose per-row source_payload. Use stock object, ETF fields, and fetch log metadata/Google Drive backups for audit needs.",
+      "primaryApis": [
+        "GET /etf/holdings",
+        "GET /etf/holdings/overview",
+        "GET /etf/events",
+        "GET /etf/events/overview",
+        "GET /etf/events/stock-overview",
+        "GET /etf/stocks/{stockCode}"
+      ]
+    },
+    {
       "id": "etf-event-ohlc-enrichment",
       "title": "ETF event OHLC enrichment and estimated trading amount",
       "status": "ready_for_frontend",

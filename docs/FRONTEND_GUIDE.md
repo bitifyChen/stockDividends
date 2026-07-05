@@ -1,5 +1,44 @@
 # 2026-07-05
 
+## ETF 持股快照移除每列 `source_payload`
+
+### 主旨
+
+後端已從 `etf_holding_snapshots` 移除 `source_payload`，ETF 持股、事件與個股觀測相關 API 不再提供每列原始來源 JSON。產品畫面請使用結構化欄位與 `stock` object；原始檔追溯改以 Google Drive xlsx backup 與 fetch log metadata 為主。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/holdings`
+- `GET /etf/holdings/overview`
+- `GET /etf/events`
+- `GET /etf/events/overview`
+- `GET /etf/events/stock-overview`
+- `GET /etf/stocks/{stockCode}`
+
+### 改動內容
+
+- `etf_holding_snapshots.source_payload` 已從 Supabase 移除。
+- 後端不再寫入持股快照每列的 `source_payload`。
+- 相關 Supabase views 已重建，輸出不再包含 `source_payload`。
+- `active_etf_daily_snapshots.source_payload` 暫時不在本次範圍內，後續 schema 收斂時再處理。
+
+### 前端處理
+
+- 前端不要讀取或顯示 `source_payload`。
+- 股票顯示一律使用 `stock` object。
+- 若需要檢查來源原始資料，請改由後台或工程流程查 Google Drive xlsx backup，不在產品頁面呈現每列 raw payload。
+
+### 其他必要補充
+
+- 這是資料庫容量精簡的一部分。
+- 下一步可繼續評估 `etf_name`、`stock_name`、`holding_value` 與舊 `active_etf_*` 表格是否整併。
+
+# 2026-07-05
+
 ## ETF 事件補上 OHLC 參考價、估算交易金額與量能占比
 
 ### 主旨
