@@ -1798,13 +1798,19 @@
                 "net_shares",
                 "buy_shares",
                 "sell_shares",
+                "estimated_amount",
+                "estimated_buy_amount",
+                "estimated_sell_amount",
+                "estimated_net_amount",
+                "estimated_net_amount_abs",
                 "buy_etf_count",
                 "sell_etf_count",
                 "event_etf_count",
                 "stock_code"
               ],
               "default": "net_shares_abs"
-            }
+            },
+            "description": "`estimated_amount` means estimated buy amount plus estimated sell amount. `estimated_net_amount_abs` sorts by absolute value of `estimated_net_amount`."
           },
           {
             "name": "page",
@@ -1951,6 +1957,10 @@
                             "items": {
                               "$ref": "#/components/schemas/EtfHoldingChange"
                             }
+                          },
+                          "estimated_amount": {
+                            "type": "number",
+                            "description": "estimated_buy_amount + estimated_sell_amount."
                           },
                           "estimated_buy_amount": {
                             "type": "number",

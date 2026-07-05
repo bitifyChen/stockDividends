@@ -1,5 +1,66 @@
 # 2026-07-05
 
+## `/etf/events/stock-overview` 新增估算交易額排序
+
+### 主旨
+
+後端已在 `GET /etf/events/stock-overview` 的 `sort` 參數新增估算交易額相關排序，讓「個股總買賣行為」可以用金額視角排序，而不只看股數或 ETF 家數。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/events/stock-overview`
+
+### 改動內容
+
+- 新增 `sort` 支援值：
+  - `estimated_amount`：估算總交易額
+  - `estimated_buy_amount`：估算買進金額
+  - `estimated_sell_amount`：估算賣出金額
+  - `estimated_net_amount`：估算淨買賣金額
+  - `estimated_net_amount_abs`：估算淨買賣金額絕對值
+- response `items[]` 新增：
+  - `estimated_amount = estimated_buy_amount + estimated_sell_amount`
+- `amount_ratio` 語意明確為：
+  - `estimated_amount / reference_turnover`
+
+### 前端處理
+
+- 若畫面有排序下拉，建議 mapping：
+
+```js
+export const ETF_STOCK_OVERVIEW_SORT_OPTIONS = [
+  { value: 'net_shares_abs', label: '淨買賣股數絕對值' },
+  { value: 'net_shares', label: '淨買賣股數' },
+  { value: 'buy_shares', label: '買進股數' },
+  { value: 'sell_shares', label: '賣出股數' },
+  { value: 'buy_etf_count', label: '買進 ETF 家數' },
+  { value: 'sell_etf_count', label: '賣出 ETF 家數' },
+  { value: 'event_etf_count', label: '異動 ETF 家數' },
+  { value: 'stock_code', label: '股票代碼' },
+  { value: 'estimated_amount', label: '估算總交易額' },
+  { value: 'estimated_buy_amount', label: '估算買進金額' },
+  { value: 'estimated_sell_amount', label: '估算賣出金額' },
+  { value: 'estimated_net_amount', label: '估算淨買賣金額' },
+  { value: 'estimated_net_amount_abs', label: '估算淨買賣金額絕對值' },
+]
+```
+
+- 預設排序仍建議維持 `net_shares_abs`，避免現有畫面行為突然改變。
+- 若想看「市場上 ETF 交易最熱的個股」，優先使用 `estimated_amount`。
+- 若想看「買超金額」，使用 `estimated_net_amount`。
+- 若想看「不分買賣方向的淨異動強度」，使用 `estimated_net_amount_abs`。
+
+### 其他必要補充
+
+- 估算金額使用 OHLC enrichment 的 `reference_price`，目前是 `reference_turnover / reference_volume`，不是 ETF 真實成交均價。
+- 若某些事件尚未補到 OHLC，該事件的估算金額會是 0，畫面仍可參考 `amountCoverage` 或 `amount_coverage_rate`。
+
+# 2026-07-05
+
 ## ETF Supabase schema 整併：改以 `etf_configs` 與股票主檔為 canonical source
 
 ### 主旨
