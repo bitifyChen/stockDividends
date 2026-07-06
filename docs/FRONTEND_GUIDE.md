@@ -1,3 +1,107 @@
+# 2026-07-06
+
+## ETF 每日進出：產業總覽、產業明細與排序統一
+
+### 主旨
+後端補強 `/dashboard/etf/events/overview` 所需的產業視角資料，並統一「個股總買賣行為」與「產業別進出總覽」的排序語意。前端本次只需改接 API 與調整顯示，不需要自行重新計算 top stocks。
+
+### 填寫人
+Backend
+
+### 影響 API
+- `GET /etf/events/industry-overview`
+- `GET /etf/events/industry-overview/{industryCode}/stocks`
+- `GET /etf/events/stock-overview`
+
+### 改動內容
+- `GET /etf/events/industry-overview` 新增 `topN` query 參數，預設 `3`，最大 `10`。
+- `GET /etf/events/industry-overview` 的每個 `items[]` 新增 `topStocks`，讓 overview card 可直接顯示該產業代表個股。
+- 新增 `GET /etf/events/industry-overview/{industryCode}/stocks`，用於點進產業卡片後顯示該產業內的個股總買賣行為列表。
+- `GET /etf/events/stock-overview` 預設排序改為 `estimated_amount`，與產業 API 一致。
+- 後端仍保留舊排序值相容既有 URL，但前端下拉建議只顯示下列共用選項。
+
+### 建議排序 Mapping
+```js
+export const ETF_EVENT_SORT_OPTIONS = [
+  { value: 'estimated_amount', label: '估算交易額' },
+  { value: 'estimated_buy_amount', label: '估算買進金額' },
+  { value: 'estimated_sell_amount', label: '估算賣出金額' },
+  { value: 'estimated_net_amount', label: '估算淨買超金額' },
+  { value: 'estimated_net_amount_abs', label: '估算淨異動金額' },
+  { value: 'event_etf_count', label: '異動 ETF 家數' },
+]
+```
+
+### 產業總覽 API
+```text
+GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&page=1&pageSize=50&sort=estimated_amount&topN=3
+```
+
+`items[].topStocks` 結構：
+```json
+{
+  "topStocks": {
+    "buy": [],
+    "sell": [],
+    "netBuy": [],
+    "netSell": [],
+    "amount": []
+  }
+}
+```
+
+各陣列內的 item：
+```json
+{
+  "stock": {
+    "code": "2330",
+    "name": "台積電",
+    "full_name": "台灣積體電路製造股份有限公司",
+    "market": "listed",
+    "industry_code": "24"
+  },
+  "buy_etf_count": 2,
+  "sell_etf_count": 0,
+  "event_etf_count": 2,
+  "buy_shares": 120000,
+  "sell_shares": 0,
+  "net_shares": 120000,
+  "estimated_buy_amount": 120000000,
+  "estimated_sell_amount": 0,
+  "estimated_net_amount": 120000000,
+  "estimated_amount": 120000000,
+  "eventCount": 2
+}
+```
+
+`topStocks` 用法建議：
+- `amount`：總交易額代表股，可放在卡片最主要的代表個股區。
+- `buy`：估算買進金額最高的個股。
+- `sell`：估算賣出金額最高的個股。
+- `netBuy`：估算淨買超金額最高的個股。
+- `netSell`：估算淨賣超金額最高的個股。
+
+### 產業內個股明細 API
+```text
+GET /etf/events/industry-overview/{industryCode}/stocks?date=YYYY-MM-DD&type=all&side=all&etfType=all&page=1&pageSize=50&limitPerStock=50&sort=estimated_amount
+```
+
+用途：
+- 使用者點擊產業卡片後，顯示該產業內所有異動個股。
+- 回傳結構接近 `/etf/events/stock-overview`，每個 `items[]` 都有 `stock`、買進/賣出/淨額、ETF 家數與 nested `events[]`。
+- `events[]` 可顯示涉及 ETF、事件類型、異動股數與 OHLC 估算金額。
+- 若要進入「ETF 對單一個股」詳情，不需新增新 URL，沿用既有 ETF/stock 專屬頁面入口。
+
+### 對應角色處理
+- 前端在產業 overview card 使用 `topStocks.amount` 或依 UI 情境切換 `buy/sell/netBuy/netSell`。
+- 前端排序下拉建議在 `stock-overview`、`industry-overview`、`industry-overview/{industryCode}/stocks` 共用同一組 mapping。
+- 前端切換 type / side / sort 時，產業總覽與個股明細應使用同一組 query 條件，避免上方與下方資料語意不同。
+
+### 其他必要補充
+- `estimated_*` 都是以 OHLC 參考價估算，不是 ETF 真實成交價。
+- 若 `amountCoverage.coverageRate` 低於 1，代表部分 event 尚未成功補到 OHLC，金額型排序可能低估。
+- 後端排序預設已改為 `estimated_amount`，前端若沒有特殊需求，不需要再帶舊的 `net_shares_abs`。
+
 # 2026-07-05
 
 ## 新增 ETF 每日進出「產業別總覽」API
