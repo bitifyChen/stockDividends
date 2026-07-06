@@ -1,6 +1,13 @@
 <script setup>
 import { computed } from 'vue'
-import { formatShare, shareColumnLabel } from '@/utils/etfDashboard.js'
+import {
+  formatDecimalRatio,
+  formatMarketAmount,
+  formatShare,
+  isOhlcEnriched,
+  shareColumnLabel
+} from '@/utils/etfDashboard.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const props = defineProps({
   group: {
@@ -99,6 +106,11 @@ const formatPercentage = (event) => {
   return `${percentage >= 100 ? percentage.toFixed(0) : percentage.toFixed(1)}%`
 }
 
+const ohlcAmountLabel = (event) => {
+  if (!isOhlcEnriched(event.ohlc)) return '尚無成交價資料'
+  return `估 ${formatMarketAmount(event.ohlc.estimated_net_amount)} · 量 ${formatDecimalRatio(event.ohlc.volume_ratio)}`
+}
+
 const eventTooltip = (event) => {
   const unitLabel = shareColumnLabel(props.shareUnit)
   const previous = formatShare(event.previous_shares, props.shareUnit)
@@ -120,12 +132,12 @@ const detailRoute = (event) => ({
   name: 'Dashboard_Etf_Holdings_Detail',
   params: {
     etfCode: String(props.group.etf_code),
-    stockCode: String(event.stock_code)
+    stockCode: getStockCode(event.stock)
   }
 })
 
 const detailTooltip = (event) =>
-  `前往查看 ${props.group.etf_code || '-'} ${props.group.etf_name || 'ETF'} 的 ${event.stock_code || '-'} ${event.stock_name || '個股'} 歷史資料`
+  `前往查看 ${props.group.etf_code || '-'} ${props.group.etf_name || 'ETF'} 的 ${getStockCode(event.stock) || '-'} ${getStockName(event.stock, '個股')} 歷史資料`
 </script>
 
 <template>
@@ -156,9 +168,9 @@ const detailTooltip = (event) =>
       <div class="event-list">
         <el-tooltip
           v-for="event in sortedEvents"
-          :key="`${group.etf_code}-${event.stock_code}-${event.snapshot_date}-${event.event_type}`"
+          :key="`${group.etf_code}-${getStockCode(event.stock)}-${event.snapshot_date}-${event.event_type}`"
           :content="detailTooltip(event)"
-          :disabled="!event.stock_code"
+          :disabled="!getStockCode(event.stock)"
           placement="right"
           effect="dark"
           popper-class="event-row-tooltip"
@@ -168,10 +180,10 @@ const detailTooltip = (event) =>
         >
           <div class="event-tooltip-reference">
             <component
-              :is="event.stock_code ? 'router-link' : 'div'"
-              :to="event.stock_code ? detailRoute(event) : undefined"
-              :class="['event-row', { 'event-row-link': event.stock_code }]"
-              :aria-label="event.stock_code ? detailTooltip(event) : undefined"
+              :is="getStockCode(event.stock) ? 'router-link' : 'div'"
+              :to="getStockCode(event.stock) ? detailRoute(event) : undefined"
+              :class="['event-row', { 'event-row-link': getStockCode(event.stock) }]"
+              :aria-label="getStockCode(event.stock) ? detailTooltip(event) : undefined"
             >
               <el-tag
                 class="event-type"
@@ -185,9 +197,12 @@ const detailTooltip = (event) =>
 
               <div class="event-main">
                 <div class="stock-identity">
-                  <strong>{{ event.stock_name || '-' }}</strong>
-                  <span>{{ event.stock_code || '-' }}</span>
+                  <strong>{{ getStockName(event.stock, '-') }}</strong>
+                  <span>{{ getStockCode(event.stock) || '-' }}</span>
                 </div>
+                <span class="event-amount" :class="{ 'is-muted': !isOhlcEnriched(event.ohlc) }">
+                  {{ ohlcAmountLabel(event) }}
+                </span>
               </div>
 
               <strong class="event-change" :class="metricTone(event)">
@@ -197,7 +212,7 @@ const detailTooltip = (event) =>
               <span
                 class="change-percent"
                 :class="metricTone(event)"
-                :aria-label="`${event.stock_name || event.stock_code}，${eventTooltip(event)}`"
+                :aria-label="`${getStockName(event.stock, getStockCode(event.stock))}，${eventTooltip(event)}`"
               >
                 {{ formatPercentage(event) }}
               </span>
@@ -366,6 +381,21 @@ h2 {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 10px;
   font-weight: 800;
+}
+
+.event-amount {
+  overflow: hidden;
+  margin-top: 2px;
+  color: color-mix(in srgb, #67e8f9 76%, var(--dashboard-text-secondary, #cbd5e1));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-amount.is-muted {
+  color: var(--dashboard-text-muted, #7c8794);
 }
 
 .event-change,

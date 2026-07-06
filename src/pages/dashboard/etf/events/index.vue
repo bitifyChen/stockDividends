@@ -6,7 +6,15 @@ import { getEtfAvailableDates, getEtfEvents, getEtfHoldings, getEtfList } from '
 import TwoTable from '@/components/Two/TwoTable.vue'
 import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
-import { formatShare, normalizeArray, shareColumnLabel } from '@/utils/etfDashboard.js'
+import {
+  formatDecimalRatio,
+  formatMarketAmount,
+  formatShare,
+  isOhlcEnriched,
+  normalizeArray,
+  shareColumnLabel
+} from '@/utils/etfDashboard.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
 const loadingList = ref(false)
@@ -34,6 +42,8 @@ const columns = computed(() => [
     formatter: (row) => formatShare(row.current_shares, dashboardSettingStore.shareUnit)
   },
   { label: `${shareColumnLabel(dashboardSettingStore.shareUnit)}變化`, slot: 'delta' },
+  { label: '估算金額', slot: 'estimated_amount', minWidth: '120' },
+  { label: '量能占比', slot: 'volume_ratio', minWidth: '110' },
   { label: '事件', slot: 'event' },
   { label: '資料日期', prop: 'snapshot_date' },
   { label: '操作', slot: 'actions', width: '96', align: 'center' }
@@ -59,13 +69,13 @@ const decreasedCount = computed(
   () => rows.value.filter((row) => row.is_sell_decrease || row.is_sell_out).length
 )
 const rowEtfCode = (row) => row.etf_code || selectedEtfCode.value
-const canOpenDetail = (row) => Boolean(rowEtfCode(row) && row.stock_code)
+const canOpenDetail = (row) => Boolean(rowEtfCode(row) && getStockCode(row.stock))
 
 const detailRoute = (row) => ({
   name: 'Dashboard_Etf_Holdings_Detail',
   params: {
     etfCode: String(rowEtfCode(row)),
-    stockCode: String(row.stock_code)
+    stockCode: getStockCode(row.stock)
   }
 })
 
@@ -258,12 +268,24 @@ onMounted(async () => {
       <TwoTable :data="rows" :columns="columns" :loading="loadingData || loadingDates">
         <template #stock="{ row }">
           <div class="stock-cell">
-            <strong>{{ row.stock_name || '-' }}</strong>
-            <span>{{ row.stock_code || '-' }}</span>
+            <strong>{{ getStockName(row.stock, '-') }}</strong>
+            <span>{{ getStockCode(row.stock) || '-' }}</span>
           </div>
         </template>
         <template #delta="{ row }">
           <span :class="eventClass(row)">{{ formatSignedShare(row.delta_shares) }}</span>
+        </template>
+        <template #estimated_amount="{ row }">
+          <span v-if="isOhlcEnriched(row.ohlc)" :class="eventClass(row)">
+            {{ formatMarketAmount(row.ohlc.estimated_net_amount) }}
+          </span>
+          <span v-else class="detail-disabled">尚無成交價資料</span>
+        </template>
+        <template #volume_ratio="{ row }">
+          <span v-if="isOhlcEnriched(row.ohlc)">
+            {{ formatDecimalRatio(row.ohlc.volume_ratio) }}
+          </span>
+          <span v-else class="detail-disabled">-</span>
         </template>
         <template #event="{ row }">
           <span :class="eventClass(row)">{{ eventLabel(row) }}</span>

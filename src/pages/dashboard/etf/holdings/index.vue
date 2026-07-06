@@ -17,6 +17,7 @@ import {
   shareColumnLabel,
   toShareUnitValue
 } from '@/utils/etfDashboard.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const TREND_DAYS = 30
 const dashboardSettingStore = useDashboardSettingStore()
@@ -83,13 +84,13 @@ const trendPoints = (row) =>
     toShareUnitValue(item.holding_shares, dashboardSettingStore.shareUnit)
   )
 const rowEtfCode = (row) => row.etf_code || selectedEtfCode.value
-const canOpenDetail = (row) => Boolean(rowEtfCode(row) && row.stock_code)
+const canOpenDetail = (row) => Boolean(rowEtfCode(row) && getStockCode(row.stock))
 
 const detailRoute = (row) => ({
   name: 'Dashboard_Etf_Holdings_Detail',
   params: {
     etfCode: String(rowEtfCode(row)),
-    stockCode: String(row.stock_code)
+    stockCode: getStockCode(row.stock)
   }
 })
 
@@ -299,8 +300,8 @@ onMounted(async () => {
       <TwoTable :data="sortedRows" :columns="columns" :loading="loadingData || loadingDates">
         <template #stock="{ row }">
           <div class="stock-cell">
-            <strong>{{ row.stock_name || '-' }}</strong>
-            <span>{{ row.stock_code || '-' }}</span>
+            <strong>{{ getStockName(row.stock, '-') }}</strong>
+            <span>{{ getStockCode(row.stock) || '-' }}</span>
           </div>
         </template>
         <template #trend="{ row }">

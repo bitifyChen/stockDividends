@@ -51,6 +51,37 @@ export const formatRatio = (value) => {
   return `${numberValue.toFixed(2)}%`
 }
 
+export const formatDecimalRatio = (value, fractionDigits = 2) => {
+  if (value === null || value === undefined || value === '') return '-'
+  const numberValue = Number(value)
+  if (!Number.isFinite(numberValue)) return '-'
+  return `${(numberValue * 100).toFixed(fractionDigits)}%`
+}
+
+export const formatMarketAmount = (value) => {
+  if (value === null || value === undefined || value === '') return '-'
+  const numberValue = Number(value)
+  if (!Number.isFinite(numberValue)) return '-'
+
+  const absValue = Math.abs(numberValue)
+  const sign = numberValue < 0 ? '-' : ''
+
+  if (absValue >= 100000000) {
+    const digits = absValue >= 1000000000 ? 1 : 2
+    return `${sign}${(absValue / 100000000).toFixed(digits)} 億`
+  }
+
+  if (absValue >= 10000) {
+    const digits = absValue >= 1000000 ? 1 : 2
+    return `${sign}${(absValue / 10000).toFixed(digits)} 萬`
+  }
+
+  return `${sign}${Math.round(absValue).toLocaleString()}`
+}
+
+export const isOhlcEnriched = (ohlc) =>
+  Number(ohlc?.enrich_status?.code) === 1 || ohlc?.enrich_status?.label === 'success'
+
 export const formatDateTime = (value) => {
   if (!value) return '-'
   const parsed = dayjs(value)

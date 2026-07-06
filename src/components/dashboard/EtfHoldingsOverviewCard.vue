@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ArrowUpRight, Info } from 'lucide-vue-next'
 import { formatRatio, formatShare, shareColumnLabel } from '@/utils/etfDashboard.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const props = defineProps({
   group: {
@@ -68,7 +69,7 @@ const detailRoute = (holding) => ({
   name: 'Dashboard_Etf_Holdings_Detail',
   params: {
     etfCode: String(props.group.etf_code),
-    stockCode: String(holding.stock_code)
+    stockCode: getStockCode(holding.stock)
   }
 })
 </script>
@@ -95,7 +96,7 @@ const detailRoute = (holding) => ({
     <div v-if="holdings.length" class="holding-list">
       <div
         v-for="holding in holdings"
-        :key="`${group.etf_code}-${holding.stock_code}`"
+        :key="`${group.etf_code}-${getStockCode(holding.stock)}`"
         class="holding-row"
       >
         <div class="holding-rank" aria-hidden="true">
@@ -105,8 +106,8 @@ const detailRoute = (holding) => ({
         <div class="holding-main">
           <div class="holding-heading">
             <div class="stock-identity">
-              <strong>{{ holding.stock_name || '-' }}</strong>
-              <span>{{ holding.stock_code || '-' }}</span>
+              <strong>{{ getStockName(holding.stock, '-') }}</strong>
+              <span>{{ getStockCode(holding.stock) || '-' }}</span>
             </div>
 
             <strong class="holding-ratio">{{ formatRatio(holding.holding_ratio) }}</strong>
@@ -121,7 +122,7 @@ const detailRoute = (holding) => ({
             <button
               class="weight-visual"
               type="button"
-              :aria-label="`${holding.stock_name || holding.stock_code}，${shareTooltip(holding)}，權重 ${formatRatio(holding.holding_ratio)}`"
+              :aria-label="`${getStockName(holding.stock, getStockCode(holding.stock))}，${shareTooltip(holding)}，權重 ${formatRatio(holding.holding_ratio)}`"
             >
               <el-progress
                 :percentage="progressPercentage(holding.holding_ratio)"
@@ -134,10 +135,10 @@ const detailRoute = (holding) => ({
         </div>
 
         <router-link
-          v-if="holding.stock_code"
+          v-if="getStockCode(holding.stock)"
           class="detail-link"
           :to="detailRoute(holding)"
-          :aria-label="`查看 ${holding.stock_name || holding.stock_code} 詳情`"
+          :aria-label="`查看 ${getStockName(holding.stock, getStockCode(holding.stock))} 詳情`"
         >
           <ArrowUpRight :size="14" aria-hidden="true" />
         </router-link>

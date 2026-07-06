@@ -21,6 +21,7 @@ import {
   shareUnitLabel,
   toShareUnitValue
 } from '@/utils/etfDashboard.js'
+import { getStockName } from '@/utils/stock.js'
 
 const route = useRoute()
 const dashboardSettingStore = useDashboardSettingStore()
@@ -45,7 +46,7 @@ const stockCode = computed(() => String(route.params.stockCode || ''))
 const stockSummary = computed(() => normalizeObject(summary.value.summary))
 const holdersRows = computed(() => normalizeArray(summary.value.holders))
 const seriesHolders = computed(() => normalizeArray(series.value.holders))
-const stockName = computed(() => summary.value.stock_name || stockSummary.value.stock_name || '')
+const stockName = computed(() => getStockName(summary.value.stock || stockSummary.value.stock, ''))
 
 const etfFilterOptions = computed(() => {
   const options = new Map()
@@ -85,8 +86,7 @@ const mergedRows = computed(() =>
       series: normalizeArray(holderSeries?.series),
       etf_code: holder.etf_code || current.etf_code,
       etf_name: holder.etf_name || current.etf_name,
-      stock_code: holder.stock_code || current.stock_code,
-      stock_name: holder.stock_name || current.stock_name,
+      stock: holder.stock || current.stock || holderSummary.stock,
       holding_shares: holderSummary.current_shares ?? current.holding_shares,
       holding_ratio: holderSummary.holding_ratio ?? current.holding_ratio,
       delta_shares: holderSummary.delta_shares,

@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { ArrowUpRight } from 'lucide-vue-next'
-import { formatShare } from '@/utils/etfDashboard.js'
+import { formatDecimalRatio, formatMarketAmount, formatShare } from '@/utils/etfDashboard.js'
+import { getStockIndustryName } from '@/utils/industry.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const props = defineProps({
   stock: {
@@ -18,14 +20,35 @@ const events = computed(() => (Array.isArray(props.stock.events) ? props.stock.e
 const buyShares = computed(() => Number(props.stock.buy_shares || 0))
 const sellShares = computed(() => Number(props.stock.sell_shares || 0))
 const netShares = computed(() => Number(props.stock.net_shares || 0))
+const estimatedBuyAmount = computed(() => Number(props.stock.estimated_buy_amount || 0))
+const estimatedSellAmount = computed(() => Number(props.stock.estimated_sell_amount || 0))
+const estimatedNetAmount = computed(() => Number(props.stock.estimated_net_amount || 0))
+const hasAmountData = computed(
+  () =>
+    Number(props.stock.ohlc_success_count || 0) > 0 ||
+    estimatedBuyAmount.value !== 0 ||
+    estimatedSellAmount.value !== 0 ||
+    estimatedNetAmount.value !== 0
+)
 const netTone = computed(() => {
   if (netShares.value > 0) return 'value-up'
   if (netShares.value < 0) return 'value-down'
   return 'value-neutral'
 })
+const amountTone = computed(() => {
+  if (estimatedNetAmount.value > 0) return 'value-up'
+  if (estimatedNetAmount.value < 0) return 'value-down'
+  return 'value-neutral'
+})
 const visibleEvents = computed(() => events.value.slice(0, 8))
 const hiddenEventCount = computed(() =>
   Math.max(0, events.value.length - visibleEvents.value.length)
+)
+const stockObject = computed(() => props.stock.stock || {})
+const stockCode = computed(() => getStockCode(stockObject.value))
+const stockName = computed(() => getStockName(stockObject.value))
+const stockIndustryName = computed(() =>
+  stockObject.value.industry_code ? getStockIndustryName(stockObject.value) : ''
 )
 
 const eventTypeLabels = {
@@ -47,15 +70,25 @@ const eventLabel = (event) =>
 
 const eventTone = (event) => (isBuyEvent(event) ? 'event-buy' : 'event-sell')
 
+const eventChangeShares = (event) => Number(event.change_shares ?? event.delta_shares ?? 0)
+const eventEstimatedAmount = (event) =>
+  event.ohlc?.estimated_net_amount ?? event.estimated_net_amount ?? event.ohlc?.estimated_amount
+
 const formatSignedShare = (value) => {
   const numericValue = Number(value || 0)
   return `${numericValue > 0 ? '+' : ''}${formatShare(numericValue, props.shareUnit)}`
 }
 
+const formatEventAmount = (event) => {
+  const value = eventEstimatedAmount(event)
+  if (value === null || value === undefined || value === '') return '無估值'
+  return formatMarketAmount(value)
+}
+
 const detailRoute = computed(() => ({
   name: 'Dashboard_Etf_Stocks_Detail',
   params: {
-    stockCode: String(props.stock.stock_code)
+    stockCode: stockCode.value
   }
 }))
 
@@ -63,7 +96,7 @@ const eventDetailRoute = (event) => ({
   name: 'Dashboard_Etf_Holdings_Detail',
   params: {
     etfCode: String(event.etf_code),
-    stockCode: String(props.stock.stock_code)
+    stockCode: stockCode.value
   }
 })
 </script>
@@ -72,15 +105,18 @@ const eventDetailRoute = (event) => ({
   <article class="stock-overview-card">
     <header class="stock-card-header">
       <div class="stock-identity">
-        <span>{{ stock.stock_code || '-' }}</span>
-        <h3>{{ stock.stock_name || '未命名股票' }}</h3>
+        <div class="stock-meta-line">
+          <span class="stock-code">{{ stockCode || '-' }}</span>
+          <span v-if="stockIndustryName" class="industry-tag">{{ stockIndustryName }}</span>
+        </div>
+        <h3>{{ stockName }}</h3>
       </div>
 
       <router-link
-        v-if="stock.stock_code"
+        v-if="stockCode"
         class="stock-detail-link"
         :to="detailRoute"
-        :aria-label="`檢視 ${stock.stock_name || stock.stock_code} 個股觀測`"
+        :aria-label="`檢視 ${stockName || stockCode} 個股觀測`"
       >
         <ArrowUpRight :size="14" aria-hidden="true" />
       </router-link>
@@ -100,6 +136,27 @@ const eventDetailRoute = (event) => ({
         <strong :class="netTone">{{ formatSignedShare(netShares) }}</strong>
       </div>
     </div>
+
+    <div v-if="hasAmountData" class="amount-ledger">
+      <div>
+        <span>估買金額</span>
+        <strong class="value-up">{{ formatMarketAmount(estimatedBuyAmount) }}</strong>
+      </div>
+      <div>
+        <span>估賣金額</span>
+        <strong class="value-down">{{ formatMarketAmount(estimatedSellAmount) }}</strong>
+      </div>
+      <div>
+        <span>估淨金額</span>
+        <strong :class="amountTone">{{ formatMarketAmount(estimatedNetAmount) }}</strong>
+      </div>
+    </div>
+
+    <div v-if="hasAmountData" class="ratio-strip">
+      <span>量能占比 {{ formatDecimalRatio(stock.volume_ratio) }}</span>
+      <span>金額占比 {{ formatDecimalRatio(stock.amount_ratio) }}</span>
+    </div>
+    <div v-else class="ohlc-note">尚無成交價資料</div>
 
     <div class="etf-count-strip">
       <el-tooltip content="當日首買或加碼這檔股票的主動 ETF 數量" placement="top" effect="dark">
@@ -124,14 +181,17 @@ const eventDetailRoute = (event) => ({
     <div class="event-chip-list">
       <router-link
         v-for="event in visibleEvents"
-        :key="`${stock.stock_code}-${event.etf_code}-${event.event_type}`"
+        :key="`${stockCode}-${event.etf_code}-${event.event_type}`"
         class="event-chip"
         :class="eventTone(event)"
         :to="eventDetailRoute(event)"
-        :aria-label="`檢視 ${event.etf_code || 'ETF'} 對 ${stock.stock_name || stock.stock_code} 的分析`"
+        :aria-label="`檢視 ${event.etf_code || 'ETF'} 對 ${stockName || stockCode} 的分析`"
       >
         <span>{{ event.etf_code || '-' }}</span>
         <strong>{{ eventLabel(event) }}</strong>
+        <small>
+          {{ formatSignedShare(eventChangeShares(event)) }} · {{ formatEventAmount(event) }}
+        </small>
       </router-link>
       <div v-if="hiddenEventCount" class="event-chip more">+{{ hiddenEventCount }}</div>
     </div>
@@ -174,12 +234,37 @@ const eventDetailRoute = (event) => ({
   gap: 4px;
 }
 
-.stock-identity span {
+.stock-meta-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.stock-code {
+  flex: 0 0 auto;
   color: #67e8f9;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.08em;
+}
+
+.industry-tag {
+  display: inline-flex;
+  max-width: 132px;
+  min-height: 20px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #67e8f9 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #67e8f9 10%, transparent);
+  padding: 0 8px;
+  color: color-mix(in srgb, #67e8f9 84%, #f8fbff);
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stock-identity h3 {
@@ -212,6 +297,12 @@ const eventDetailRoute = (event) => ({
   color: #67e8f9;
 }
 
+:global(.dashboard-theme-light) .industry-tag {
+  border-color: rgb(8 145 178 / 0.18);
+  background: rgb(8 145 178 / 0.08);
+  color: #0e7490;
+}
+
 .share-ledger > div {
   display: grid;
   gap: 5px;
@@ -238,6 +329,52 @@ const eventDetailRoute = (event) => ({
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   padding: 4px 0 2px;
+}
+
+.amount-ledger {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--main-border-color, rgb(148 163 184 / 0.12));
+}
+
+.amount-ledger > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.amount-ledger span,
+.ratio-strip span {
+  color: var(--dashboard-text-muted, #7c8794);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.amount-ledger strong {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ratio-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: -4px;
+}
+
+.ohlc-note {
+  border-top: 1px solid var(--main-border-color, rgb(148 163 184 / 0.12));
+  padding-top: 10px;
+  color: var(--dashboard-text-muted, #7c8794);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .etf-count-strip {
@@ -282,20 +419,20 @@ const eventDetailRoute = (event) => ({
 }
 
 .event-chip-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   min-height: 28px;
 }
 
 .event-chip {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
   gap: 6px;
-  min-height: 26px;
+  min-height: 48px;
+  align-content: center;
   border: 1px solid var(--dashboard-control-border, rgb(148 163 184 / 0.14));
-  border-radius: 999px;
-  padding: 0 9px;
+  border-radius: 12px;
+  padding: 7px 9px;
   font-size: 11px;
   font-weight: 900;
   text-decoration: none;
@@ -316,7 +453,24 @@ const eventDetailRoute = (event) => ({
 }
 
 .event-chip span {
+  overflow: hidden;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-chip strong {
+  line-height: 1;
+}
+
+.event-chip small {
+  overflow: hidden;
+  color: var(--dashboard-text-muted, #7c8794);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .event-buy {
@@ -332,12 +486,18 @@ const eventDetailRoute = (event) => ({
 }
 
 .event-chip.more {
+  min-height: 32px;
   color: var(--dashboard-text-muted, #7c8794);
 }
 
 @media (max-width: 560px) {
   .share-ledger,
+  .amount-ledger,
   .etf-count-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .event-chip-list {
     grid-template-columns: 1fr;
   }
 }

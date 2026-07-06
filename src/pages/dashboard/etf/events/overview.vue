@@ -1,17 +1,21 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
-import { getEtfEventsOverview, getEtfEventsStockOverview } from '@/api/etf.js'
 import {
-  etfEventStockSortOptions,
+  getEtfEventsIndustryOverview,
+  getEtfEventsOverview,
+  getEtfEventsStockOverview
+} from '@/api/etf.js'
+import {
+  etfEventSortOptions,
   etfEventTypeOptions,
   etfTypeOptions
 } from '@/data/dashboardDataMapping.js'
-import EtfEventsOverviewCard from '@/components/dashboard/EtfEventsOverviewCard.vue'
-import EtfEventsStockOverviewCard from '@/components/dashboard/EtfEventsStockOverviewCard.vue'
+import EtfEventsEtfOverviewSection from '@/components/dashboard/EtfEventsEtfOverviewSection.vue'
+import EtfEventsIndustryOverviewSection from '@/components/dashboard/EtfEventsIndustryOverviewSection.vue'
+import EtfEventsStockOverviewSection from '@/components/dashboard/EtfEventsStockOverviewSection.vue'
 import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
-import EtfOverviewCardSkeleton from '@/components/dashboard/EtfOverviewCardSkeleton.vue'
 import {
   createDashboardCacheKey,
   useDashboardDataCacheStore
@@ -43,14 +47,31 @@ const stockPageSize = ref(12)
 const stockLimitPerStock = ref(50)
 const stockItems = ref([])
 const stockTotalCount = ref(0)
+const stockAmountCoverage = ref({})
 const stockHasMore = ref(false)
 const stockNextPage = ref(null)
 const stockErrorMessage = ref('')
-const selectedSort = ref('net_shares_abs')
+const selectedSort = ref('estimated_amount')
 const selectedEtfType = ref('')
+const stockOverviewSectionRef = ref(null)
+const hasRequestedStockOverview = ref(false)
+const pendingStockOverviewRequest = ref(false)
+const industryLoadingData = ref(false)
+const industryLoadingMore = ref(false)
+const industryPage = ref(1)
+const industryPageSize = ref(20)
+const industryItems = ref([])
+const industryTotalCount = ref(0)
+const industryAmountCoverage = ref({})
+const industryHasMore = ref(false)
+const industryNextPage = ref(null)
+const industryErrorMessage = ref('')
+const industryOverviewSectionRef = ref(null)
+const hasRequestedIndustryOverview = ref(false)
+let lazyOverviewObserver = null
 
 const typeOptions = etfEventTypeOptions
-const sortOptions = etfEventStockSortOptions
+const sortOptions = etfEventSortOptions
 
 const availableDateSet = computed(() => new Set(availableDates.value))
 const isDateDisabled = (date) => {
@@ -79,11 +100,48 @@ const applyStockOverviewResponse = (response, { append = false } = {}) => {
   const nextItems = normalizeArray(response?.items)
   stockItems.value = append ? [...stockItems.value, ...nextItems] : nextItems
   stockTotalCount.value = Number(response?.totalCount || 0)
+  stockAmountCoverage.value = response?.amountCoverage || {}
   stockHasMore.value = Boolean(response?.hasMore)
   stockNextPage.value = response?.nextPage ?? null
   stockPage.value = Number(response?.page || stockPage.value)
   stockPageSize.value = Number(response?.pageSize || stockPageSize.value)
   stockLimitPerStock.value = Number(response?.limitPerStock || stockLimitPerStock.value)
+}
+
+const applyIndustryOverviewResponse = (response, { append = false } = {}) => {
+  const nextItems = normalizeArray(response?.items)
+  industryItems.value = append ? [...industryItems.value, ...nextItems] : nextItems
+  industryTotalCount.value = Number(response?.totalCount || 0)
+  industryAmountCoverage.value = response?.amountCoverage || {}
+  industryHasMore.value = Boolean(response?.hasMore)
+  industryNextPage.value = response?.nextPage ?? null
+  industryPage.value = Number(response?.page || industryPage.value)
+  industryPageSize.value = Number(response?.pageSize || industryPageSize.value)
+}
+
+const resetLazyOverviewBlocks = () => {
+  hasRequestedIndustryOverview.value = false
+  hasRequestedStockOverview.value = false
+  pendingStockOverviewRequest.value = false
+  industryItems.value = []
+  industryTotalCount.value = 0
+  industryAmountCoverage.value = {}
+  industryHasMore.value = false
+  industryNextPage.value = null
+  industryErrorMessage.value = ''
+  stockItems.value = []
+  stockTotalCount.value = 0
+  stockAmountCoverage.value = {}
+  stockHasMore.value = false
+  stockNextPage.value = null
+  stockErrorMessage.value = ''
+}
+
+const isSectionNearViewport = (element) => {
+  if (!element) return false
+  const preloadDistance = 360
+  const rect = element.getBoundingClientRect()
+  return rect.top <= window.innerHeight + preloadDistance && rect.bottom >= -preloadDistance
 }
 
 const loadEvents = async ({ append = false, force = false } = {}) => {
@@ -176,6 +234,7 @@ const loadStockOverview = async ({
   } catch (error) {
     stockErrorMessage.value = error?.message || '載入個股彙總失敗'
     if (!append) stockItems.value = []
+    if (!append) stockAmountCoverage.value = {}
     stockHasMore.value = false
     stockNextPage.value = null
   } finally {
@@ -184,12 +243,96 @@ const loadStockOverview = async ({
   }
 }
 
+const loadIndustryOverview = async ({
+  append = false,
+  date = selectedDate.value,
+  force = false
+} = {}) => {
+  const requestParams = {
+    date: date || null,
+    type: selectedType.value,
+    etfType: selectedEtfType.value || null,
+    sort: selectedSort.value,
+    page: append ? industryPage.value : 1,
+    pageSize: industryPageSize.value,
+    topN: 3
+  }
+  const cacheKey = createDashboardCacheKey('etfEventsIndustryOverview', requestParams)
+  const cached = force ? null : dashboardDataCacheStore.getFresh(cacheKey)
+
+  if (cached) {
+    industryErrorMessage.value = ''
+    if (!append) industryPage.value = 1
+    applyIndustryOverviewResponse(cached, { append })
+    return
+  }
+
+  if (append) {
+    industryLoadingMore.value = true
+  } else {
+    industryLoadingData.value = true
+    industryErrorMessage.value = ''
+    industryPage.value = 1
+    industryItems.value = []
+  }
+
+  try {
+    const response = await dashboardDataCacheStore.remember(
+      cacheKey,
+      () => getEtfEventsIndustryOverview(requestParams),
+      { force }
+    )
+
+    applyIndustryOverviewResponse(response, { append })
+  } catch (error) {
+    industryErrorMessage.value = error?.message || '載入產業總覽失敗'
+    if (!append) industryItems.value = []
+    if (!append) industryAmountCoverage.value = {}
+    industryHasMore.value = false
+    industryNextPage.value = null
+  } finally {
+    industryLoadingData.value = false
+    industryLoadingMore.value = false
+    if (pendingStockOverviewRequest.value && isSectionNearViewport(stockOverviewSectionRef.value)) {
+      pendingStockOverviewRequest.value = false
+      requestStockOverview()
+    }
+  }
+}
+
+const requestIndustryOverview = ({ force = false } = {}) => {
+  if (industryLoadingData.value || (!force && hasRequestedIndustryOverview.value)) return
+  hasRequestedIndustryOverview.value = true
+  loadIndustryOverview({ force })
+}
+
+const requestStockOverview = ({ force = false } = {}) => {
+  if (!hasRequestedIndustryOverview.value || industryLoadingData.value) {
+    pendingStockOverviewRequest.value = true
+    requestIndustryOverview({ force })
+    return
+  }
+
+  if (stockLoadingData.value || (!force && hasRequestedStockOverview.value)) return
+  hasRequestedStockOverview.value = true
+  loadStockOverview({ force })
+}
+
+const requestLazyOverviewBlocks = () => {
+  if (isSectionNearViewport(industryOverviewSectionRef.value)) requestIndustryOverview()
+  if (isSectionNearViewport(stockOverviewSectionRef.value)) requestStockOverview()
+}
+
 const loadOverview = async ({ force = false } = {}) => {
-  await Promise.all([loadEvents({ force }), loadStockOverview({ force })])
+  await loadEvents({ force })
+  await nextTick()
+  requestLazyOverviewBlocks()
 }
 
 const reload = async () => {
-  await loadOverview({ force: true })
+  await loadEvents({ force: true })
+  if (hasRequestedIndustryOverview.value) loadIndustryOverview({ force: true })
+  if (hasRequestedStockOverview.value) loadStockOverview({ force: true })
 }
 
 const loadMore = async () => {
@@ -202,6 +345,12 @@ const loadMoreStocks = async () => {
   if (!stockHasMore.value || stockLoadingMore.value) return
   stockPage.value = Number(stockNextPage.value || stockPage.value + 1)
   await loadStockOverview({ append: true })
+}
+
+const loadMoreIndustries = async () => {
+  if (!industryHasMore.value || industryLoadingMore.value) return
+  industryPage.value = Number(industryNextPage.value || industryPage.value + 1)
+  await loadIndustryOverview({ append: true })
 }
 
 const groupedCards = computed(() =>
@@ -217,6 +366,17 @@ const displayedEventCount = computed(() =>
 )
 const skeletonCards = computed(() => Array.from({ length: Math.min(pageSize.value, 8) }))
 const stockSkeletonCards = computed(() => Array.from({ length: Math.min(stockPageSize.value, 8) }))
+const industrySkeletonCards = computed(() =>
+  Array.from({ length: Math.min(industryPageSize.value, 8) })
+)
+const shouldShowStockLoading = computed(
+  () =>
+    (loadingData.value || stockLoadingData.value || pendingStockOverviewRequest.value) &&
+    !stockItems.value.length
+)
+const shouldShowIndustryLoading = computed(
+  () => (loadingData.value || industryLoadingData.value) && !industryItems.value.length
+)
 const updatedEtfCount = computed(() => Number(coverage.value.updated_etf_count || 0))
 const trackedEtfCount = computed(() => Number(coverage.value.tracked_etf_count || 0))
 const notUpdatedEtfCount = computed(() => Number(coverage.value.not_updated_etf_count || 0))
@@ -225,18 +385,51 @@ const failedEtfCount = computed(() => Number(coverage.value.fetch_failed_etf_cou
 const selectedEtfTypeLabel = computed(
   () => etfTypeOptions.find((option) => option.value === selectedEtfType.value)?.label || '全部 ETF'
 )
+const selectedIndustrySortLabel = computed(
+  () => sortOptions.find((option) => option.value === selectedSort.value)?.label || '估算交易額'
+)
+const industryDetailQuery = computed(() => ({
+  date: selectedDate.value || undefined,
+  type: selectedType.value || 'all',
+  etfType: selectedEtfType.value || undefined,
+  sort: selectedSort.value || 'estimated_amount'
+}))
 
 watch([selectedDate, selectedType], () => {
   if (syncingDate.value) return
+  resetLazyOverviewBlocks()
   loadOverview()
 })
 
 watch([selectedSort, selectedEtfType], () => {
-  loadStockOverview()
+  if (hasRequestedStockOverview.value) loadStockOverview()
+  if (hasRequestedIndustryOverview.value) loadIndustryOverview()
 })
 
-onMounted(() => {
-  loadOverview()
+onMounted(async () => {
+  await loadOverview()
+
+  lazyOverviewObserver = new IntersectionObserver(
+    () => {
+      requestLazyOverviewBlocks()
+    },
+    {
+      rootMargin: '360px 0px 360px 0px',
+      threshold: 0
+    }
+  )
+
+  if (industryOverviewSectionRef.value) {
+    lazyOverviewObserver.observe(industryOverviewSectionRef.value)
+  }
+  if (stockOverviewSectionRef.value) {
+    lazyOverviewObserver.observe(stockOverviewSectionRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  lazyOverviewObserver?.disconnect()
+  lazyOverviewObserver = null
 })
 </script>
 
@@ -287,236 +480,72 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="console-panel">
-      <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
-
-      <div class="summary-line">
-        <div>
-          <strong>{{ selectedDate || '讀取中' }}</strong>
-          <span>全 ETF 當日進出總覽</span>
-        </div>
-        <div>
-          <span>ETF / 異動</span>
-          <strong>{{ totalCount }} / {{ displayedEventCount }}</strong>
-        </div>
-      </div>
-
-      <div class="metric-strip">
-        <div class="metric-box">
-          <span>已更新 ETF</span>
-          <strong>{{ updatedEtfCount }}</strong>
-        </div>
-        <div class="metric-box">
-          <span>追蹤 ETF</span>
-          <strong>{{ trackedEtfCount }}</strong>
-        </div>
-        <div class="metric-box">
-          <span>未更新 / 未開始 / 失敗</span>
-          <strong
-            >{{ notUpdatedEtfCount }} / {{ notStartedEtfCount }} / {{ failedEtfCount }}</strong
-          >
-        </div>
-      </div>
-
-      <div class="card-grid">
-        <template v-if="loadingData && !groupedCards.length">
-          <EtfOverviewCardSkeleton
-            v-for="(_, index) in skeletonCards"
-            :key="`event-skeleton-${index}`"
-            :rows="6"
-            variant="events"
-          />
-        </template>
-
-        <EtfEventsOverviewCard
-          v-for="card in groupedCards"
-          :key="`${card.etf_code}-${card.display_date}`"
-          :group="card"
-          :selected-date="selectedDate"
-          :selected-type="selectedType"
-          :share-unit="dashboardSettingStore.shareUnit"
-        />
-      </div>
-
-      <div v-if="!groupedCards.length && !loadingData" class="empty-state">
-        目前沒有符合條件的進出資料
-      </div>
-
-      <div class="footer-actions" v-if="hasMore">
-        <button class="load-more-button" type="button" :disabled="loadingMore" @click="loadMore">
-          {{ loadingMore ? '載入中' : '載入更多' }}
-        </button>
-      </div>
-
-      <section class="stock-overview-section" aria-labelledby="stock-overview-title">
-        <div class="stock-overview-head">
-          <div>
-            <span>STOCK FLOW</span>
-            <h2 id="stock-overview-title">個股總買賣行為</h2>
-            <p>以股票為單位彙總同日所有主動 ETF 的買進、賣出與淨變動。</p>
-          </div>
-
-          <div class="stock-overview-tools">
-            <label class="field compact">
-              <span>ETF 類型</span>
-              <el-select v-model="selectedEtfType" class="dashboard-select">
-                <el-option
-                  v-for="item in etfTypeOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </label>
-
-            <label class="field compact">
-              <span>排序</span>
-              <el-select v-model="selectedSort" class="dashboard-select">
-                <el-option
-                  v-for="item in sortOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </label>
-          </div>
-        </div>
-
-        <div v-if="stockErrorMessage" class="error-banner">{{ stockErrorMessage }}</div>
-
-        <div class="stock-summary-line">
-          <span>{{ selectedDate || '最新資料日期' }}</span>
-          <strong>{{ stockTotalCount }} 檔股票</strong>
-          <span>{{ selectedEtfTypeLabel }}</span>
-        </div>
-
-        <div class="stock-card-grid">
-          <template v-if="stockLoadingData && !stockItems.length">
-            <EtfOverviewCardSkeleton
-              v-for="(_, index) in stockSkeletonCards"
-              :key="`stock-event-skeleton-${index}`"
-              :rows="5"
-            />
-          </template>
-
-          <EtfEventsStockOverviewCard
-            v-for="stock in stockItems"
-            :key="`${stock.stock_code}-${selectedDate}`"
-            :stock="stock"
+    <EtfEventsEtfOverviewSection
+      :error-message="errorMessage"
+      :selected-date="selectedDate"
+      :total-count="totalCount"
+      :displayed-event-count="displayedEventCount"
+      :updated-etf-count="updatedEtfCount"
+      :tracked-etf-count="trackedEtfCount"
+      :not-updated-etf-count="notUpdatedEtfCount"
+      :not-started-etf-count="notStartedEtfCount"
+      :failed-etf-count="failedEtfCount"
+      :loading-data="loadingData"
+      :loading-more="loadingMore"
+      :grouped-cards="groupedCards"
+      :skeleton-cards="skeletonCards"
+      :has-more="hasMore"
+      :selected-type="selectedType"
+      :share-unit="dashboardSettingStore.shareUnit"
+      @load-more="loadMore"
+    >
+      <template #after>
+        <div ref="industryOverviewSectionRef">
+          <EtfEventsIndustryOverviewSection
+            v-model:selected-sort="selectedSort"
+            :sort-options="sortOptions"
+            :error-message="industryErrorMessage"
+            :selected-date="selectedDate"
+            :total-count="industryTotalCount"
+            :selected-etf-type-label="selectedEtfTypeLabel"
+            :selected-sort-label="selectedIndustrySortLabel"
+            :amount-coverage="industryAmountCoverage"
+            :detail-query="industryDetailQuery"
+            :loading-data="industryLoadingData"
+            :loading-more="industryLoadingMore"
+            :items="industryItems"
+            :skeleton-cards="industrySkeletonCards"
+            :has-more="industryHasMore"
             :share-unit="dashboardSettingStore.shareUnit"
+            :show-loading="shouldShowIndustryLoading"
+            @load-more="loadMoreIndustries"
           />
         </div>
 
-        <div v-if="!stockItems.length && !stockLoadingData" class="empty-state">
-          目前沒有符合條件的個股彙總資料
+        <div ref="stockOverviewSectionRef">
+          <EtfEventsStockOverviewSection
+            v-model:selected-sort="selectedSort"
+            v-model:selected-etf-type="selectedEtfType"
+            :sort-options="sortOptions"
+            :etf-type-options="etfTypeOptions"
+            :error-message="stockErrorMessage"
+            :selected-date="selectedDate"
+            :total-count="stockTotalCount"
+            :selected-etf-type-label="selectedEtfTypeLabel"
+            :amount-coverage="stockAmountCoverage"
+            :loading-more="stockLoadingMore"
+            :items="stockItems"
+            :skeleton-cards="stockSkeletonCards"
+            :has-more="stockHasMore"
+            :share-unit="dashboardSettingStore.shareUnit"
+            :show-loading="shouldShowStockLoading"
+            @load-more="loadMoreStocks"
+          />
         </div>
-
-        <div class="footer-actions" v-if="stockHasMore">
-          <button
-            class="load-more-button"
-            type="button"
-            :disabled="stockLoadingMore"
-            @click="loadMoreStocks"
-          >
-            {{ stockLoadingMore ? '載入中' : '載入更多個股' }}
-          </button>
-        </div>
-      </section>
-    </section>
+      </template>
+    </EtfEventsEtfOverviewSection>
   </div>
 </template>
-
-<style scoped>
-.stock-overview-section {
-  display: grid;
-  gap: 14px;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--main-border-color, rgb(148 163 184 / 0.16));
-}
-
-.stock-overview-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.stock-overview-head span {
-  color: var(--dashboard-text-muted, #7c8794);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
-.stock-overview-head h2 {
-  margin: 4px 0 0;
-  color: var(--dashboard-text-primary, #f8fbff);
-  font-size: 20px;
-  font-weight: 900;
-}
-
-.stock-overview-head p {
-  max-width: 58ch;
-  margin: 7px 0 0;
-  color: var(--dashboard-text-muted, #94a3b8);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.stock-overview-tools {
-  display: flex;
-  align-items: end;
-  gap: 10px;
-}
-
-.stock-summary-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  color: var(--dashboard-text-muted, #94a3b8);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.stock-summary-line strong {
-  color: var(--dashboard-text-primary, #f8fbff);
-}
-
-.stock-card-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-@media (max-width: 1500px) {
-  .stock-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1180px) {
-  .stock-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .stock-overview-head,
-  .stock-overview-tools {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 680px) {
-  .stock-card-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
 
 <route>
 {

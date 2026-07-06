@@ -11,6 +11,7 @@ import {
   normalizeObject,
   shareColumnLabel
 } from '@/utils/etfDashboard.js'
+import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const dashboardSettingStore = useDashboardSettingStore()
 
@@ -88,7 +89,7 @@ const growingCount = computed(
 const detailRoute = (row) => ({
   name: 'Dashboard_Etf_Stocks_Detail',
   params: {
-    stockCode: String(row?.stock_code || '')
+    stockCode: getStockCode(row?.stock)
   }
 })
 
@@ -339,8 +340,8 @@ onMounted(async () => {
       <TwoTable :data="rows" :columns="columns" :loading="loading">
         <template #stock="{ row }">
           <div class="stock-cell">
-            <strong>{{ row.stock_name || '-' }}</strong>
-            <span>{{ row.stock_code || '-' }}</span>
+            <strong>{{ getStockName(row.stock, '-') }}</strong>
+            <span>{{ getStockCode(row.stock) || '-' }}</span>
           </div>
         </template>
 
@@ -392,7 +393,7 @@ onMounted(async () => {
         </template>
 
         <template #actions="{ row }">
-          <router-link v-if="row.stock_code" class="detail-link" :to="detailRoute(row)"
+          <router-link v-if="getStockCode(row.stock)" class="detail-link" :to="detailRoute(row)"
             >詳情</router-link
           >
           <span v-else class="detail-disabled">-</span>

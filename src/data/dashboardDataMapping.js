@@ -23,13 +23,15 @@ export const etfEventTypeOptions = [
   { label: '出清', value: 'sell_out' }
 ]
 
-export const etfEventStockSortOptions = [
-  { label: '淨變動絕對值', value: 'net_shares_abs' },
-  { label: '淨買超', value: 'net_shares' },
-  { label: '買進合計', value: 'buy_shares' },
-  { label: '賣出合計', value: 'sell_shares' },
-  { label: '買進 ETF 數', value: 'buy_etf_count' },
-  { label: '賣出 ETF 數', value: 'sell_etf_count' },
-  { label: '事件 ETF 數', value: 'event_etf_count' },
-  { label: '股票代號', value: 'stock_code' }
+export const etfEventSortOptions = [
+  { label: '估算交易額', value: 'estimated_amount' },
+  { label: '估算買進金額', value: 'estimated_buy_amount' },
+  { label: '估算賣出金額', value: 'estimated_sell_amount' },
+  { label: '估算淨買超金額', value: 'estimated_net_amount' },
+  { label: '估算淨異動金額', value: 'estimated_net_amount_abs' },
+  { label: '異動 ETF 家數', value: 'event_etf_count' }
 ]
+
+export const etfEventStockSortOptions = etfEventSortOptions
+
+export const etfEventIndustrySortOptions = etfEventSortOptions

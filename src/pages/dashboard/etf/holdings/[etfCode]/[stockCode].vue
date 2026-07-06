@@ -18,6 +18,7 @@ import {
   shareUnitLabel,
   toShareUnitValue
 } from '@/utils/etfDashboard.js'
+import { getStockName } from '@/utils/stock.js'
 
 const route = useRoute()
 const dashboardSettingStore = useDashboardSettingStore()
@@ -38,7 +39,7 @@ const current = computed(() => normalizeObject(summary.value.current))
 const detailSummary = computed(() => normalizeObject(summary.value.summary))
 const seriesItems = computed(() => getSeriesItems(series.value))
 const etfName = computed(() => current.value.etf_name || summary.value.etf_name || '')
-const stockName = computed(() => current.value.stock_name || summary.value.stock_name || '')
+const stockName = computed(() => getStockName(current.value.stock || summary.value.stock, ''))
 const stockDetailRoute = computed(() => ({
   name: 'Dashboard_Etf_Stocks_Detail',
   params: {
@@ -55,7 +56,7 @@ const chartDataset = computed(() => {
     }))
 
   return {
-    label: `${current.value.etf_name || summary.value.etf_name || etfCode.value} / ${current.value.stock_name || summary.value.stock_name || stockCode.value}`,
+    label: `${current.value.etf_name || summary.value.etf_name || etfCode.value} / ${stockName.value || stockCode.value}`,
     data: points,
     borderColor: '#10bfae',
     backgroundColor: '#10bfae',

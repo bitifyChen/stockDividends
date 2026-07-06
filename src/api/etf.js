@@ -65,7 +65,7 @@ export const getEtfEventsStockOverview = ({
   side = 'all',
   etfType = null,
   stockCode = null,
-  sort = 'net_shares_abs',
+  sort = 'estimated_amount',
   page = 1,
   pageSize = 12,
   limitPerStock = 50
@@ -76,6 +76,51 @@ export const getEtfEventsStockOverview = ({
     side,
     etfType,
     stockCode,
+    sort,
+    page,
+    pageSize,
+    limitPerStock
+  })
+
+export const getEtfEventsIndustryOverview = ({
+  date = null,
+  type = 'all',
+  side = 'all',
+  etfType = null,
+  industryCode = null,
+  sort = 'estimated_amount',
+  page = 1,
+  pageSize = 12,
+  topN = 3
+} = {}) =>
+  get('/etf/events/industry-overview', {
+    date,
+    type,
+    side,
+    etfType,
+    industryCode,
+    sort,
+    page,
+    pageSize,
+    topN
+  })
+
+export const getEtfEventsIndustryStocks = ({
+  industryCode,
+  date = null,
+  type = 'all',
+  side = 'all',
+  etfType = null,
+  sort = 'estimated_amount',
+  page = 1,
+  pageSize = 50,
+  limitPerStock = 50
+} = {}) =>
+  get(`/etf/events/industry-overview/${industryCode}/stocks`, {
+    date,
+    type,
+    side,
+    etfType,
     sort,
     page,
     pageSize,
