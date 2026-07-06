@@ -1594,9 +1594,9 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Send or preview ETF daily event summary notification",
-        "description": "Builds the daily ETF event summary by taking the top stocks for first_buy, buy_increase, first_sell, sell_decrease and sell_out. By default this endpoint sends the summary to Telegram; use send=0 to preview without sending.",
-        "x-frontend-purpose": "後台維運按鈕使用，可補發或預覽每日 ETF 事件摘要通知。",
+        "summary": "Send or preview ETF daily event notifications",
+        "description": "Builds ETF daily notification messages. section=event preserves the original event summary using share/position-change oriented ranking. section=industry returns the industry direction message. section=stock returns the stock direction message. section=all returns all three messages. By default this endpoint sends to Telegram; use send=0 to preview without sending.",
+        "x-frontend-purpose": "後台維運按鈕使用，可補發或預覽 ETF 今日事件摘要、產業方向與個股方向通知。",
         "parameters": [
           {
             "name": "date",
@@ -1607,7 +1607,7 @@
               "format": "date",
               "example": "2026-07-02"
             },
-            "description": "指定摘要資料日期；不帶時使用最新可用 ETF event display date。"
+            "description": "ETF event display date. If omitted, backend resolves the latest available event date."
           },
           {
             "name": "send",
@@ -1621,7 +1621,23 @@
               ],
               "default": "1"
             },
-            "description": "1 會發送 Telegram；0 只回傳預覽訊息。"
+            "description": "1 sends to Telegram; 0 previews only."
+          },
+          {
+            "name": "section",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "event",
+                "industry",
+                "stock",
+                "all"
+              ],
+              "default": "event"
+            },
+            "description": "event: original ETF event summary. industry: industry direction message. stock: stock direction message. all: all three messages."
           },
           {
             "name": "etfType",
@@ -1668,6 +1684,14 @@
                     },
                     "summary": {
                       "type": "object"
+                    },
+                    "industryDirection": {
+                      "type": "object",
+                      "description": "Present when section=industry or section=all."
+                    },
+                    "stockDirection": {
+                      "type": "object",
+                      "description": "Present when section=stock or section=all."
                     }
                   }
                 }

@@ -1,5 +1,56 @@
 # 2026-07-06
 
+## ETF 通知調整：事件摘要、產業方向、個股方向
+
+### 主旨
+後端將 ETF 每日通知拆成三則獨立訊息：保留原本「ETF 今日事件摘要」，新增「ETF 今日產業方向」與「ETF 今日個股方向」。每日 `/etf/fetch-all?save=1` 會在 ETF 抓取、OHLC 日線更新、event OHLC enrichment 完成後，才建立這三份通知 summary。
+
+### 填寫人
+Backend
+
+### 影響 API
+- `GET /etf/events/summary-notify`
+
+### 改動內容
+- `GET /etf/events/summary-notify` 新增 `section` query 參數：
+  - `event`：只預覽或發送原本「ETF 今日事件摘要」，預設值。
+  - `industry`：只預覽或發送「ETF 今日產業方向」。
+  - `stock`：只預覽或發送「ETF 今日個股方向」。
+  - `all`：依序處理三則通知。
+- `event` 通知排序仍維持股數/持股變化比例導向，不改成金額排序。
+- `event` 通知每檔股票補充顯示：
+  - 異動股數
+  - 變化比例
+  - 估算金額
+  - 異動 ETF 家數
+- `industry` 與 `stock` 通知使用 OHLC enrichment 後的估算金額，因此每日批次必須在 `eventOhlcEnrichment` 後產生通知。
+
+### 後台按鈕建議
+- 預覽事件摘要：
+  - `GET /etf/events/summary-notify?section=event&send=0`
+- 預覽產業方向：
+  - `GET /etf/events/summary-notify?section=industry&send=0`
+- 預覽個股方向：
+  - `GET /etf/events/summary-notify?section=stock&send=0`
+- 預覽全部：
+  - `GET /etf/events/summary-notify?section=all&send=0`
+- 補發時把 `send=0` 改成 `send=1`，前端仍需二次確認。
+
+### 對應角色處理
+- `/dashboard/setting` 若已有補發通知按鈕，可新增 section 下拉。
+- 預設選項建議維持 `event`，避免使用者不小心一次發出三則 Telegram。
+- 若前端要顯示預覽結果：
+  - `section=event` 看 root `message`
+  - `section=industry` 看 `industryDirection.message`
+  - `section=stock` 看 `stockDirection.message`
+  - `section=all` 同時看三個 message
+
+### 其他必要補充
+- 本次只做文字版 Telegram，圖片版仍是後續升級項目。
+- 後端已用本地資料模擬一張「產業方向」圖片樣板，檔案不納入正式流程。
+
+# 2026-07-06
+
 ## ETF 每日進出：產業總覽、產業明細與排序統一
 
 ### 主旨
