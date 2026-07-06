@@ -81,6 +81,10 @@ export const deleteStock = (id) => {
 export const getStockDividend = async (stockId) => {
   return new Promise(async (resolve, reject) => {
     try {
+      if (!stockId) {
+        resolve({ status: 200, data: [] })
+        return
+      }
       const stockRef = doc(db, 'stocks', stockId)
       const dividendStockRef = collection(stockRef, 'dividend')
       const querySnapshot = await getDocs(dividendStockRef)

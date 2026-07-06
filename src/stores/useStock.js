@@ -22,7 +22,7 @@ export const useStockStore = defineStore('stock', {
       const _set = new Set()
       if (state.orgData) {
         state.orgData.map((e) => {
-          if (!_set.has(e.stockId)) _set.add(e.stockId)
+          if (e.stockId && !_set.has(e.stockId)) _set.add(e.stockId)
         })
       }
       return _set
@@ -61,7 +61,7 @@ export const useStockStore = defineStore('stock', {
           const _set = new Set()
           if (res.data) {
             res.data.forEach((e) => {
-              if (!_set.has(e.stockId)) _set.add(e.stockId)
+              if (e.stockId && !_set.has(e.stockId)) _set.add(e.stockId)
             })
           }
           // 批次取得股票股利與價格
@@ -87,6 +87,7 @@ export const useStockStore = defineStore('stock', {
       this.update.isNeedUpdate = false
     },
     async getDividendData(stockId) {
+      if (!stockId) return []
       return getStockDividend(stockId).then((res) => {
         if (res.status === 200) {
           return res.data
