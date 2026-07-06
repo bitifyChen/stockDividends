@@ -1720,6 +1720,280 @@
         }
       }
     },
+    "/etf/events/industry-overview": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Daily ETF event overview grouped by industry",
+        "description": "Returns one page of industries grouped from ETF daily holding events. Use this endpoint on /dashboard/etf/events/overview to show which industries were jointly bought or sold by tracked ETFs on a display date.",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-07-03"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "first_buy",
+                "buy_increase",
+                "first_sell",
+                "sell_decrease",
+                "sell_out"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "buy",
+                "sell"
+              ],
+              "default": "all"
+            },
+            "description": "Optional buy/sell grouping filter. buy includes first_buy and buy_increase; sell includes first_sell, sell_decrease and sell_out."
+          },
+          {
+            "name": "etfType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "active",
+                "passive"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "industryCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "24"
+            },
+            "description": "Optional Taiwan stock industry_code filter. Frontend maps code to display name."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "estimated_amount",
+                "estimated_buy_amount",
+                "estimated_sell_amount",
+                "estimated_net_amount",
+                "estimated_net_amount_abs",
+                "net_shares_abs",
+                "net_shares",
+                "buy_shares",
+                "sell_shares",
+                "buy_stock_count",
+                "sell_stock_count",
+                "event_stock_count",
+                "buy_etf_count",
+                "sell_etf_count",
+                "event_etf_count",
+                "industry_code"
+              ],
+              "default": "estimated_amount"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily industry-grouped ETF event overview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "availableDates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "side": {
+                      "type": "string"
+                    },
+                    "etfType": {
+                      "type": "string"
+                    },
+                    "industry": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    },
+                    "sort": {
+                      "type": "string"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    },
+                    "amountCoverage": {
+                      "type": "object"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "industry": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "24"
+                              }
+                            }
+                          },
+                          "buy_stock_count": {
+                            "type": "integer"
+                          },
+                          "sell_stock_count": {
+                            "type": "integer"
+                          },
+                          "event_stock_count": {
+                            "type": "integer"
+                          },
+                          "buy_etf_count": {
+                            "type": "integer"
+                          },
+                          "sell_etf_count": {
+                            "type": "integer"
+                          },
+                          "event_etf_count": {
+                            "type": "integer"
+                          },
+                          "buy_shares": {
+                            "type": "number"
+                          },
+                          "sell_shares": {
+                            "type": "number"
+                          },
+                          "net_shares": {
+                            "type": "number"
+                          },
+                          "estimated_buy_amount": {
+                            "type": "number"
+                          },
+                          "estimated_sell_amount": {
+                            "type": "number"
+                          },
+                          "estimated_net_amount": {
+                            "type": "number"
+                          },
+                          "estimated_amount": {
+                            "type": "number"
+                          },
+                          "amount_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "volume_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "amount_coverage_rate": {
+                            "type": "number"
+                          },
+                          "eventCount": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/etf/events/stock-overview": {
       "get": {
         "tags": [

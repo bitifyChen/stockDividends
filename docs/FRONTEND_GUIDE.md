@@ -1,5 +1,108 @@
 # 2026-07-05
 
+## 新增 ETF 每日進出「產業別總覽」API
+
+### 主旨
+
+後端新增 `GET /etf/events/industry-overview`，可在 `/dashboard/etf/events/overview` 加入「產業別進出總覽」區塊。此 API 使用與個股總買賣行為相同的 ETF event / OHLC enrichment 資料來源，但聚合維度改為 `industry.code`。
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- `GET /etf/events/industry-overview`
+
+### API 使用
+
+```text
+GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&page=1&pageSize=50&sort=estimated_amount
+```
+
+### 支援參數
+
+- `date`：顯示日期，不帶時由後端選最近可用日期。
+- `type`：`all|first_buy|buy_increase|first_sell|sell_decrease|sell_out`。
+- `side`：`all|buy|sell`。
+- `etfType`：`all|active|passive`。
+- `industryCode`：選填，指定台股產業代碼。
+- `page` / `pageSize`：分頁。
+- `sort`：
+  - `estimated_amount`：估算總交易額，預設值。
+  - `estimated_buy_amount`：估算買進金額。
+  - `estimated_sell_amount`：估算賣出金額。
+  - `estimated_net_amount`：估算淨買賣金額。
+  - `estimated_net_amount_abs`：估算淨買賣金額絕對值。
+  - `net_shares_abs`：淨買賣股數絕對值。
+  - `net_shares`：淨買賣股數。
+  - `buy_shares`：買進股數。
+  - `sell_shares`：賣出股數。
+  - `buy_stock_count`：買進股票檔數。
+  - `sell_stock_count`：賣出股票檔數。
+  - `event_stock_count`：異動股票檔數。
+  - `buy_etf_count`：買進 ETF 家數。
+  - `sell_etf_count`：賣出 ETF 家數。
+  - `event_etf_count`：異動 ETF 家數。
+  - `industry_code`：產業代碼。
+
+### 回傳重點
+
+```json
+{
+  "date": "2026-07-03",
+  "sort": "estimated_amount",
+  "amountCoverage": {
+    "eventCount": 59,
+    "successCount": 59,
+    "missingCount": 0,
+    "failedCount": 0,
+    "coverageRate": 1
+  },
+  "items": [
+    {
+      "industry": {
+        "code": "24"
+      },
+      "event_stock_count": 12,
+      "event_etf_count": 7,
+      "buy_shares": 1200000,
+      "sell_shares": 500000,
+      "net_shares": 700000,
+      "estimated_buy_amount": 900000000,
+      "estimated_sell_amount": 300000000,
+      "estimated_net_amount": 600000000,
+      "estimated_amount": 1200000000,
+      "amount_ratio": 0.08,
+      "volume_ratio": 0.04,
+      "amount_coverage_rate": 1
+    }
+  ]
+}
+```
+
+### 前端處理
+
+- 建議放在 `/dashboard/etf/events/overview`，與「ETF 角度總覽」、「個股總買賣行為」同頁。
+- 日期、事件類型、ETF 類型建議與同頁其他 overview 共用。
+- 產業名稱由前端使用既有 `industry_code` mapping 顯示；API 第一版只回 `industry.code`。
+- 建議第一版卡片欄位：
+  - 產業名稱
+  - 估算總交易額
+  - 估算買進金額
+  - 估算賣出金額
+  - 估算淨買賣金額
+  - 異動股票檔數
+  - 異動 ETF 家數
+- 若要避免首屏 loading 過重，產業總覽可延遲載入。
+
+### 其他必要補充
+
+- 估算金額依賴 OHLC enrichment；若 `amountCoverage.coverageRate` 不足，畫面需提示「金額覆蓋率不足」。
+- 此 API 不回傳產業底下股票明細；未來若需要 drill-down，可再新增 `industryCode` 詳情頁或於同 API 加入輕量 top stocks。
+
+# 2026-07-05
+
 ## `/etf/events/stock-overview` 新增估算交易額排序
 
 ### 主旨
