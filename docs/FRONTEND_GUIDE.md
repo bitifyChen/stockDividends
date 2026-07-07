@@ -1,3 +1,78 @@
+# 2026-07-07
+
+## TPEx 產業鏈資料基礎建置
+
+### 主旨
+後端新增 TPEx 產業鏈資料基礎，第一版已完成 `D000 半導體` 產業鏈樹與股票標記。既有股票物件新增 `stock.industry_chain_codes`，前端可先開始建立產業鏈選擇器、產業鏈地圖與股票對照頁面。
+
+### 填寫人
+Backend
+
+### 影響 API
+- 新增 `GET /industry-chains`
+- 新增 `GET /industry-chains/{code}`
+- 新增 `GET /industry-chains/{code}/stocks`
+- 既有股票物件新增 `stock.industry_chain_codes`
+- OpenAPI 已更新：`docs/openapi.json`
+
+### 改動內容
+- 後端新增 `industry_chains` 資料表。
+- 後端在 `tw_stock_master` 新增 `industry_chain_codes`。
+- 第一版已同步 TPEx `D000 半導體`：
+  - 31 個產業鏈節點
+  - 336 檔股票標記到 `industry_chain_codes`
+- 股票 object 格式補上：
+
+```json
+{
+  "stock": {
+    "code": "2330",
+    "name": "台積電",
+    "full_name": "台灣積體電路製造股份有限公司",
+    "market": "listed",
+    "industry_code": "24",
+    "industry_chain_codes": ["D300"]
+  }
+}
+```
+
+### API 使用方式
+- `GET /industry-chains?includeCounts=1`
+  - 取得產業鏈樹。
+  - 回傳每個節點的 `direct_stock_count`、`stock_count`、`disabled`。
+  - 前端可用 `disabled=true` 避免使用者點擊後沒有資料。
+- `GET /industry-chains/D000`
+  - 取得半導體節點與子樹。
+- `GET /industry-chains/D000/stocks?page=1&pageSize=50`
+  - 取得半導體產業鏈底下股票。
+  - `includeChildren` 預設為 `true`，選父節點會包含子節點。
+
+### 對應角色處理
+- 可先建立共用 `IndustryChainSelector`：
+  - 支援 tree 顯示。
+  - 支援搜尋。
+  - 支援 `stock_count`。
+  - `disabled=true` 的節點建議不可點或弱化。
+- 可先建立共用 `IndustryChainFlowMap`：
+  - 參考 GoodwinLab supply-chain 的產業選擇與河流 UIUX。
+  - 使用 `stage=upstream|midstream|downstream` 分組。
+  - 點擊節點後可呼叫 `/industry-chains/{code}/stocks`。
+- 可開始規劃「產業鏈地圖」頁：
+  - 左側或上方產業鏈選擇。
+  - 中間顯示上游 / 中游 / 下游節點。
+  - 節點下股票可連到既有股票詳情頁。
+
+### 尚未完成
+- ETF overview / ETF list / holdings / events 的 `industryChainCode` filter 尚未完成。
+- 後台新增、刪除、編輯產業鏈節點尚未完成。
+- 後台批次調整股票 `industry_chain_codes` 尚未完成。
+- 目前只完成 `D000 半導體`，其他產業鏈會分批同步。
+
+### 其他必要補充
+- `industry_code` 仍是官方大產業別。
+- `industry_chain_codes` 是 TPEx 產業鏈節點，可多選。
+- 前端不要把兩者混成同一個 mapping。
+
 # 2026-07-06
 
 ## ETF 通知調整：事件摘要、產業方向、個股方向

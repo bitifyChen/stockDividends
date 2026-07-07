@@ -13,6 +13,18 @@
   ],
   "x-current-work-items": [
     {
+      "id": "industry-chain-foundation",
+      "title": "TPEx 產業鏈資料基礎建置",
+      "status": "ready_for_frontend",
+      "frontendEntry": "新增 industry_chains 與 tw_stock_master.industry_chain_codes。第一版已完成 D000 半導體資料，股票物件會回傳 stock.industry_chain_codes，前端可先建立產業鏈選擇器與產業鏈地圖的資料接法。",
+      "primaryApis": [
+        "GET /industry-chains",
+        "GET /industry-chains/{code}",
+        "GET /industry-chains/{code}/stocks",
+        "GET /etf/stocks/{stockCode}"
+      ]
+    },
+    {
       "id": "etf-schema-consolidation",
       "title": "Consolidate ETF Supabase schema around etf_configs and canonical stock master",
       "status": "ready_for_frontend",
@@ -113,11 +125,229 @@
       "description": "主動式 ETF 清單、持股、事件與批次抓取"
     },
     {
+      "name": "IndustryChain",
+      "description": "TPEx 產業鏈樹、產業鏈節點與股票對照"
+    },
+    {
       "name": "Internal",
       "description": "後端測試、手動匯入或排程入口；一般前台畫面不建議直接串接"
     }
   ],
   "paths": {
+    "/industry-chains": {
+      "get": {
+        "tags": [
+          "IndustryChain"
+        ],
+        "summary": "取得產業鏈樹",
+        "description": "取得後端已同步的產業鏈樹。第一版已寫入 TPEx D000 半導體。可用 includeCounts 取得每個節點目前掛載的股票數，讓前端 disabled 無資料節點。",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "all",
+              "enum": [
+                "all",
+                "stocks",
+                "etf_holdings",
+                "etf_events"
+              ]
+            },
+            "description": "第一版 scope 主要影響是否自動回傳 counts；未來可依頁面資料範圍計算節點可用性。"
+          },
+          {
+            "name": "includeCounts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否回傳 direct_stock_count、stock_count、disabled。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "產業鏈樹",
+            "content": {
+              "application/json": {
+                "example": {
+                  "scope": "all",
+                  "includeCounts": true,
+                  "totalCount": 31,
+                  "items": [
+                    {
+                      "code": "D000",
+                      "name": "半導體",
+                      "parent_code": null,
+                      "level": 1,
+                      "sort_order": 0,
+                      "stage": null,
+                      "stock_count": 336,
+                      "disabled": false,
+                      "children": [
+                        {
+                          "code": "D300",
+                          "name": "IC/晶圓製造",
+                          "parent_code": "D000",
+                          "level": 2,
+                          "stage": "midstream",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/industry-chains/{code}": {
+      "get": {
+        "tags": [
+          "IndustryChain"
+        ],
+        "summary": "取得單一產業鏈節點與子樹",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "D000"
+          },
+          {
+            "name": "includeCounts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "指定節點與子樹",
+            "content": {
+              "application/json": {
+                "example": {
+                  "item": {
+                    "code": "D000",
+                    "name": "半導體",
+                    "children": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/industry-chains/{code}/stocks": {
+      "get": {
+        "tags": [
+          "IndustryChain"
+        ],
+        "summary": "取得產業鏈節點下的股票",
+        "description": "依 industry_chain_codes 查詢股票。includeChildren 預設 true，選父節點時會包含子節點股票。",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "D000"
+          },
+          {
+            "name": "includeChildren",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "market",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "listed",
+                "otc",
+                "emerging"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "股票列表",
+            "content": {
+              "application/json": {
+                "example": {
+                  "industryChain": {
+                    "code": "D000",
+                    "includeChildren": true,
+                    "selectedCodes": [
+                      "D000",
+                      "D300"
+                    ]
+                  },
+                  "page": 1,
+                  "pageSize": 50,
+                  "totalCount": 336,
+                  "items": [
+                    {
+                      "stock": {
+                        "code": "2330",
+                        "name": "台積電",
+                        "full_name": "台灣積體電路製造股份有限公司",
+                        "market": "listed",
+                        "industry_code": "24",
+                        "industry_chain_codes": [
+                          "D300"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dividend": {
       "get": {
         "tags": [
@@ -3579,6 +3809,16 @@
             ],
             "description": "Official Taiwan stock industry code from stock master.",
             "example": "24"
+          },
+          "industry_chain_codes": {
+            "type": "array",
+            "description": "TPEx industry-chain node codes attached to this stock.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "D300"
+            ]
           }
         },
         "additionalProperties": false
