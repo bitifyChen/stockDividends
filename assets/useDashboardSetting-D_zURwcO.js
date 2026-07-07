@@ -1,1 +1,0 @@
-import{b4 as t}from"./index-Dn3XkL3h.js";const r=t("dashboardSetting",{persist:!0,state:()=>({shareUnit:"share",themeMode:"dark"}),actions:{setShareUnit(e){this.shareUnit=e==="lot"?"lot":"share"},setThemeMode(e){this.themeMode=["light","dark","system"].includes(e)?e:"dark"}}});export{r as u};
