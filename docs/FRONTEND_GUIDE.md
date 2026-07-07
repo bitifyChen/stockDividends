@@ -43,9 +43,44 @@ Backend
   - 前端可用 `disabled=true` 避免使用者點擊後沒有資料。
 - `GET /industry-chains/D000`
   - 取得半導體節點與子樹。
+  - `/dashboard/industry-chain` 若要做河流 UI，請優先使用 response root 的 `flow`：
+    - `flow.upstream`
+    - `flow.midstream`
+    - `flow.downstream`
+  - `item.children` 是完整樹，可能包含第三層細分類，適合後台管理或完整 tree selector，不適合直接拿來畫上游 / 中游 / 下游主畫面。
 - `GET /industry-chains/D000/stocks?page=1&pageSize=50`
   - 取得半導體產業鏈底下股票。
   - `includeChildren` 預設為 `true`，選父節點會包含子節點。
+  - 股票顯示產業鏈名稱時，請用 `stock.industry_chains`，不要在前端自行維護 D400 這類 code mapping。
+
+### 產業鏈欄位差異
+```json
+{
+  "stock": {
+    "industry_chain_codes": ["D400", "D600"],
+    "industry_chains": [
+      {
+        "code": "D400",
+        "name": "生產製程 及 檢測設備",
+        "parent_code": "D000",
+        "level": 2,
+        "stage": "midstream"
+      },
+      {
+        "code": "D600",
+        "name": "生產製程 及 檢測設備",
+        "parent_code": "D000",
+        "level": 2,
+        "stage": "downstream"
+      }
+    ]
+  }
+}
+```
+
+- `industry_chain_codes`：資料與 filter 用。
+- `industry_chains`：畫面顯示用，後端已解析 code/name/stage。
+- 同名節點可能出現在不同 stage，例如 D400 與 D600 都是「生產製程及檢測設備」，前端顯示時建議同時帶 stage 或上/中/下游標籤。
 
 ### 對應角色處理
 - 可先建立共用 `IndustryChainSelector`：

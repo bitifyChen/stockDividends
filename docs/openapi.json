@@ -243,6 +243,33 @@
                     "code": "D000",
                     "name": "半導體",
                     "children": []
+                  },
+                  "flow": {
+                    "upstream": [
+                      {
+                        "code": "DC00",
+                        "name": "IP設計 /IC設計 代工服務",
+                        "stage": "upstream",
+                        "children_count": 0
+                      }
+                    ],
+                    "midstream": [
+                      {
+                        "code": "D300",
+                        "name": "IC/晶圓製造",
+                        "stage": "midstream",
+                        "children_count": 3
+                      }
+                    ],
+                    "downstream": [
+                      {
+                        "code": "D900",
+                        "name": "IC封裝測試",
+                        "stage": "downstream",
+                        "children_count": 0
+                      }
+                    ],
+                    "other": []
                   }
                 }
               }
@@ -337,6 +364,15 @@
                         "industry_code": "24",
                         "industry_chain_codes": [
                           "D300"
+                        ],
+                        "industry_chains": [
+                          {
+                            "code": "D300",
+                            "name": "IC/晶圓製造",
+                            "parent_code": "D000",
+                            "level": 2,
+                            "stage": "midstream"
+                          }
                         ]
                       }
                     }
@@ -3819,6 +3855,49 @@
             "example": [
               "D300"
             ]
+          },
+          "industry_chains": {
+            "type": "array",
+            "description": "Resolved TPEx industry-chain nodes for display. Returned by industry-chain APIs; other stock APIs may only return industry_chain_codes until they need display names.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parent_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "stage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "upstream",
+                    "midstream",
+                    "downstream",
+                    null
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
