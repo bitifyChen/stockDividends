@@ -1,5 +1,43 @@
 # 2026-07-07
 
+## TPEx 全產業鏈資料已同步
+
+### 主旨
+後端已將 TPEx 產業價值鏈資訊平台可解析的全部產業頁同步到 `industry_chains`，前端的 `/dashboard/industry-chain` 產業選擇器可以改為顯示完整產業清單，不再只限 `D000 半導體`。
+
+### 填寫人
+Backend
+
+### 影響 API
+- `GET /industry-chains`
+- `GET /industry-chains/{code}`
+- `GET /industry-chains/{code}/stocks`
+
+### 改動內容
+- TPEx catalog 已同步：
+  - 40 個 root 產業
+  - 533 個產業鏈節點
+  - 2196 檔股票已標記 `industry_chain_codes`
+- `GET /industry-chains?includeCounts=1` 現在可取得完整產業樹與每個節點的股票數。
+- `GET /industry-chains/{code}` 可用於任一 root code，例如：
+  - `D000`：半導體
+  - `5100`：區塊鏈
+  - `5200`：金融科技
+  - `C100`：製藥
+  - `B000`：休閒娛樂
+
+### 對應角色處理
+- 產業選擇器請改由 `GET /industry-chains?includeCounts=1` 產生，不要寫死半導體。
+- 若節點 `disabled=true` 或 `stock_count=0`，建議弱化或不可點擊。
+- 部分產業沒有明確上游 / 中游 / 下游，`GET /industry-chains/{code}` 會把它們放在 `flow.other`，前端可以顯示為「其他分類」或用一般 grid/list 呈現。
+- Sankey / 河流圖僅適合有 `flow.upstream / midstream / downstream` 的產業；若全部集中在 `flow.other`，建議自動切換成節點卡片列表。
+
+### 其他必要補充
+- TPEx 有些公司候選資料不在目前 `tw_stock_master`，後端已保留本地 audit，但正式 API 只顯示我們股票主檔已有的標的。
+- 產業鏈資料代表分類與上下游位置，不代表公司對公司的真實供應交易關係。
+
+# 2026-07-07
+
 ## TPEx 產業鏈資料基礎建置
 
 ### 主旨

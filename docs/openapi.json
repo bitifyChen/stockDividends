@@ -16,7 +16,7 @@
       "id": "industry-chain-foundation",
       "title": "TPEx 產業鏈資料基礎建置",
       "status": "ready_for_frontend",
-      "frontendEntry": "新增 industry_chains 與 tw_stock_master.industry_chain_codes。第一版已完成 D000 半導體資料，股票物件會回傳 stock.industry_chain_codes，前端可先建立產業鏈選擇器與產業鏈地圖的資料接法。",
+      "frontendEntry": "新增 industry_chains 與 tw_stock_master.industry_chain_codes。已同步 TPEx 全部 40 個 root 產業與 533 個節點，股票物件會回傳 stock.industry_chain_codes，前端可建立完整產業鏈選擇器與產業鏈地圖。",
       "primaryApis": [
         "GET /industry-chains",
         "GET /industry-chains/{code}",
@@ -140,7 +140,7 @@
           "IndustryChain"
         ],
         "summary": "取得產業鏈樹",
-        "description": "取得後端已同步的產業鏈樹。第一版已寫入 TPEx D000 半導體。可用 includeCounts 取得每個節點目前掛載的股票數，讓前端 disabled 無資料節點。",
+        "description": "取得後端已同步的產業鏈樹。目前已寫入 TPEx 全部 40 個 root 產業與 533 個節點。可用 includeCounts 取得每個節點目前掛載的股票數，讓前端 disabled 無資料節點。",
         "parameters": [
           {
             "name": "scope",
@@ -156,7 +156,7 @@
                 "etf_events"
               ]
             },
-            "description": "第一版 scope 主要影響是否自動回傳 counts；未來可依頁面資料範圍計算節點可用性。"
+            "description": "目前 scope 主要影響是否自動回傳 counts；未來可依頁面資料範圍計算節點可用性。"
           },
           {
             "name": "includeCounts",
