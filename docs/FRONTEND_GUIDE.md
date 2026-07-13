@@ -1,3 +1,43 @@
+# 2026-07-13
+
+## ETF 個股詳情補上產業鏈顯示資料
+
+### 主旨
+`GET /etf/stocks/{stockCode}` 的 `stock` 物件已補上 `industry_chains`，前端可直接取得產業鏈名稱、層級與上下游階段，不需要自行維護 code/name mapping。
+
+### 填寫人
+Backend
+
+### 影響 API
+- `GET /etf/stocks/{stockCode}`
+- `GET /etf/stocks/{stockCode}/series?range=1w|1m|6m|1y|max`
+
+### 改動內容
+- `stock.industry_chain_codes` 保留，定位為資料與 filter 用。
+- 新增 `stock.industry_chains`，定位為畫面顯示用。
+- `industry_chains` 格式：
+
+```json
+[
+  {
+    "code": "D300",
+    "name": "IC/晶圓製造",
+    "parent_code": "D000",
+    "level": 2,
+    "stage": "midstream"
+  }
+]
+```
+
+### 對應角色處理
+- 個股詳情頁如需顯示產業鏈名稱，請改讀 `stock.industry_chains[].name`。
+- 產業鏈篩選、比對或送 API 時，仍使用 `stock.industry_chain_codes`。
+- 若 `industry_chains` 為空陣列，前端顯示「尚未標記產業鏈」即可。
+
+### 其他必要補充
+- 這次沒有改變既有 URL 或 query 參數。
+- `stock.industry_chain_codes` 不移除，避免破壞既有篩選流程。
+
 # 2026-07-07
 
 ## TPEx 全產業鏈資料已同步

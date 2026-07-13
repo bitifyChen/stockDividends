@@ -3858,7 +3858,7 @@
           },
           "industry_chains": {
             "type": "array",
-            "description": "Resolved TPEx industry-chain nodes for display. Returned by industry-chain APIs; other stock APIs may only return industry_chain_codes until they need display names.",
+            "description": "Resolved TPEx industry-chain nodes for display. ETF stock detail APIs now return this alongside industry_chain_codes so frontend does not need a separate code-name mapping.",
             "items": {
               "type": "object",
               "properties": {
