@@ -1,0 +1,1 @@
+const e=n=>(n==null?void 0:n.code)||"",r=(n,a="未命名股票")=>(n==null?void 0:n.name)||a,d=n=>(n==null?void 0:n.full_name)||"",i=n=>(n==null?void 0:n.industry_code)||"",y=n=>Array.isArray(n==null?void 0:n.industry_chain_codes)?n.industry_chain_codes:[],u=n=>Array.isArray(n==null?void 0:n.industry_chains)?n.industry_chains:[];export{e as a,u as b,d as c,i as d,y as e,r as g};
