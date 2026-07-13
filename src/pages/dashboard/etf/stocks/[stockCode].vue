@@ -21,7 +21,8 @@ import {
   shareUnitLabel,
   toShareUnitValue
 } from '@/utils/etfDashboard.js'
-import { getStockName } from '@/utils/stock.js'
+import { getIndustryName } from '@/utils/industry.js'
+import { getStockIndustryChains, getStockIndustryCode, getStockName } from '@/utils/stock.js'
 
 const route = useRoute()
 const dashboardSettingStore = useDashboardSettingStore()
@@ -46,7 +47,16 @@ const stockCode = computed(() => String(route.params.stockCode || ''))
 const stockSummary = computed(() => normalizeObject(summary.value.summary))
 const holdersRows = computed(() => normalizeArray(summary.value.holders))
 const seriesHolders = computed(() => normalizeArray(series.value.holders))
-const stockName = computed(() => getStockName(summary.value.stock || stockSummary.value.stock, ''))
+const stockObject = computed(() => {
+  const rowStock = mergedRows.value.find((row) => row.stock)?.stock
+  return normalizeObject(summary.value.stock || stockSummary.value.stock || rowStock)
+})
+const stockName = computed(() => getStockName(stockObject.value, ''))
+const stockIndustryCode = computed(() => getStockIndustryCode(stockObject.value))
+const stockIndustryName = computed(() =>
+  stockIndustryCode.value ? getIndustryName(stockIndustryCode.value, '未分類產業') : '未分類產業'
+)
+const stockIndustryChains = computed(() => getStockIndustryChains(stockObject.value))
 
 const etfFilterOptions = computed(() => {
   const options = new Map()
@@ -317,6 +327,20 @@ const deltaClass = (value) => {
   return 'stock-neutral'
 }
 
+const chainStageLabel = (stage) => {
+  if (stage === 'upstream') return '上游'
+  if (stage === 'midstream') return '中游'
+  if (stage === 'downstream') return '下游'
+  return stage ? String(stage) : '未分段'
+}
+
+const chainStageClass = (stage) => {
+  if (stage === 'upstream') return 'chain-upstream'
+  if (stage === 'midstream') return 'chain-midstream'
+  if (stage === 'downstream') return 'chain-downstream'
+  return 'chain-other'
+}
+
 const canOpenHoldingDetail = (row) => Boolean(row.etf_code && stockCode.value)
 
 const detailRoute = (row) => ({
@@ -364,6 +388,33 @@ onBeforeUnmount(() => {
           <div class="etf-relation">
             <span>{{ activeEtfCodes.size }} / {{ etfFilterOptions.length }}</span>
             <strong>持有 ETF 顯示中</strong>
+          </div>
+
+          <div class="industry-profile">
+            <div class="main-industry-card">
+              <span>主要產業</span>
+              <div class="main-industry-pill">
+                <strong>{{ stockIndustryName }}</strong>
+                <small>{{ stockIndustryCode || '未分類' }}</small>
+              </div>
+            </div>
+
+            <div class="chain-card">
+              <span>產業鏈類型</span>
+              <div v-if="stockIndustryChains.length" class="chain-list">
+                <div
+                  v-for="chain in stockIndustryChains"
+                  :key="chain.code"
+                  class="chain-pill"
+                  :class="chainStageClass(chain.stage)"
+                >
+                  <em>{{ chainStageLabel(chain.stage) }}</em>
+                  <strong>{{ chain.name || chain.code }}</strong>
+                  <small>{{ chain.code }}</small>
+                </div>
+              </div>
+              <strong v-else class="chain-empty">尚未標記產業鏈</strong>
+            </div>
           </div>
         </div>
 
@@ -653,6 +704,157 @@ onBeforeUnmount(() => {
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.industry-profile {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(260px, 1fr);
+  gap: 10px;
+  max-width: min(860px, 100%);
+  min-width: 0;
+}
+
+.main-industry-card,
+.chain-card {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  border: 1px solid rgb(148 163 184 / 0.18);
+  border-radius: 16px;
+  background: rgb(8 11 14 / 0.42);
+  padding: 12px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.main-industry-card > span,
+.chain-card > span {
+  color: #7c858f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.chain-empty {
+  overflow: hidden;
+  color: #f7fafc;
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main-industry-pill {
+  display: inline-grid;
+  grid-template-columns: minmax(0, auto) auto;
+  justify-self: start;
+  gap: 7px;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid rgb(16 191 174 / 0.3);
+  border-radius: 999px;
+  background: rgb(16 191 174 / 0.09);
+  padding: 7px 10px;
+}
+
+.main-industry-pill strong {
+  overflow: hidden;
+  color: #f7fafc;
+  font-size: 13px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main-industry-pill small {
+  color: #10bfae;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.chain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-height: 86px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.chain-pill {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid rgb(148 163 184 / 0.16);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  padding: 6px 9px;
+}
+
+.chain-pill em,
+.chain-pill small {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.chain-pill strong {
+  overflow: hidden;
+  color: #dbe7f0;
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chain-pill small {
+  color: #7c858f;
+}
+
+.chain-upstream {
+  border-color: rgb(96 165 250 / 0.28);
+  background: rgb(96 165 250 / 0.08);
+}
+
+.chain-upstream em {
+  color: #93c5fd;
+}
+
+.chain-midstream {
+  border-color: rgb(245 158 11 / 0.3);
+  background: rgb(245 158 11 / 0.09);
+}
+
+.chain-midstream em {
+  color: #fbbf24;
+}
+
+.chain-downstream {
+  border-color: rgb(251 113 133 / 0.3);
+  background: rgb(251 113 133 / 0.09);
+}
+
+.chain-downstream em {
+  color: #fda4af;
+}
+
+.chain-other {
+  border-color: rgb(34 211 238 / 0.24);
+  background: rgb(34 211 238 / 0.08);
+}
+
+.chain-other em {
+  color: #67e8f9;
+}
+
+.chain-empty {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .header-actions {
@@ -1019,6 +1221,10 @@ h2 {
 
   .etf-relation strong {
     min-width: 0;
+  }
+
+  .industry-profile {
+    grid-template-columns: 1fr;
   }
 
   .console-panel {

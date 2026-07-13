@@ -1,4 +1,4 @@
-import { Activity, Briefcase, Coins, Eye, Settings, TrendingUp } from 'lucide-vue-next'
+import { Activity, Briefcase, Coins, Eye, Network, Settings, TrendingUp } from 'lucide-vue-next'
 
 export const navGroups = [
   {
@@ -25,6 +25,12 @@ export const navGroups = [
         title: '個股觀測',
         path: 'Dashboard_Etf_Stocks',
         icon: Eye
+      },
+      {
+        title: '產業鏈地圖',
+        path: 'Dashboard_Industry_Chain',
+        to: '/dashboard/industry/chain',
+        icon: Network
       }
     ]
   },
