@@ -220,6 +220,7 @@ function sendNotify() {
         date: notifyDate.value || null,
         send: true,
         etfType: notifyEtfType.value || null,
+        section: 'all',
         topN: notifyTopN.value
       }),
     {

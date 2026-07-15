@@ -3,16 +3,19 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { RefreshCw } from 'lucide-vue-next'
 import {
+  getEtfEventsIndustryChainOverview,
   getEtfEventsIndustryOverview,
   getEtfEventsOverview,
   getEtfEventsStockOverview
 } from '@/api/etf.js'
 import {
-  etfEventSortOptions,
+  etfEventIndustrySortOptions,
+  etfEventStockSortOptions,
   etfEventTypeOptions,
   etfTypeOptions
 } from '@/data/dashboardDataMapping.js'
 import EtfEventsEtfOverviewSection from '@/components/dashboard/EtfEventsEtfOverviewSection.vue'
+import EtfEventsIndustryChainOverviewSection from '@/components/dashboard/EtfEventsIndustryChainOverviewSection.vue'
 import EtfEventsIndustryOverviewSection from '@/components/dashboard/EtfEventsIndustryOverviewSection.vue'
 import EtfEventsStockOverviewSection from '@/components/dashboard/EtfEventsStockOverviewSection.vue'
 import EtfEventsViewSwitcher from '@/components/dashboard/EtfEventsViewSwitcher.vue'
@@ -51,11 +54,23 @@ const stockAmountCoverage = ref({})
 const stockHasMore = ref(false)
 const stockNextPage = ref(null)
 const stockErrorMessage = ref('')
-const selectedSort = ref('estimated_amount')
+const selectedIndustrySort = ref('estimated_amount')
+const selectedStockSort = ref('estimated_amount')
 const selectedEtfType = ref('')
 const stockOverviewSectionRef = ref(null)
 const hasRequestedStockOverview = ref(false)
-const pendingStockOverviewRequest = ref(false)
+const industryChainLoadingData = ref(false)
+const industryChainLoadingMore = ref(false)
+const industryChainPage = ref(1)
+const industryChainPageSize = ref(20)
+const industryChainItems = ref([])
+const industryChainTotalCount = ref(0)
+const industryChainAmountCoverage = ref({})
+const industryChainHasMore = ref(false)
+const industryChainNextPage = ref(null)
+const industryChainErrorMessage = ref('')
+const industryChainOverviewSectionRef = ref(null)
+const hasRequestedIndustryChainOverview = ref(false)
 const industryLoadingData = ref(false)
 const industryLoadingMore = ref(false)
 const industryPage = ref(1)
@@ -71,7 +86,8 @@ const hasRequestedIndustryOverview = ref(false)
 let lazyOverviewObserver = null
 
 const typeOptions = etfEventTypeOptions
-const sortOptions = etfEventSortOptions
+const industrySortOptions = etfEventIndustrySortOptions
+const stockSortOptions = etfEventStockSortOptions
 
 const availableDateSet = computed(() => new Set(availableDates.value))
 const isDateDisabled = (date) => {
@@ -119,10 +135,27 @@ const applyIndustryOverviewResponse = (response, { append = false } = {}) => {
   industryPageSize.value = Number(response?.pageSize || industryPageSize.value)
 }
 
+const applyIndustryChainOverviewResponse = (response, { append = false } = {}) => {
+  const nextItems = normalizeArray(response?.items)
+  industryChainItems.value = append ? [...industryChainItems.value, ...nextItems] : nextItems
+  industryChainTotalCount.value = Number(response?.totalCount || 0)
+  industryChainAmountCoverage.value = response?.amountCoverage || {}
+  industryChainHasMore.value = Boolean(response?.hasMore)
+  industryChainNextPage.value = response?.nextPage ?? null
+  industryChainPage.value = Number(response?.page || industryChainPage.value)
+  industryChainPageSize.value = Number(response?.pageSize || industryChainPageSize.value)
+}
+
 const resetLazyOverviewBlocks = () => {
+  hasRequestedIndustryChainOverview.value = false
   hasRequestedIndustryOverview.value = false
   hasRequestedStockOverview.value = false
-  pendingStockOverviewRequest.value = false
+  industryChainItems.value = []
+  industryChainTotalCount.value = 0
+  industryChainAmountCoverage.value = {}
+  industryChainHasMore.value = false
+  industryChainNextPage.value = null
+  industryChainErrorMessage.value = ''
   industryItems.value = []
   industryTotalCount.value = 0
   industryAmountCoverage.value = {}
@@ -199,7 +232,7 @@ const loadStockOverview = async ({
     date: date || null,
     type: selectedType.value,
     etfType: selectedEtfType.value || null,
-    sort: selectedSort.value,
+    sort: selectedStockSort.value,
     page: append ? stockPage.value : 1,
     pageSize: stockPageSize.value,
     limitPerStock: stockLimitPerStock.value
@@ -252,7 +285,7 @@ const loadIndustryOverview = async ({
     date: date || null,
     type: selectedType.value,
     etfType: selectedEtfType.value || null,
-    sort: selectedSort.value,
+    sort: selectedIndustrySort.value,
     page: append ? industryPage.value : 1,
     pageSize: industryPageSize.value,
     topN: 3
@@ -293,11 +326,66 @@ const loadIndustryOverview = async ({
   } finally {
     industryLoadingData.value = false
     industryLoadingMore.value = false
-    if (pendingStockOverviewRequest.value && isSectionNearViewport(stockOverviewSectionRef.value)) {
-      pendingStockOverviewRequest.value = false
-      requestStockOverview()
-    }
   }
+}
+
+const loadIndustryChainOverview = async ({
+  append = false,
+  date = selectedDate.value,
+  force = false
+} = {}) => {
+  const requestParams = {
+    date: date || null,
+    type: selectedType.value,
+    etfType: selectedEtfType.value || null,
+    sort: selectedIndustrySort.value,
+    page: append ? industryChainPage.value : 1,
+    pageSize: industryChainPageSize.value,
+    topN: 3
+  }
+  const cacheKey = createDashboardCacheKey('etfEventsIndustryChainOverview', requestParams)
+  const cached = force ? null : dashboardDataCacheStore.getFresh(cacheKey)
+
+  if (cached) {
+    industryChainErrorMessage.value = ''
+    if (!append) industryChainPage.value = 1
+    applyIndustryChainOverviewResponse(cached, { append })
+    return
+  }
+
+  if (append) {
+    industryChainLoadingMore.value = true
+  } else {
+    industryChainLoadingData.value = true
+    industryChainErrorMessage.value = ''
+    industryChainPage.value = 1
+    industryChainItems.value = []
+  }
+
+  try {
+    const response = await dashboardDataCacheStore.remember(
+      cacheKey,
+      () => getEtfEventsIndustryChainOverview(requestParams),
+      { force }
+    )
+
+    applyIndustryChainOverviewResponse(response, { append })
+  } catch (error) {
+    industryChainErrorMessage.value = error?.message || '載入產業鏈方向失敗'
+    if (!append) industryChainItems.value = []
+    if (!append) industryChainAmountCoverage.value = {}
+    industryChainHasMore.value = false
+    industryChainNextPage.value = null
+  } finally {
+    industryChainLoadingData.value = false
+    industryChainLoadingMore.value = false
+  }
+}
+
+const requestIndustryChainOverview = ({ force = false } = {}) => {
+  if (industryChainLoadingData.value || (!force && hasRequestedIndustryChainOverview.value)) return
+  hasRequestedIndustryChainOverview.value = true
+  loadIndustryChainOverview({ force })
 }
 
 const requestIndustryOverview = ({ force = false } = {}) => {
@@ -307,18 +395,13 @@ const requestIndustryOverview = ({ force = false } = {}) => {
 }
 
 const requestStockOverview = ({ force = false } = {}) => {
-  if (!hasRequestedIndustryOverview.value || industryLoadingData.value) {
-    pendingStockOverviewRequest.value = true
-    requestIndustryOverview({ force })
-    return
-  }
-
   if (stockLoadingData.value || (!force && hasRequestedStockOverview.value)) return
   hasRequestedStockOverview.value = true
   loadStockOverview({ force })
 }
 
 const requestLazyOverviewBlocks = () => {
+  if (isSectionNearViewport(industryChainOverviewSectionRef.value)) requestIndustryChainOverview()
   if (isSectionNearViewport(industryOverviewSectionRef.value)) requestIndustryOverview()
   if (isSectionNearViewport(stockOverviewSectionRef.value)) requestStockOverview()
 }
@@ -331,6 +414,7 @@ const loadOverview = async ({ force = false } = {}) => {
 
 const reload = async () => {
   await loadEvents({ force: true })
+  if (hasRequestedIndustryChainOverview.value) loadIndustryChainOverview({ force: true })
   if (hasRequestedIndustryOverview.value) loadIndustryOverview({ force: true })
   if (hasRequestedStockOverview.value) loadStockOverview({ force: true })
 }
@@ -353,6 +437,12 @@ const loadMoreIndustries = async () => {
   await loadIndustryOverview({ append: true })
 }
 
+const loadMoreIndustryChains = async () => {
+  if (!industryChainHasMore.value || industryChainLoadingMore.value) return
+  industryChainPage.value = Number(industryChainNextPage.value || industryChainPage.value + 1)
+  await loadIndustryChainOverview({ append: true })
+}
+
 const groupedCards = computed(() =>
   items.value.map((item) => ({
     ...item,
@@ -369,13 +459,17 @@ const stockSkeletonCards = computed(() => Array.from({ length: Math.min(stockPag
 const industrySkeletonCards = computed(() =>
   Array.from({ length: Math.min(industryPageSize.value, 8) })
 )
+const industryChainSkeletonCards = computed(() =>
+  Array.from({ length: Math.min(industryChainPageSize.value, 8) })
+)
 const shouldShowStockLoading = computed(
-  () =>
-    (loadingData.value || stockLoadingData.value || pendingStockOverviewRequest.value) &&
-    !stockItems.value.length
+  () => (loadingData.value || stockLoadingData.value) && !stockItems.value.length
 )
 const shouldShowIndustryLoading = computed(
   () => (loadingData.value || industryLoadingData.value) && !industryItems.value.length
+)
+const shouldShowIndustryChainLoading = computed(
+  () => (loadingData.value || industryChainLoadingData.value) && !industryChainItems.value.length
 )
 const updatedEtfCount = computed(() => Number(coverage.value.updated_etf_count || 0))
 const trackedEtfCount = computed(() => Number(coverage.value.tracked_etf_count || 0))
@@ -386,13 +480,15 @@ const selectedEtfTypeLabel = computed(
   () => etfTypeOptions.find((option) => option.value === selectedEtfType.value)?.label || '全部 ETF'
 )
 const selectedIndustrySortLabel = computed(
-  () => sortOptions.find((option) => option.value === selectedSort.value)?.label || '估算交易額'
+  () =>
+    industrySortOptions.find((option) => option.value === selectedIndustrySort.value)?.label ||
+    '估算交易額'
 )
 const industryDetailQuery = computed(() => ({
   date: selectedDate.value || undefined,
   type: selectedType.value || 'all',
   etfType: selectedEtfType.value || undefined,
-  sort: selectedSort.value || 'estimated_amount'
+  sort: selectedIndustrySort.value || 'estimated_amount'
 }))
 
 watch([selectedDate, selectedType], () => {
@@ -401,9 +497,13 @@ watch([selectedDate, selectedType], () => {
   loadOverview()
 })
 
-watch([selectedSort, selectedEtfType], () => {
-  if (hasRequestedStockOverview.value) loadStockOverview()
+watch([selectedIndustrySort, selectedEtfType], () => {
+  if (hasRequestedIndustryChainOverview.value) loadIndustryChainOverview()
   if (hasRequestedIndustryOverview.value) loadIndustryOverview()
+})
+
+watch([selectedStockSort, selectedEtfType], () => {
+  if (hasRequestedStockOverview.value) loadStockOverview()
 })
 
 onMounted(async () => {
@@ -421,6 +521,9 @@ onMounted(async () => {
 
   if (industryOverviewSectionRef.value) {
     lazyOverviewObserver.observe(industryOverviewSectionRef.value)
+  }
+  if (industryChainOverviewSectionRef.value) {
+    lazyOverviewObserver.observe(industryChainOverviewSectionRef.value)
   }
   if (stockOverviewSectionRef.value) {
     lazyOverviewObserver.observe(stockOverviewSectionRef.value)
@@ -500,10 +603,30 @@ onBeforeUnmount(() => {
       @load-more="loadMore"
     >
       <template #after>
+        <div ref="industryChainOverviewSectionRef">
+          <EtfEventsIndustryChainOverviewSection
+            v-model:selected-sort="selectedIndustrySort"
+            :sort-options="industrySortOptions"
+            :error-message="industryChainErrorMessage"
+            :selected-date="selectedDate"
+            :total-count="industryChainTotalCount"
+            :selected-etf-type-label="selectedEtfTypeLabel"
+            :selected-sort-label="selectedIndustrySortLabel"
+            :amount-coverage="industryChainAmountCoverage"
+            :loading-more="industryChainLoadingMore"
+            :items="industryChainItems"
+            :skeleton-cards="industryChainSkeletonCards"
+            :has-more="industryChainHasMore"
+            :share-unit="dashboardSettingStore.shareUnit"
+            :show-loading="shouldShowIndustryChainLoading"
+            @load-more="loadMoreIndustryChains"
+          />
+        </div>
+
         <div ref="industryOverviewSectionRef">
           <EtfEventsIndustryOverviewSection
-            v-model:selected-sort="selectedSort"
-            :sort-options="sortOptions"
+            v-model:selected-sort="selectedIndustrySort"
+            :sort-options="industrySortOptions"
             :error-message="industryErrorMessage"
             :selected-date="selectedDate"
             :total-count="industryTotalCount"
@@ -524,9 +647,9 @@ onBeforeUnmount(() => {
 
         <div ref="stockOverviewSectionRef">
           <EtfEventsStockOverviewSection
-            v-model:selected-sort="selectedSort"
+            v-model:selected-sort="selectedStockSort"
             v-model:selected-etf-type="selectedEtfType"
-            :sort-options="sortOptions"
+            :sort-options="stockSortOptions"
             :etf-type-options="etfTypeOptions"
             :error-message="stockErrorMessage"
             :selected-date="selectedDate"

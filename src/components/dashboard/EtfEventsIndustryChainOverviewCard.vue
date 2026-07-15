@@ -1,23 +1,18 @@
 <script setup>
 import { computed } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
 import {
   formatDecimalRatio,
   formatMarketAmount,
+  normalizeArray,
   formatShare,
   shareColumnLabel
 } from '@/utils/etfDashboard.js'
-import { getIndustryName, normalizeIndustryCode } from '@/utils/industry.js'
 import { getStockCode, getStockName } from '@/utils/stock.js'
 
 const props = defineProps({
-  industry: {
+  chain: {
     type: Object,
     required: true
-  },
-  detailQuery: {
-    type: Object,
-    default: () => ({})
   },
   shareUnit: {
     type: String,
@@ -25,22 +20,13 @@ const props = defineProps({
   }
 })
 
-const industryCode = computed(() => normalizeIndustryCode(props.industry.industry?.code))
-const industryName = computed(
-  () => props.industry.industry?.name || getIndustryName(industryCode.value, '未分類產業')
-)
-const estimatedNetAmount = computed(() => Number(props.industry.estimated_net_amount || 0))
-const netShares = computed(() => Number(props.industry.net_shares || 0))
-const topAmountStocks = computed(() =>
-  Array.isArray(props.industry.topStocks?.amount) ? props.industry.topStocks.amount.slice(0, 3) : []
-)
-const detailRoute = computed(() => ({
-  name: 'Dashboard_Etf_Events_Industry_Detail',
-  params: {
-    industryCode: industryCode.value || 'unknown'
-  },
-  query: props.detailQuery
-}))
+const identity = computed(() => props.chain.industryChain || props.chain.industry_chain || {})
+const chainCode = computed(() => identity.value.code || identity.value.chain_code || '-')
+const chainName = computed(() => identity.value.name || identity.value.chain_name || '未分類產業鏈')
+const estimatedNetAmount = computed(() => Number(props.chain.estimated_net_amount || 0))
+const netShares = computed(() => Number(props.chain.net_shares || 0))
+const topSegments = computed(() => normalizeArray(props.chain.topSegments).slice(0, 3))
+const topAmountStocks = computed(() => normalizeArray(props.chain.topStocks?.amount).slice(0, 3))
 
 const amountTone = computed(() => {
   if (estimatedNetAmount.value > 0) return 'value-up'
@@ -58,37 +44,42 @@ const formatSignedShare = (value) => {
   const numericValue = Number(value || 0)
   return `${numericValue > 0 ? '+' : ''}${formatShare(numericValue, props.shareUnit)}`
 }
+
+const segmentIdentity = (segment) => segment?.industryChain || segment?.industry_chain || {}
+const stockRoute = (stock) => {
+  const stockCode = getStockCode(stock?.stock)
+  return stockCode
+    ? {
+        name: 'Dashboard_Etf_Stocks_Detail',
+        params: { stockCode }
+      }
+    : undefined
+}
 </script>
 
 <template>
-  <article class="industry-overview-card">
-    <header class="industry-card-header">
-      <div class="industry-identity">
-        <h3>{{ industryName }}</h3>
+  <article class="chain-overview-card">
+    <header class="chain-card-header">
+      <div class="chain-identity">
+        <span>{{ chainCode }}</span>
+        <h3>{{ chainName }}</h3>
       </div>
-
-      <router-link
-        class="industry-detail-link"
-        :to="detailRoute"
-        :aria-label="`檢視 ${industryName} 產業明細`"
-      >
-        <ArrowUpRight :size="14" aria-hidden="true" />
-      </router-link>
+      <strong>{{ Number(chain.event_etf_count || 0) }} ETF</strong>
     </header>
 
     <div class="hero-metric">
-      <span>估算總交易額</span>
-      <strong>{{ formatMarketAmount(industry.estimated_amount) }}</strong>
+      <span>分攤估算交易額</span>
+      <strong>{{ formatMarketAmount(chain.estimated_amount) }}</strong>
     </div>
 
     <div class="amount-ledger">
       <div>
         <span>估買金額</span>
-        <strong class="value-up">{{ formatMarketAmount(industry.estimated_buy_amount) }}</strong>
+        <strong class="value-up">{{ formatMarketAmount(chain.estimated_buy_amount) }}</strong>
       </div>
       <div>
         <span>估賣金額</span>
-        <strong class="value-down">{{ formatMarketAmount(industry.estimated_sell_amount) }}</strong>
+        <strong class="value-down">{{ formatMarketAmount(chain.estimated_sell_amount) }}</strong>
       </div>
       <div>
         <span>估淨金額</span>
@@ -99,11 +90,11 @@ const formatSignedShare = (value) => {
     <div class="count-strip">
       <div>
         <span>異動股票</span>
-        <strong>{{ Number(industry.event_stock_count || 0) }}</strong>
+        <strong>{{ Number(chain.event_stock_count || 0) }}</strong>
       </div>
       <div>
         <span>異動 ETF</span>
-        <strong>{{ Number(industry.event_etf_count || 0) }}</strong>
+        <strong>{{ Number(chain.event_etf_count || 0) }}</strong>
       </div>
       <div>
         <span>{{ shareColumnLabel(shareUnit, '淨') }}</span>
@@ -112,25 +103,42 @@ const formatSignedShare = (value) => {
     </div>
 
     <div class="ratio-strip">
-      <span>量能占比 {{ formatDecimalRatio(industry.volume_ratio) }}</span>
-      <span>金額占比 {{ formatDecimalRatio(industry.amount_ratio) }}</span>
+      <span>量能占比 {{ formatDecimalRatio(chain.volume_ratio) }}</span>
+      <span>金額占比 {{ formatDecimalRatio(chain.amount_ratio) }}</span>
+    </div>
+
+    <div v-if="topSegments.length" class="segment-list">
+      <span>主要鏈節</span>
+      <div v-for="segment in topSegments" :key="segmentIdentity(segment).code" class="segment-row">
+        <div>
+          <strong>{{ segmentIdentity(segment).name || '未命名鏈節' }}</strong>
+          <small>{{ segmentIdentity(segment).code || '-' }}</small>
+        </div>
+        <em>{{ formatMarketAmount(segment.estimated_amount) }}</em>
+      </div>
     </div>
 
     <div v-if="topAmountStocks.length" class="top-stock-list">
       <span>代表個股</span>
-      <div v-for="stock in topAmountStocks" :key="getStockCode(stock.stock)" class="top-stock-row">
+      <component
+        :is="stockRoute(stock) ? 'router-link' : 'div'"
+        v-for="(stock, index) in topAmountStocks"
+        :key="`${getStockCode(stock.stock) || 'unknown'}-${index}`"
+        class="top-stock-row"
+        :to="stockRoute(stock)"
+      >
         <div>
           <strong>{{ getStockName(stock.stock, '-') }}</strong>
           <small>{{ getStockCode(stock.stock) || '-' }}</small>
         </div>
         <em>{{ formatMarketAmount(stock.estimated_amount) }}</em>
-      </div>
+      </component>
     </div>
   </article>
 </template>
 
 <style scoped>
-.industry-overview-card {
+.chain-overview-card {
   position: relative;
   display: grid;
   min-width: 0;
@@ -138,7 +146,8 @@ const formatSignedShare = (value) => {
   overflow: hidden;
   border: 1px solid var(--main-border-color, rgb(148 163 184 / 0.16));
   border-radius: 18px;
-  background: radial-gradient(circle at 100% 0%, rgb(34 211 238 / 0.12), transparent 32%),
+  background: radial-gradient(circle at 100% 0%, rgb(245 158 11 / 0.13), transparent 32%),
+    radial-gradient(circle at 0% 100%, rgb(34 211 238 / 0.1), transparent 34%),
     var(--dashboard-section-bg);
   box-shadow: var(--dashboard-section-shadow);
   padding: 16px;
@@ -148,25 +157,46 @@ const formatSignedShare = (value) => {
     transform 0.18s ease;
 }
 
-.industry-overview-card:hover {
-  border-color: rgb(34 211 238 / 0.32);
+.chain-overview-card:hover {
+  border-color: rgb(245 158 11 / 0.34);
   transform: translateY(-2px);
 }
 
-.industry-card-header {
+.chain-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.industry-identity {
+.chain-card-header > strong {
+  flex: 0 0 auto;
+  border: 1px solid rgb(245 158 11 / 0.24);
+  border-radius: 999px;
+  background: rgb(245 158 11 / 0.1);
+  color: #fbbf24;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  padding: 7px 9px;
+}
+
+.chain-identity {
   display: grid;
   min-width: 0;
   gap: 5px;
 }
 
-.industry-identity h3 {
+.chain-identity span {
+  color: #fbbf24;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+}
+
+.chain-identity h3 {
   overflow: hidden;
   margin: 0;
   color: var(--dashboard-text-primary, #f8fbff);
@@ -174,27 +204,6 @@ const formatSignedShare = (value) => {
   font-weight: 950;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.industry-detail-link {
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(34 211 238 / 0.2);
-  border-radius: 10px;
-  background: rgb(34 211 238 / 0.08);
-  color: #67e8f9;
-  text-decoration: none;
-  opacity: 0.86;
-}
-
-.industry-detail-link:hover,
-.industry-detail-link:focus-visible {
-  border-color: rgb(34 211 238 / 0.36);
-  opacity: 0.9;
 }
 
 .hero-metric {
@@ -205,7 +214,9 @@ const formatSignedShare = (value) => {
 .hero-metric span,
 .amount-ledger span,
 .count-strip span,
-.ratio-strip span {
+.ratio-strip span,
+.segment-list > span,
+.top-stock-list > span {
   color: var(--dashboard-text-muted, #7c8794);
   font-size: 11px;
   font-weight: 900;
@@ -254,6 +265,7 @@ const formatSignedShare = (value) => {
   gap: 6px 12px;
 }
 
+.segment-list,
 .top-stock-list {
   display: grid;
   gap: 8px;
@@ -261,12 +273,7 @@ const formatSignedShare = (value) => {
   border-top: 1px solid var(--main-border-color, rgb(148 163 184 / 0.12));
 }
 
-.top-stock-list > span {
-  color: var(--dashboard-text-muted, #7c8794);
-  font-size: 11px;
-  font-weight: 900;
-}
-
+.segment-row,
 .top-stock-row {
   display: flex;
   align-items: center;
@@ -275,12 +282,29 @@ const formatSignedShare = (value) => {
   min-width: 0;
 }
 
+.top-stock-row {
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.top-stock-row:hover,
+.top-stock-row:focus-visible {
+  background: rgb(34 211 238 / 0.08);
+  color: var(--dashboard-text-primary, #f8fbff);
+}
+
+.segment-row div,
 .top-stock-row div {
   display: grid;
   min-width: 0;
   gap: 2px;
 }
 
+.segment-row strong,
 .top-stock-row strong {
   overflow: hidden;
   color: var(--dashboard-text-primary, #f8fbff);
@@ -290,6 +314,7 @@ const formatSignedShare = (value) => {
   white-space: nowrap;
 }
 
+.segment-row small,
 .top-stock-row small {
   color: var(--dashboard-text-muted, #7c8794);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -297,8 +322,9 @@ const formatSignedShare = (value) => {
   font-weight: 850;
 }
 
+.segment-row em,
 .top-stock-row em {
-  color: color-mix(in srgb, #67e8f9 78%, var(--dashboard-text-primary, #f8fbff));
+  color: color-mix(in srgb, #fbbf24 76%, var(--dashboard-text-primary, #f8fbff));
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   font-style: normal;
@@ -318,15 +344,20 @@ const formatSignedShare = (value) => {
   color: var(--dashboard-text-muted, #7c8794) !important;
 }
 
-:global(.dashboard-theme-light) .industry-overview-card {
-  background: radial-gradient(circle at 100% 0%, rgb(8 145 178 / 0.1), transparent 32%),
+:global(.dashboard-theme-light) .chain-overview-card {
+  background: radial-gradient(circle at 100% 0%, rgb(217 119 6 / 0.1), transparent 32%),
+    radial-gradient(circle at 0% 100%, rgb(8 145 178 / 0.08), transparent 34%),
     var(--dashboard-section-bg);
 }
 
-:global(.dashboard-theme-light) .industry-detail-link {
-  border-color: rgb(8 145 178 / 0.18);
-  background: rgb(8 145 178 / 0.08);
-  color: #0e7490;
+:global(.dashboard-theme-light) .chain-card-header > strong {
+  border-color: rgb(217 119 6 / 0.18);
+  background: rgb(217 119 6 / 0.08);
+  color: #b45309;
+}
+
+:global(.dashboard-theme-light) .chain-identity span {
+  color: #b45309;
 }
 
 @media (max-width: 560px) {
@@ -337,11 +368,11 @@ const formatSignedShare = (value) => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .industry-overview-card {
+  .chain-overview-card {
     transition: none;
   }
 
-  .industry-overview-card:hover {
+  .chain-overview-card:hover {
     transform: none;
   }
 }

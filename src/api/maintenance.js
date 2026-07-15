@@ -26,12 +26,14 @@ export const runEtfEventsSummaryNotify = ({
   date = null,
   send = false,
   etfType = null,
+  section = null,
   topN = 5
 } = {}) =>
   get('/etf/events/summary-notify', {
     date,
     send: send ? 1 : 0,
     etfType,
+    section,
     topN
   })
 

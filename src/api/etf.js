@@ -27,18 +27,46 @@ export const getEtfHoldings = ({
   date = null,
   mode = null,
   dateRange = null,
-  includeTrendDays = null
-}) => get('/etf/holdings', { etfCode, stockCode, date, mode, dateRange, includeTrendDays })
+  includeTrendDays = null,
+  industryChainCode = null,
+  includeChildren = null
+}) =>
+  get('/etf/holdings', {
+    etfCode,
+    stockCode,
+    date,
+    mode,
+    dateRange,
+    includeTrendDays,
+    industryChainCode,
+    includeChildren
+  })
 
 export const getEtfHoldingsOverview = ({
   date = null,
   page = 1,
   pageSize = 12,
-  limitPerEtf = 10
-} = {}) => get('/etf/holdings/overview', { date, page, pageSize, limitPerEtf })
+  limitPerEtf = 10,
+  industryChainCode = null,
+  includeChildren = null
+} = {}) =>
+  get('/etf/holdings/overview', {
+    date,
+    page,
+    pageSize,
+    limitPerEtf,
+    industryChainCode,
+    includeChildren
+  })
 
-export const getEtfEvents = ({ mode = 'stock', stockCode = null, etfCode = null, date = null }) =>
-  get('/etf/events', { mode, stockCode, etfCode, date })
+export const getEtfEvents = ({
+  mode = 'stock',
+  stockCode = null,
+  etfCode = null,
+  date = null,
+  industryChainCode = null,
+  includeChildren = null
+}) => get('/etf/events', { mode, stockCode, etfCode, date, industryChainCode, includeChildren })
 
 export const getEtfEventsOverview = ({
   date = null,
@@ -47,7 +75,9 @@ export const getEtfEventsOverview = ({
   etfCode = null,
   page = 1,
   pageSize = 20,
-  limitPerEtf = 100
+  limitPerEtf = 100,
+  industryChainCode = null,
+  includeChildren = null
 } = {}) =>
   get('/etf/events/overview', {
     date,
@@ -56,7 +86,9 @@ export const getEtfEventsOverview = ({
     etfCode,
     page,
     pageSize,
-    limitPerEtf
+    limitPerEtf,
+    industryChainCode,
+    includeChildren
   })
 
 export const getEtfEventsStockOverview = ({
@@ -65,6 +97,8 @@ export const getEtfEventsStockOverview = ({
   side = 'all',
   etfType = null,
   stockCode = null,
+  industryChainCode = null,
+  includeChildren = null,
   sort = 'estimated_amount',
   page = 1,
   pageSize = 12,
@@ -76,6 +110,8 @@ export const getEtfEventsStockOverview = ({
     side,
     etfType,
     stockCode,
+    industryChainCode,
+    includeChildren,
     sort,
     page,
     pageSize,
@@ -88,6 +124,8 @@ export const getEtfEventsIndustryOverview = ({
   side = 'all',
   etfType = null,
   industryCode = null,
+  industryChainCode = null,
+  includeChildren = null,
   sort = 'estimated_amount',
   page = 1,
   pageSize = 12,
@@ -99,6 +137,33 @@ export const getEtfEventsIndustryOverview = ({
     side,
     etfType,
     industryCode,
+    industryChainCode,
+    includeChildren,
+    sort,
+    page,
+    pageSize,
+    topN
+  })
+
+export const getEtfEventsIndustryChainOverview = ({
+  date = null,
+  type = 'all',
+  side = 'all',
+  etfType = null,
+  industryChainCode = null,
+  includeChildren = null,
+  sort = 'estimated_amount',
+  page = 1,
+  pageSize = 20,
+  topN = 3
+} = {}) =>
+  get('/etf/events/industry-chain-overview', {
+    date,
+    type,
+    side,
+    etfType,
+    industryChainCode,
+    includeChildren,
     sort,
     page,
     pageSize,
@@ -111,6 +176,8 @@ export const getEtfEventsIndustryStocks = ({
   type = 'all',
   side = 'all',
   etfType = null,
+  industryChainCode = null,
+  includeChildren = null,
   sort = 'estimated_amount',
   page = 1,
   pageSize = 50,
@@ -121,6 +188,8 @@ export const getEtfEventsIndustryStocks = ({
     type,
     side,
     etfType,
+    industryChainCode,
+    includeChildren,
     sort,
     page,
     pageSize,
@@ -132,7 +201,9 @@ export const getEtfFirstBuyEvents = ({
   pageSize = 50,
   date = null,
   stockCode = null,
-  etfCode = null
+  etfCode = null,
+  industryChainCode = null,
+  includeChildren = null
 } = {}) =>
   get('/etf/events', {
     type: 'first_buy',
@@ -140,7 +211,9 @@ export const getEtfFirstBuyEvents = ({
     pageSize,
     date,
     stockCode,
-    etfCode
+    etfCode,
+    industryChainCode,
+    includeChildren
   })
 
 export const getEtfStockDetail = ({ etfCode, stockCode }) => get(`/etf/${etfCode}/${stockCode}`)
@@ -148,8 +221,13 @@ export const getEtfStockDetail = ({ etfCode, stockCode }) => get(`/etf/${etfCode
 export const getEtfStockSeries = ({ etfCode, stockCode, range = '1m' }) =>
   get(`/etf/${etfCode}/${stockCode}/series`, { range })
 
-export const getEtfStocks = ({ page = 1, pageSize = 50, q = null } = {}) =>
-  get('/etf/stocks', { page, pageSize, q })
+export const getEtfStocks = ({
+  page = 1,
+  pageSize = 50,
+  q = null,
+  industryChainCode = null,
+  includeChildren = null
+} = {}) => get('/etf/stocks', { page, pageSize, q, industryChainCode, includeChildren })
 
 export const getEtfObservedStockDetail = ({ stockCode }) => get(`/etf/stocks/${stockCode}`)
 
