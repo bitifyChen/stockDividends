@@ -937,6 +937,12 @@
               "maximum": 500,
               "default": 200
             }
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -1045,6 +1051,12 @@
               "default": 100
             },
             "description": "Maximum number of nested events returned for each ETF."
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -1167,6 +1179,16 @@
                           "events"
                         ]
                       }
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -1582,6 +1604,12 @@
               ]
             },
             "description": "搭配 `etfCode` 使用，回傳 ETF 總持股摘要"
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -1898,12 +1926,14 @@
               "enum": [
                 "event",
                 "industry",
+                "industry_chain",
+                "chain",
                 "stock",
                 "all"
               ],
               "default": "event"
             },
-            "description": "event: original ETF event summary. industry: industry direction message. stock: stock direction message. all: all three messages."
+            "description": "Notification section. section=all previews or sends four independent messages: event, industry, industry_chain and stock."
           },
           {
             "name": "etfType",
@@ -2143,6 +2173,12 @@
               "maximum": 200,
               "default": 50
             }
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2180,6 +2216,12 @@
                       ],
                       "properties": {
                         "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
                           "type": [
                             "string",
                             "null"
@@ -2320,6 +2362,16 @@
                           }
                         }
                       }
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }
@@ -2464,6 +2516,12 @@
               "default": 50
             },
             "description": "Maximum number of nested ETF event rows returned for each stock."
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2577,6 +2635,16 @@
                           }
                         ]
                       }
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }
@@ -2716,6 +2784,12 @@
               "default": 50
             },
             "description": "Maximum number of nested ETF event rows returned for each stock."
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2766,6 +2840,12 @@
                       ],
                       "properties": {
                         "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
                           "type": [
                             "string",
                             "null"
@@ -2924,6 +3004,16 @@
                         }
                       },
                       "additionalProperties": true
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }
@@ -2989,6 +3079,12 @@
               "maximum": 50,
               "default": 10
             }
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -3110,6 +3206,16 @@
                           "holdings"
                         ]
                       }
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -3286,6 +3392,12 @@
               "type": "string",
               "example": "2330"
             }
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -3721,6 +3833,363 @@
           }
         }
       }
+    },
+    "/etf/events/industry-chain-overview": {
+      "get": {
+        "tags": [
+          "ETF"
+        ],
+        "summary": "Daily ETF event overview grouped by industry chain",
+        "description": "Returns ETF daily event direction aggregated by TPEx industry-chain root nodes. Amounts use fractional attribution when one stock belongs to multiple root chains.",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-07-03"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "first_buy",
+                "buy_increase",
+                "first_sell",
+                "sell_decrease",
+                "sell_out"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "buy",
+                "sell"
+              ],
+              "default": "all"
+            },
+            "description": "Optional buy/sell grouping filter. buy includes first_buy and buy_increase; sell includes first_sell, sell_decrease and sell_out."
+          },
+          {
+            "name": "etfType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "active",
+                "passive"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "estimated_amount",
+                "estimated_buy_amount",
+                "estimated_sell_amount",
+                "estimated_net_amount",
+                "estimated_net_amount_abs",
+                "net_shares_abs",
+                "net_shares",
+                "buy_shares",
+                "sell_shares",
+                "buy_stock_count",
+                "sell_stock_count",
+                "event_stock_count",
+                "buy_etf_count",
+                "sell_etf_count",
+                "event_etf_count",
+                "industry_code"
+              ],
+              "default": "estimated_amount"
+            }
+          },
+          {
+            "name": "topN",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 3
+            },
+            "description": "Number of stocks returned in each items[].topStocks group. Use 0 to omit all top-stock lists."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "": "#/components/parameters/IndustryChainCode"
+          },
+          {
+            "": "#/components/parameters/IncludeChildren"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily industry-grouped ETF event overview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "availableDates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "side": {
+                      "type": "string"
+                    },
+                    "etfType": {
+                      "type": "string"
+                    },
+                    "industry": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    },
+                    "sort": {
+                      "type": "string"
+                    },
+                    "topN": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalCount": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    },
+                    "amountCoverage": {
+                      "type": "object"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "buy_stock_count": {
+                            "type": "integer"
+                          },
+                          "sell_stock_count": {
+                            "type": "integer"
+                          },
+                          "event_stock_count": {
+                            "type": "integer"
+                          },
+                          "buy_etf_count": {
+                            "type": "integer"
+                          },
+                          "sell_etf_count": {
+                            "type": "integer"
+                          },
+                          "event_etf_count": {
+                            "type": "integer"
+                          },
+                          "buy_shares": {
+                            "type": "number"
+                          },
+                          "sell_shares": {
+                            "type": "number"
+                          },
+                          "net_shares": {
+                            "type": "number"
+                          },
+                          "estimated_buy_amount": {
+                            "type": "number"
+                          },
+                          "estimated_sell_amount": {
+                            "type": "number"
+                          },
+                          "estimated_net_amount": {
+                            "type": "number"
+                          },
+                          "estimated_amount": {
+                            "type": "number"
+                          },
+                          "amount_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "volume_ratio": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "amount_coverage_rate": {
+                            "type": "number"
+                          },
+                          "topStocks": {
+                            "type": "object",
+                            "description": "Top stocks in this industry for overview cards. Each group is sorted descending by its own metric.",
+                            "properties": {
+                              "buy": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/EtfEventStockSummary"
+                                }
+                              },
+                              "sell": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/EtfEventStockSummary"
+                                }
+                              },
+                              "netBuy": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/EtfEventStockSummary"
+                                }
+                              },
+                              "netSell": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/EtfEventStockSummary"
+                                }
+                              },
+                              "amount": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/EtfEventStockSummary"
+                                }
+                              }
+                            }
+                          },
+                          "eventCount": {
+                            "type": "integer"
+                          },
+                          "industryChain": {
+                            "": "#/components/schemas/IndustryChainIdentity"
+                          },
+                          "topSegments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "industryChain": {
+                                  "": "#/components/schemas/IndustryChainIdentity"
+                                },
+                                "estimated_amount": {
+                                  "type": "number"
+                                },
+                                "estimated_buy_amount": {
+                                  "type": "number"
+                                },
+                                "estimated_sell_amount": {
+                                  "type": "number"
+                                },
+                                "estimated_net_amount": {
+                                  "type": "number"
+                                },
+                                "event_stock_count": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "industryChain": {
+                      "oneOf": [
+                        {
+                          "": "#/components/schemas/IndustryChainIdentity"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "attribution": {
+                      "": "#/components/schemas/IndustryChainAttribution"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3782,6 +4251,30 @@
           "type": "boolean"
         },
         "description": "是否允許 `/etf/fetch-all` 批次抓取"
+      },
+      "IndustryChainCode": {
+        "name": "industryChainCode",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "D000"
+        },
+        "description": "Optional industry-chain code filter. Root codes include descendants by default."
+      },
+      "IncludeChildren": {
+        "name": "includeChildren",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ],
+          "default": 1
+        },
+        "description": "When industryChainCode is provided, 1 includes descendant nodes; 0 matches the exact chain code only."
       }
     },
     "responses": {
@@ -5526,6 +6019,61 @@
           }
         },
         "additionalProperties": true
+      },
+      "IndustryChainIdentity": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "level": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "IndustryChainAttribution": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "fractional"
+            ]
+          },
+          "groupLevel": {
+            "type": "string",
+            "enum": [
+              "root"
+            ]
+          },
+          "includesUnclassified": {
+            "type": "boolean"
+          }
+        }
       }
     }
   }

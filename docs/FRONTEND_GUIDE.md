@@ -1,3 +1,43 @@
+# 2026-07-15
+
+## ETF overview 效能、產業鏈篩選與每日摘要通知改版
+
+### 主旨
+後端已將 `/dashboard/etf/events/overview` 相關資料整理成共用查詢流程，並新增產業鏈方向 API。前端本次不需要自行計算產業鏈分攤，只需要改接 API、平行載入區塊、調整篩選器與通知預覽文字顯示。
+
+### 填寫人
+Backend
+
+### 影響 API
+- 新增 `GET /etf/events/industry-chain-overview`
+- `GET /etf/events/summary-notify` 新增 `section=industry_chain`，`section=chain` 也可用；`section=all` 會回傳四則獨立訊息
+- 以下 API 新增 `industryChainCode` 與 `includeChildren=1|0`：
+- `GET /etf/events`
+- `GET /etf/events/overview`
+- `GET /etf/events/stock-overview`
+- `GET /etf/events/industry-overview`
+- `GET /etf/events/industry-overview/{industryCode}/stocks`
+- `GET /etf/holdings`
+- `GET /etf/holdings/overview`
+- `GET /etf/stocks`
+
+### 改動內容
+- `GET /etf/events/industry-overview` 的 `industry` 現在會回傳 `{ code, name }`，前端可直接顯示 `電子零組件業（28）` 這類名稱。
+- `GET /etf/events/industry-chain-overview` 以產業鏈 root 節點聚合每日 ETF 進出，金額採 fractional attribution：同一股票若屬於多個 root chain，估算金額會平均分攤，避免總額被放大。
+- `industry-chain-overview.items[]` 會包含 `industryChain`、`estimated_*`、`event_stock_count`、`event_etf_count`、`topSegments`、`topStocks`。
+- `industryChainCode` 預設包含子節點；若前端要精準只查某節點，帶 `includeChildren=0`。
+
+### 對應角色處理
+- `/dashboard/etf/events/overview` 的 ETF 角度、產業方向、產業鏈方向、個股方向區塊建議平行載入，不要等上一個區塊完成才打下一支 API。
+- 若 `date` 未帶，後端會選最新可用 display date；前端 cache latest 資料時請使用短 TTL 或在手動刷新後清除 cache，避免每日批次後仍顯示舊資料。
+- 產業鏈 overview 的 `estimated_*` 是分攤後金額；若點進某產業鏈後再用 `/etf/events/stock-overview?industryChainCode=...`，該頁顯示的是實際股票事件金額，不是分攤金額。
+- 通知預覽可使用 `GET /etf/events/summary-notify?section=all&send=0`，也可分別使用 `section=event|industry|industry_chain|stock`。
+
+### 其他必要補充
+- `GET /etf/list` 沒有加入產業鏈 filter，仍維持「目前追蹤 ETF 設定清單」定位。
+- OpenAPI 已更新於 `docs/openapi.json`。
+- 每日 Telegram 會分成四則：事件摘要、產業方向、產業鏈方向、個股方向；文字已改為手機較容易閱讀的分段格式。
+
 # 2026-07-13
 
 ## ETF 個股詳情補上產業鏈顯示資料
