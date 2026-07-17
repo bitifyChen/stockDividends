@@ -1,14 +1,125 @@
+# 2026-07-17
+
+## 主旨
+
+維護 API 新增 Bearer Token 保護
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- 以下維護/批次 API 需要 `Authorization: Bearer <token>`：
+- `GET /etf/fetch-all`
+- `GET /etf/events/summary-notify`，僅 `send=1` 或未帶 `send` 時需要 token；`send=0` 預覽仍可不帶 token
+- `POST /etf/events/enrich-ohlc`
+- `GET /ohlc/daily-fetch`
+- `POST /ohlc/daily-fetch`
+- `POST /ohlc/fetch`
+- `POST /ohlc/backup-drive`
+- `POST /industry-chains/tpex-sync`
+- `POST /tools/ohlc-batch-monitor/package-build`
+- `POST /tools/ohlc-batch-monitor/package-control`
+- `GET /dividend?mode=all` 需要 token；`GET /dividend?stockId=2330` 仍維持公開查詢
+- `GET /price?mode=all` 需要 token；`GET /price?stockId=2330` 仍維持公開查詢
+
+### 改動內容
+
+- 公開資料查詢 API 不需要 token，例如：
+- `GET /etf/list`
+- `GET /etf/holdings`
+- `GET /etf/events/overview`
+- `GET /etf/events/stock-overview`
+- `GET /etf/events/industry-overview`
+- `GET /etf/events/industry-chain-overview`
+- `GET /ohlc/stocks/{stockCode}/candles`
+- `GET /maintenance/batch-status`
+- `GET /website/health`
+- Postman 定時排程需在 header 加上：
+
+```http
+Authorization: Bearer {{MAINTENANCE_API_TOKEN}}
+```
+
+- 後端 Render 需新增 `MAINTENANCE_API_TOKENS`，可用逗號放多組 token 方便輪替。
+- 前端若要讓 `/dashboard/setting` 的維護按鈕可用，環境變數需新增 `VITE_MAINTENANCE_API_TOKEN`，值必須等於 Render `MAINTENANCE_API_TOKENS` 其中一組。
+- 若後端未設定 `MAINTENANCE_API_TOKENS`，維護 API 會回 `401`，避免 production 誤開放。
+
+### 對應角色處理
+
+- 前端一般資料頁不需調整，公開查詢 API 仍維持原本串接方式。
+- `/dashboard/setting` 的維護按鈕目前可透過 `VITE_MAINTENANCE_API_TOKEN` 自動加上 `Authorization: Bearer <token>`。
+- `VITE_MAINTENANCE_API_TOKEN` 會被打包到前端，僅適合作為目前內部後台過渡方案；不要把它視為長期安全邊界。
+- 後續若要做正式權限，仍建議改成「Firebase superuser -> 後端驗證 -> 後端代打維護 API」流程，避免 token 長期存在瀏覽器。
+
+### 其他必要補充
+
+- `GET /etf/events/summary-notify?send=0` 可繼續作為通知預覽，不會發 Telegram，也不需要 token。
+- OpenAPI 已更新：`docs/openapi.json`
+
+# 2026-07-16
+
+## 主旨
+
+新增 ETF 每日資金方向 PNG 日報預覽與補發 API
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- 新增 `GET /etf/events/daily-report.png`
+- 調整 `GET /etf/events/summary-notify`
+  - `section` 新增 `report`
+  - `section=report&send=0` 只產生/預覽圖片，不發 Telegram、不寫通知狀態
+  - `section=report&send=1` 會把 PNG 日報發送到 Telegram
+
+### API 使用方式
+
+- 直接取圖：
+  - `GET /etf/events/daily-report.png?date=YYYY-MM-DD&etfType=all&topN=5`
+- 預覽補發結果：
+  - `GET /etf/events/summary-notify?section=report&send=0&date=YYYY-MM-DD`
+- 真正補發 Telegram 圖片：
+  - `GET /etf/events/summary-notify?section=report&send=1&date=YYYY-MM-DD`
+
+### 回應與畫面建議
+
+- `daily-report.png` 回傳 `image/png`，可直接放在 `<img>`、開新視窗或下載預覽。
+- `summary-notify?section=report&send=0` 回傳 JSON，包含 `sent=false`、`previewUrl`、`report.date`、`report.png`、`report.html`、`report.payload`。
+- `/dashboard/setting` 若要新增「ETF 日報圖片預覽」按鈕，建議先用 `send=0` 顯示預覽，再由使用者二次確認後呼叫 `send=1`。
+- 目前每日自動批次仍維持既有文字通知流程，尚未自動替換成 PNG；等真實資料版確認後再切換。
+- 更新：`GET /etf/fetch-all?save=1` 已改為保留批次狀態文字通知，並自動發送單張 PNG 日報作為分析摘要。
+
+### 日報內容邏輯
+
+- `ETF 事件雷達 Top 3` 依估算成交額排序，不再以張數排序。
+- 產業方向與產業鏈方向使用估算淨流向長條圖。
+- 產業鏈金額仍採 fractional attribution；股票若屬於多個 root chain，金額會平均分配。
+- 圖片上不顯示 ETF 更新率與 OHLC 覆蓋率；這些維持在批次文字通知。
+- 估算成交額僅為方向與量級參考，不代表 ETF 實際成交價或建倉成本。
+
+### 其他必要補充
+
+- Render 端需要可用的 Chrome/Edge headless 環境才能產 PNG。若 production 回傳找不到瀏覽器，後端會回明確錯誤，不會影響 ETF/OHLC 寫入。
+- OpenAPI 已更新：`docs/openapi.json`
+
 # 2026-07-15
 
 ## ETF overview 效能、產業鏈篩選與每日摘要通知改版
 
 ### 主旨
+
 後端已將 `/dashboard/etf/events/overview` 相關資料整理成共用查詢流程，並新增產業鏈方向 API。前端本次不需要自行計算產業鏈分攤，只需要改接 API、平行載入區塊、調整篩選器與通知預覽文字顯示。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - 新增 `GET /etf/events/industry-chain-overview`
 - `GET /etf/events/summary-notify` 新增 `section=industry_chain`，`section=chain` 也可用；`section=all` 會回傳四則獨立訊息
 - 以下 API 新增 `industryChainCode` 與 `includeChildren=1|0`：
@@ -22,18 +133,21 @@ Backend
 - `GET /etf/stocks`
 
 ### 改動內容
+
 - `GET /etf/events/industry-overview` 的 `industry` 現在會回傳 `{ code, name }`，前端可直接顯示 `電子零組件業（28）` 這類名稱。
 - `GET /etf/events/industry-chain-overview` 以產業鏈 root 節點聚合每日 ETF 進出，金額採 fractional attribution：同一股票若屬於多個 root chain，估算金額會平均分攤，避免總額被放大。
 - `industry-chain-overview.items[]` 會包含 `industryChain`、`estimated_*`、`event_stock_count`、`event_etf_count`、`topSegments`、`topStocks`。
 - `industryChainCode` 預設包含子節點；若前端要精準只查某節點，帶 `includeChildren=0`。
 
 ### 對應角色處理
+
 - `/dashboard/etf/events/overview` 的 ETF 角度、產業方向、產業鏈方向、個股方向區塊建議平行載入，不要等上一個區塊完成才打下一支 API。
 - 若 `date` 未帶，後端會選最新可用 display date；前端 cache latest 資料時請使用短 TTL 或在手動刷新後清除 cache，避免每日批次後仍顯示舊資料。
 - 產業鏈 overview 的 `estimated_*` 是分攤後金額；若點進某產業鏈後再用 `/etf/events/stock-overview?industryChainCode=...`，該頁顯示的是實際股票事件金額，不是分攤金額。
 - 通知預覽可使用 `GET /etf/events/summary-notify?section=all&send=0`，也可分別使用 `section=event|industry|industry_chain|stock`。
 
 ### 其他必要補充
+
 - `GET /etf/list` 沒有加入產業鏈 filter，仍維持「目前追蹤 ETF 設定清單」定位。
 - OpenAPI 已更新於 `docs/openapi.json`。
 - 每日 Telegram 會分成四則：事件摘要、產業方向、產業鏈方向、個股方向；文字已改為手機較容易閱讀的分段格式。
@@ -43,16 +157,20 @@ Backend
 ## ETF 個股詳情補上產業鏈顯示資料
 
 ### 主旨
+
 `GET /etf/stocks/{stockCode}` 的 `stock` 物件已補上 `industry_chains`，前端可直接取得產業鏈名稱、層級與上下游階段，不需要自行維護 code/name mapping。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - `GET /etf/stocks/{stockCode}`
 - `GET /etf/stocks/{stockCode}/series?range=1w|1m|6m|1y|max`
 
 ### 改動內容
+
 - `stock.industry_chain_codes` 保留，定位為資料與 filter 用。
 - 新增 `stock.industry_chains`，定位為畫面顯示用。
 - `industry_chains` 格式：
@@ -70,11 +188,13 @@ Backend
 ```
 
 ### 對應角色處理
+
 - 個股詳情頁如需顯示產業鏈名稱，請改讀 `stock.industry_chains[].name`。
 - 產業鏈篩選、比對或送 API 時，仍使用 `stock.industry_chain_codes`。
 - 若 `industry_chains` 為空陣列，前端顯示「尚未標記產業鏈」即可。
 
 ### 其他必要補充
+
 - 這次沒有改變既有 URL 或 query 參數。
 - `stock.industry_chain_codes` 不移除，避免破壞既有篩選流程。
 
@@ -83,17 +203,21 @@ Backend
 ## TPEx 全產業鏈資料已同步
 
 ### 主旨
+
 後端已將 TPEx 產業價值鏈資訊平台可解析的全部產業頁同步到 `industry_chains`，前端的 `/dashboard/industry-chain` 產業選擇器可以改為顯示完整產業清單，不再只限 `D000 半導體`。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - `GET /industry-chains`
 - `GET /industry-chains/{code}`
 - `GET /industry-chains/{code}/stocks`
 
 ### 改動內容
+
 - TPEx catalog 已同步：
   - 40 個 root 產業
   - 533 個產業鏈節點
@@ -107,12 +231,14 @@ Backend
   - `B000`：休閒娛樂
 
 ### 對應角色處理
+
 - 產業選擇器請改由 `GET /industry-chains?includeCounts=1` 產生，不要寫死半導體。
 - 若節點 `disabled=true` 或 `stock_count=0`，建議弱化或不可點擊。
 - 部分產業沒有明確上游 / 中游 / 下游，`GET /industry-chains/{code}` 會把它們放在 `flow.other`，前端可以顯示為「其他分類」或用一般 grid/list 呈現。
 - Sankey / 河流圖僅適合有 `flow.upstream / midstream / downstream` 的產業；若全部集中在 `flow.other`，建議自動切換成節點卡片列表。
 
 ### 其他必要補充
+
 - TPEx 有些公司候選資料不在目前 `tw_stock_master`，後端已保留本地 audit，但正式 API 只顯示我們股票主檔已有的標的。
 - 產業鏈資料代表分類與上下游位置，不代表公司對公司的真實供應交易關係。
 
@@ -121,12 +247,15 @@ Backend
 ## TPEx 產業鏈資料基礎建置
 
 ### 主旨
+
 後端新增 TPEx 產業鏈資料基礎，第一版已完成 `D000 半導體` 產業鏈樹與股票標記。既有股票物件新增 `stock.industry_chain_codes`，前端可先開始建立產業鏈選擇器、產業鏈地圖與股票對照頁面。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - 新增 `GET /industry-chains`
 - 新增 `GET /industry-chains/{code}`
 - 新增 `GET /industry-chains/{code}/stocks`
@@ -134,6 +263,7 @@ Backend
 - OpenAPI 已更新：`docs/openapi.json`
 
 ### 改動內容
+
 - 後端新增 `industry_chains` 資料表。
 - 後端在 `tw_stock_master` 新增 `industry_chain_codes`。
 - 第一版已同步 TPEx `D000 半導體`：
@@ -155,6 +285,7 @@ Backend
 ```
 
 ### API 使用方式
+
 - `GET /industry-chains?includeCounts=1`
   - 取得產業鏈樹。
   - 回傳每個節點的 `direct_stock_count`、`stock_count`、`disabled`。
@@ -172,6 +303,7 @@ Backend
   - 股票顯示產業鏈名稱時，請用 `stock.industry_chains`，不要在前端自行維護 D400 這類 code mapping。
 
 ### 產業鏈欄位差異
+
 ```json
 {
   "stock": {
@@ -201,6 +333,7 @@ Backend
 - 同名節點可能出現在不同 stage，例如 D400 與 D600 都是「生產製程及檢測設備」，前端顯示時建議同時帶 stage 或上/中/下游標籤。
 
 ### 對應角色處理
+
 - 可先建立共用 `IndustryChainSelector`：
   - 支援 tree 顯示。
   - 支援搜尋。
@@ -216,12 +349,14 @@ Backend
   - 節點下股票可連到既有股票詳情頁。
 
 ### 尚未完成
+
 - ETF overview / ETF list / holdings / events 的 `industryChainCode` filter 尚未完成。
 - 後台新增、刪除、編輯產業鏈節點尚未完成。
 - 後台批次調整股票 `industry_chain_codes` 尚未完成。
 - 目前只完成 `D000 半導體`，其他產業鏈會分批同步。
 
 ### 其他必要補充
+
 - `industry_code` 仍是官方大產業別。
 - `industry_chain_codes` 是 TPEx 產業鏈節點，可多選。
 - 前端不要把兩者混成同一個 mapping。
@@ -231,15 +366,19 @@ Backend
 ## ETF 通知調整：事件摘要、產業方向、個股方向
 
 ### 主旨
+
 後端將 ETF 每日通知拆成三則獨立訊息：保留原本「ETF 今日事件摘要」，新增「ETF 今日產業方向」與「ETF 今日個股方向」。每日 `/etf/fetch-all?save=1` 會在 ETF 抓取、OHLC 日線更新、event OHLC enrichment 完成後，才建立這三份通知 summary。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - `GET /etf/events/summary-notify`
 
 ### 改動內容
+
 - `GET /etf/events/summary-notify` 新增 `section` query 參數：
   - `event`：只預覽或發送原本「ETF 今日事件摘要」，預設值。
   - `industry`：只預覽或發送「ETF 今日產業方向」。
@@ -254,6 +393,7 @@ Backend
 - `industry` 與 `stock` 通知使用 OHLC enrichment 後的估算金額，因此每日批次必須在 `eventOhlcEnrichment` 後產生通知。
 
 ### 後台按鈕建議
+
 - 預覽事件摘要：
   - `GET /etf/events/summary-notify?section=event&send=0`
 - 預覽產業方向：
@@ -265,6 +405,7 @@ Backend
 - 補發時把 `send=0` 改成 `send=1`，前端仍需二次確認。
 
 ### 對應角色處理
+
 - `/dashboard/setting` 若已有補發通知按鈕，可新增 section 下拉。
 - 預設選項建議維持 `event`，避免使用者不小心一次發出三則 Telegram。
 - 若前端要顯示預覽結果：
@@ -274,6 +415,7 @@ Backend
   - `section=all` 同時看三個 message
 
 ### 其他必要補充
+
 - 本次只做文字版 Telegram，圖片版仍是後續升級項目。
 - 後端已用本地資料模擬一張「產業方向」圖片樣板，檔案不納入正式流程。
 
@@ -282,17 +424,21 @@ Backend
 ## ETF 每日進出：產業總覽、產業明細與排序統一
 
 ### 主旨
+
 後端補強 `/dashboard/etf/events/overview` 所需的產業視角資料，並統一「個股總買賣行為」與「產業別進出總覽」的排序語意。前端本次只需改接 API 與調整顯示，不需要自行重新計算 top stocks。
 
 ### 填寫人
+
 Backend
 
 ### 影響 API
+
 - `GET /etf/events/industry-overview`
 - `GET /etf/events/industry-overview/{industryCode}/stocks`
 - `GET /etf/events/stock-overview`
 
 ### 改動內容
+
 - `GET /etf/events/industry-overview` 新增 `topN` query 參數，預設 `3`，最大 `10`。
 - `GET /etf/events/industry-overview` 的每個 `items[]` 新增 `topStocks`，讓 overview card 可直接顯示該產業代表個股。
 - 新增 `GET /etf/events/industry-overview/{industryCode}/stocks`，用於點進產業卡片後顯示該產業內的個股總買賣行為列表。
@@ -300,6 +446,7 @@ Backend
 - 後端仍保留舊排序值相容既有 URL，但前端下拉建議只顯示下列共用選項。
 
 ### 建議排序 Mapping
+
 ```js
 export const ETF_EVENT_SORT_OPTIONS = [
   { value: 'estimated_amount', label: '估算交易額' },
@@ -307,16 +454,18 @@ export const ETF_EVENT_SORT_OPTIONS = [
   { value: 'estimated_sell_amount', label: '估算賣出金額' },
   { value: 'estimated_net_amount', label: '估算淨買超金額' },
   { value: 'estimated_net_amount_abs', label: '估算淨異動金額' },
-  { value: 'event_etf_count', label: '異動 ETF 家數' },
+  { value: 'event_etf_count', label: '異動 ETF 家數' }
 ]
 ```
 
 ### 產業總覽 API
+
 ```text
 GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&page=1&pageSize=50&sort=estimated_amount&topN=3
 ```
 
 `items[].topStocks` 結構：
+
 ```json
 {
   "topStocks": {
@@ -330,6 +479,7 @@ GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&
 ```
 
 各陣列內的 item：
+
 ```json
 {
   "stock": {
@@ -354,6 +504,7 @@ GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&
 ```
 
 `topStocks` 用法建議：
+
 - `amount`：總交易額代表股，可放在卡片最主要的代表個股區。
 - `buy`：估算買進金額最高的個股。
 - `sell`：估算賣出金額最高的個股。
@@ -361,22 +512,26 @@ GET /etf/events/industry-overview?date=YYYY-MM-DD&type=all&side=all&etfType=all&
 - `netSell`：估算淨賣超金額最高的個股。
 
 ### 產業內個股明細 API
+
 ```text
 GET /etf/events/industry-overview/{industryCode}/stocks?date=YYYY-MM-DD&type=all&side=all&etfType=all&page=1&pageSize=50&limitPerStock=50&sort=estimated_amount
 ```
 
 用途：
+
 - 使用者點擊產業卡片後，顯示該產業內所有異動個股。
 - 回傳結構接近 `/etf/events/stock-overview`，每個 `items[]` 都有 `stock`、買進/賣出/淨額、ETF 家數與 nested `events[]`。
 - `events[]` 可顯示涉及 ETF、事件類型、異動股數與 OHLC 估算金額。
 - 若要進入「ETF 對單一個股」詳情，不需新增新 URL，沿用既有 ETF/stock 專屬頁面入口。
 
 ### 對應角色處理
+
 - 前端在產業 overview card 使用 `topStocks.amount` 或依 UI 情境切換 `buy/sell/netBuy/netSell`。
 - 前端排序下拉建議在 `stock-overview`、`industry-overview`、`industry-overview/{industryCode}/stocks` 共用同一組 mapping。
 - 前端切換 type / side / sort 時，產業總覽與個股明細應使用同一組 query 條件，避免上方與下方資料語意不同。
 
 ### 其他必要補充
+
 - `estimated_*` 都是以 OHLC 參考價估算，不是 ETF 真實成交價。
 - 若 `amountCoverage.coverageRate` 低於 1，代表部分 event 尚未成功補到 OHLC，金額型排序可能低估。
 - 後端排序預設已改為 `estimated_amount`，前端若沒有特殊需求，不需要再帶舊的 `net_shares_abs`。
@@ -531,7 +686,7 @@ export const ETF_STOCK_OVERVIEW_SORT_OPTIONS = [
   { value: 'estimated_buy_amount', label: '估算買進金額' },
   { value: 'estimated_sell_amount', label: '估算賣出金額' },
   { value: 'estimated_net_amount', label: '估算淨買賣金額' },
-  { value: 'estimated_net_amount_abs', label: '估算淨買賣金額絕對值' },
+  { value: 'estimated_net_amount_abs', label: '估算淨買賣金額絕對值' }
 ]
 ```
 
@@ -847,39 +1002,39 @@ Backend
 
 ```js
 export const TW_INDUSTRY_CODE_MAP = {
-  "01": "水泥工業",
-  "02": "食品工業",
-  "03": "塑膠工業",
-  "04": "紡織纖維",
-  "05": "電機機械",
-  "06": "電器電纜",
-  "08": "玻璃陶瓷",
-  "09": "造紙工業",
-  "10": "鋼鐵工業",
-  "11": "橡膠工業",
-  "12": "汽車工業",
-  "14": "建材營造",
-  "15": "航運業",
-  "16": "觀光餐旅",
-  "17": "金融保險",
-  "18": "貿易百貨",
-  "20": "綜合",
-  "21": "化學工業",
-  "22": "生技醫療業",
-  "23": "油電燃氣業",
-  "24": "半導體業",
-  "25": "電腦及週邊設備業",
-  "26": "光電業",
-  "27": "通信網路業",
-  "28": "電子零組件業",
-  "29": "電子通路業",
-  "30": "資訊服務業",
-  "31": "其他電子業",
-  "32": "綠能環保",
-  "33": "數位雲端",
-  "34": "運動休閒",
-  "35": "居家生活",
-  "80": "其他"
+  '01': '水泥工業',
+  '02': '食品工業',
+  '03': '塑膠工業',
+  '04': '紡織纖維',
+  '05': '電機機械',
+  '06': '電器電纜',
+  '08': '玻璃陶瓷',
+  '09': '造紙工業',
+  10: '鋼鐵工業',
+  11: '橡膠工業',
+  12: '汽車工業',
+  14: '建材營造',
+  15: '航運業',
+  16: '觀光餐旅',
+  17: '金融保險',
+  18: '貿易百貨',
+  20: '綜合',
+  21: '化學工業',
+  22: '生技醫療業',
+  23: '油電燃氣業',
+  24: '半導體業',
+  25: '電腦及週邊設備業',
+  26: '光電業',
+  27: '通信網路業',
+  28: '電子零組件業',
+  29: '電子通路業',
+  30: '資訊服務業',
+  31: '其他電子業',
+  32: '綠能環保',
+  33: '數位雲端',
+  34: '運動休閒',
+  35: '居家生活',
+  80: '其他'
 }
 ```
 
@@ -887,8 +1042,8 @@ export const TW_INDUSTRY_CODE_MAP = {
 
 ```js
 export function getIndustryName(industryCode) {
-  if (!industryCode) return "未分類"
-  const code = String(industryCode).padStart(2, "0")
+  if (!industryCode) return '未分類'
+  const code = String(industryCode).padStart(2, '0')
   return TW_INDUSTRY_CODE_MAP[code] || `未知產業 ${code}`
 }
 ```

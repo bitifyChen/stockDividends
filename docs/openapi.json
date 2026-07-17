@@ -98,11 +98,7 @@
       "title": "群益 00982A 來源接入與歷史回填",
       "status": "in_progress",
       "frontendEntry": "後端先完成 00982A 群益 provider / parser / Drive 命名規則，前端本次不調整",
-      "primaryApis": [
-        "GET /etf/fetch-all",
-        "GET /etf/capitalfund",
-        "POST /etf/capitalfund"
-      ]
+      "primaryApis": ["GET /etf/fetch-all", "GET /etf/capitalfund", "POST /etf/capitalfund"]
     },
     {
       "id": "api-docs-page",
@@ -136,9 +132,7 @@
   "paths": {
     "/industry-chains": {
       "get": {
-        "tags": [
-          "IndustryChain"
-        ],
+        "tags": ["IndustryChain"],
         "summary": "取得產業鏈樹",
         "description": "取得後端已同步的產業鏈樹。目前已寫入 TPEx 全部 40 個 root 產業與 533 個節點。可用 includeCounts 取得每個節點目前掛載的股票數，讓前端 disabled 無資料節點。",
         "parameters": [
@@ -149,12 +143,7 @@
             "schema": {
               "type": "string",
               "default": "all",
-              "enum": [
-                "all",
-                "stocks",
-                "etf_holdings",
-                "etf_events"
-              ]
+              "enum": ["all", "stocks", "etf_holdings", "etf_events"]
             },
             "description": "目前 scope 主要影響是否自動回傳 counts；未來可依頁面資料範圍計算節點可用性。"
           },
@@ -209,9 +198,7 @@
     },
     "/industry-chains/{code}": {
       "get": {
-        "tags": [
-          "IndustryChain"
-        ],
+        "tags": ["IndustryChain"],
         "summary": "取得單一產業鏈節點與子樹",
         "parameters": [
           {
@@ -280,9 +267,7 @@
     },
     "/industry-chains/{code}/stocks": {
       "get": {
-        "tags": [
-          "IndustryChain"
-        ],
+        "tags": ["IndustryChain"],
         "summary": "取得產業鏈節點下的股票",
         "description": "依 industry_chain_codes 查詢股票。includeChildren 預設 true，選父節點時會包含子節點股票。",
         "parameters": [
@@ -310,11 +295,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "listed",
-                "otc",
-                "emerging"
-              ]
+              "enum": ["listed", "otc", "emerging"]
             }
           },
           {
@@ -346,10 +327,7 @@
                   "industryChain": {
                     "code": "D000",
                     "includeChildren": true,
-                    "selectedCodes": [
-                      "D000",
-                      "D300"
-                    ]
+                    "selectedCodes": ["D000", "D300"]
                   },
                   "page": 1,
                   "pageSize": 50,
@@ -362,9 +340,7 @@
                         "full_name": "台灣積體電路製造股份有限公司",
                         "market": "listed",
                         "industry_code": "24",
-                        "industry_chain_codes": [
-                          "D300"
-                        ],
+                        "industry_chain_codes": ["D300"],
                         "industry_chains": [
                           {
                             "code": "D300",
@@ -386,11 +362,9 @@
     },
     "/dividend": {
       "get": {
-        "tags": [
-          "Stock"
-        ],
+        "tags": ["Stock"],
         "summary": "取得或更新股利資料",
-        "description": "帶 `stockId` 時取得單一股票股利；帶 `mode=all` 時觸發全市場股利更新。",
+        "description": "帶 `stockId` 時取得單一股票股利；帶 `mode=all` 時觸發全市場股利更新。 Maintenance token is required only when mode=all triggers the dividend batch update; stockId lookup remains public.",
         "x-frontend-purpose": "前台股票詳情可查單一股票股利；`mode=all` 為外部排程或後端維護使用。",
         "parameters": [
           {
@@ -409,9 +383,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all"
-              ]
+              "enum": ["all"]
             },
             "description": "使用 `all` 觸發批次更新"
           }
@@ -422,10 +394,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": [
-                    "object",
-                    "array"
-                  ],
+                  "type": ["object", "array"],
                   "additionalProperties": true
                 }
               }
@@ -433,15 +402,25 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ]
       }
     },
     "/etf/active-list": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "取得目前 active ETF 主檔",
         "description": "回傳目前資料庫中的 active ETF 主檔與最新 snapshot 資訊。",
         "x-frontend-purpose": "可用於 ETF 總覽，但第一階段 selector 建議使用 `/etf/list`。",
@@ -465,9 +444,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "匯入 active ETF 清單",
         "description": "手動或批次匯入某日期 active ETF 清單。",
         "x-frontend-purpose": "後端維護用，一般前台頁面不需要串接。",
@@ -500,9 +477,7 @@
     },
     "/etf/available-dates": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "取得某支 ETF 的可用日期清單",
         "description": "回傳該 ETF 已有持股 snapshot 的日期清單，可用於日期選擇器 disabled。`from` / `to` 可限制區間。",
         "x-frontend-purpose": "ETF 日期選擇器的 disabled 資料來源。",
@@ -553,9 +528,7 @@
     },
     "/etf/capitalfund": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 capitalfund ETF 資料",
         "description": "依 `sourceCode` 抓取群益投信官方 portfolio API，解析後可選擇是否寫入 Supabase。可用 `date` 指定歷史日期。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -624,9 +597,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 capitalfund ETF 資料",
         "description": "POST 版本，功能同 GET。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -636,9 +607,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "sourceCode"
-                ],
+                "required": ["sourceCode"],
                 "properties": {
                   "sourceCode": {
                     "type": "string",
@@ -689,9 +658,7 @@
     },
     "/etf/ctbc": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 CTBC ETF 資料",
         "description": "依 `sourceCode` 抓取中信投信官方 ETFHoldingWeight API，解析後可選擇是否寫入 Supabase。若未指定 `date`，後端會以今日查詢來源 API，並以 API 回傳的資料日期作為實際 snapshot date。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -750,9 +717,7 @@
     },
     "/etf/first": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 First ETF 資料",
         "description": "依 `sourceCode` 抓取第一金投信 `Get_hd` API，解析後可選擇是否寫入 Supabase。實際 snapshot date 以 API 回傳的 `sdate` 為準。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -811,9 +776,7 @@
     },
     "/etf/jpm": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 JPM ETF 資料",
         "description": "依 `sourceCode` 下載摩根投信官方 PCF xlsx，解析後可選擇是否寫入 Supabase。此來源的 source snapshot date 取 xlsx `Valuation Date`，目前 provider 以 `display_date_offset_days=-1` 正規化顯示日期。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -861,9 +824,7 @@
     },
     "/etf/events": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "查詢 ETF 或股票事件",
         "description": "依股票查首次買入、首次賣出、多家 ETF 買賣等事件；或依 ETF 查某日持股變化。",
         "x-frontend-purpose": "股票事件頁與 ETF 日期變化頁使用。",
@@ -874,12 +835,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "stock",
-                "etf",
-                "first-buy",
-                "first_buy"
-              ],
+              "enum": ["stock", "etf", "first-buy", "first_buy"],
               "default": "stock"
             },
             "description": "Use stock or etf for legacy filtered views; use first-buy/first_buy to list first-buy events across all tracked ETFs."
@@ -890,13 +846,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "first_buy",
-                "buy_increase",
-                "first_sell",
-                "sell_decrease",
-                "sell_out"
-              ]
+              "enum": ["first_buy", "buy_increase", "first_sell", "sell_decrease", "sell_out"]
             },
             "description": "List ETF-stock events across all tracked ETFs. Supported values: first_buy, buy_increase, first_sell, sell_decrease, sell_out. etfCode, stockCode, and date are optional filters."
           },
@@ -939,10 +889,10 @@
             }
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -980,9 +930,7 @@
     },
     "/etf/events/overview": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "All ETF daily event overview",
         "description": "Returns tracked ETFs as the pagination unit, with each ETF's mutually exclusive holding events nested in events. When date is omitted, the latest available display date is selected. An explicitly requested date is never replaced.",
         "parameters": [
@@ -1053,10 +1001,10 @@
             "description": "Maximum number of nested events returned for each ETF."
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -1072,10 +1020,7 @@
                       "format": "date"
                     },
                     "requestedDate": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": ["string", "null"],
                       "format": "date"
                     },
                     "availableDates": {
@@ -1101,10 +1046,7 @@
                       "type": "boolean"
                     },
                     "nextPage": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
+                      "type": ["integer", "null"]
                     },
                     "coverage": {
                       "type": "object",
@@ -1133,29 +1075,18 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "updated",
-                              "not_updated",
-                              "not_started",
-                              "fetch_failed"
-                            ]
+                            "enum": ["updated", "not_updated", "not_started", "fetch_failed"]
                           },
                           "display_date": {
                             "type": "string",
                             "format": "date"
                           },
                           "latest_available_date": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
+                            "type": ["string", "null"],
                             "format": "date"
                           },
                           "error": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
+                            "type": ["string", "null"]
                           },
                           "eventCount": {
                             "type": "integer"
@@ -1183,7 +1114,7 @@
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -1218,9 +1149,7 @@
     },
     "/etf/ezmoney": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 ezmoney ETF XLSX",
         "description": "依 `fundCode` 抓取 ezmoney XLSX，解析後可選擇是否寫入 Supabase。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -1278,9 +1207,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "手動抓取 ezmoney ETF XLSX",
         "description": "POST 版本，功能同 GET。",
         "x-frontend-purpose": "後端測試或手動補資料使用；一般前台展示頁面不建議串接。",
@@ -1290,9 +1217,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "fundCode"
-                ],
+                "required": ["fundCode"],
                 "properties": {
                   "fundCode": {
                     "type": "string",
@@ -1337,9 +1262,7 @@
     },
     "/etf/fetch-all": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "批次抓取所有已啟用 ETF 來源",
         "description": "讀取 `etf_configs`，依 provider、揭露時間與 batch 設定抓取已啟用的 ETF 來源。 Includes ezmoney, capitalfund, fhtrust, and yuanta providers.",
         "x-frontend-purpose": "給外部排程工具使用，例如每日 16:35 後定時呼叫；一般使用者頁面不直接串接。",
@@ -1378,15 +1301,24 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/etf/fhtrust": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Fetch Fhtrust ETF holdings",
         "description": "Manual backend fetch/test endpoint for Fhtrust active ETF sources. Normal frontend screens should use /etf/list, /etf/available-dates, and /etf/holdings.",
         "parameters": [
@@ -1435,10 +1367,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                1
-              ],
+              "enum": [0, 1],
               "default": 1
             },
             "description": "Use save=0 to parse only without DB/Drive writes."
@@ -1511,9 +1440,7 @@
     },
     "/etf/health": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "ETF API 健康檢查",
         "description": "確認 ETF API 是否可用。",
         "x-frontend-purpose": "API 文件頁或 ETF 功能頁可用來顯示後端狀態。",
@@ -1540,9 +1467,7 @@
     },
     "/etf/holdings": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "查詢 ETF 持股或股票被 ETF 持有狀態",
         "description": "可依 ETF 代碼查目前持股、帶 `includeTrendDays` 回傳每檔股票近 N 日曲線、依日期查某日持股快照、或依股票代碼查目前相關 ETF 持有量。若同時帶 `stockCode` 與 `dateRange`，回傳單一股票在該 ETF 的歷史序列。",
         "x-frontend-purpose": "00403A 持股頁、ETF 日期進出頁、股票相關 ETF 頁的主要資料來源。",
@@ -1599,17 +1524,15 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "summary"
-              ]
+              "enum": ["summary"]
             },
             "description": "搭配 `etfCode` 使用，回傳 ETF 總持股摘要"
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -1668,9 +1591,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "匯入 ETF 持股",
         "description": "手動或批次匯入 ETF 某日期持股 snapshot。",
         "x-frontend-purpose": "後端維護用，一般前台頁面不需要串接。",
@@ -1703,9 +1624,7 @@
     },
     "/ohlc/daily-fetch": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "Manually run official daily OHLC fetch",
         "description": "Triggers the TWSE/TPEx official daily OHLC update without running ETF fetch-all. If date is omitted, backend resolves the latest official trade date available from TWSE and TPEx.",
         "x-frontend-purpose": "後台維運頁 OHLC 手動重跑按鈕使用；一般 K 線圖仍使用 `/ohlc/stocks/{stockCode}/candles`。",
@@ -1727,10 +1646,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "0",
-                "1"
-              ],
+              "enum": ["0", "1"],
               "default": "0"
             },
             "description": "1 時即使該交易日已有足量資料，也重新寫入。"
@@ -1741,10 +1657,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "0",
-                "1"
-              ],
+              "enum": ["0", "1"],
               "default": "1"
             },
             "description": "1 時先同步 OHLC watchlist。"
@@ -1763,13 +1676,22 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "Manually run official daily OHLC fetch",
         "description": "POST version for the dashboard maintenance button. If `tradeDate` is omitted, backend resolves the latest official trade date available from TWSE and TPEx.",
         "x-frontend-purpose": "後台維運頁 OHLC 手動重跑按鈕使用。",
@@ -1815,15 +1737,24 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/maintenance/batch-status": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "Get backend batch maintenance status",
         "description": "Returns the latest known run and success status for backend maintenance jobs such as ETF fetch-all, dividend batch, ETF event summary notification, and OHLC daily fetch.",
         "x-frontend-purpose": "後台維運頁使用，讓使用者在手動重跑前確認各功能最近成功時間。",
@@ -1834,10 +1765,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "0",
-                "1"
-              ],
+              "enum": ["0", "1"],
               "default": "0"
             },
             "description": "1 時額外彙總 Firebase stocks 股利更新狀態；預設 0 以維持輕量。"
@@ -1885,11 +1813,9 @@
     },
     "/etf/events/summary-notify": {
       "get": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "Send or preview ETF daily event notifications",
-        "description": "Builds ETF daily notification messages. section=event preserves the original event summary using share/position-change oriented ranking. section=industry returns the industry direction message. section=stock returns the stock direction message. section=all returns all three messages. By default this endpoint sends to Telegram; use send=0 to preview without sending.",
+        "description": "Builds ETF daily notification messages. section=event preserves the original event summary using share/position-change oriented ranking. section=industry returns the industry direction message. section=industry_chain returns the industry-chain direction message. section=stock returns the stock direction message. section=report renders/sends a single PNG daily report. section=all returns the text messages only. By default this endpoint sends to Telegram; use send=0 to preview without sending. Maintenance token is required when send=1 or send is omitted. send=0 preview can be called without a token.",
         "x-frontend-purpose": "後台維運按鈕使用，可補發或預覽 ETF 今日事件摘要、產業方向與個股方向通知。",
         "parameters": [
           {
@@ -1909,10 +1835,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "0",
-                "1"
-              ],
+              "enum": ["0", "1"],
               "default": "1"
             },
             "description": "1 sends to Telegram; 0 previews only."
@@ -1923,17 +1846,10 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "event",
-                "industry",
-                "industry_chain",
-                "chain",
-                "stock",
-                "all"
-              ],
+              "enum": ["event", "industry", "industry_chain", "chain", "stock", "report", "all"],
               "default": "event"
             },
-            "description": "Notification section. section=all previews or sends four independent messages: event, industry, industry_chain and stock."
+            "description": "Notification section. section=report previews or sends the PNG daily report. section=all previews or sends text messages: event, industry, industry_chain and stock."
           },
           {
             "name": "etfType",
@@ -1941,11 +1857,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "active",
-                "passive"
-              ],
+              "enum": ["all", "active", "passive"],
               "default": "all"
             }
           },
@@ -1973,10 +1885,7 @@
                       "type": "boolean"
                     },
                     "message": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": ["string", "null"]
                     },
                     "summary": {
                       "type": "object"
@@ -1999,15 +1908,25 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ]
       }
     },
     "/etf/events/enrich-ohlc": {
       "post": {
-        "tags": [
-          "Internal"
-        ],
+        "tags": ["Internal"],
         "summary": "Enrich ETF event rows with OHLC reference data",
         "description": "Backfills Supabase etf_event_ohlc_refs from Turso stock_ohlc_daily. Daily fetch-all runs this after ETF snapshots and OHLC daily update. Normal frontend pages should not call this automatically.",
         "requestBody": {
@@ -2036,15 +1955,24 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/etf/events/industry-overview": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Daily ETF event overview grouped by industry",
         "description": "Returns one page of industries grouped from ETF daily holding events. Use this endpoint on /dashboard/etf/events/overview to show which industries were jointly bought or sold by tracked ETFs on a display date.",
         "parameters": [
@@ -2081,11 +2009,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "buy",
-                "sell"
-              ],
+              "enum": ["all", "buy", "sell"],
               "default": "all"
             },
             "description": "Optional buy/sell grouping filter. buy includes first_buy and buy_increase; sell includes first_sell, sell_decrease and sell_out."
@@ -2096,11 +2020,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "active",
-                "passive"
-              ],
+              "enum": ["all", "active", "passive"],
               "default": "all"
             }
           },
@@ -2175,10 +2095,10 @@
             }
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2210,22 +2130,13 @@
                       "type": "string"
                     },
                     "industry": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
+                      "type": ["object", "null"],
                       "properties": {
                         "code": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         },
                         "name": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         }
                       }
                     },
@@ -2259,10 +2170,7 @@
                             "type": "object",
                             "properties": {
                               "code": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
+                                "type": ["string", "null"],
                                 "example": "24"
                               }
                             }
@@ -2307,16 +2215,10 @@
                             "type": "number"
                           },
                           "amount_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
+                            "type": ["number", "null"]
                           },
                           "volume_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
+                            "type": ["number", "null"]
                           },
                           "amount_coverage_rate": {
                             "type": "number"
@@ -2366,7 +2268,7 @@
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -2389,9 +2291,7 @@
     },
     "/etf/events/industry-overview/{industryCode}/stocks": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Daily ETF event stock overview inside one industry",
         "description": "Returns stock-level ETF event aggregation for one industry code. Use this endpoint when users open an industry card and need the detailed changed stocks in that industry.",
         "parameters": [
@@ -2437,11 +2337,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "buy",
-                "sell"
-              ],
+              "enum": ["all", "buy", "sell"],
               "default": "all"
             }
           },
@@ -2451,11 +2347,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "active",
-                "passive"
-              ],
+              "enum": ["all", "active", "passive"],
               "default": "all"
             }
           },
@@ -2518,10 +2410,10 @@
             "description": "Maximum number of nested ETF event rows returned for each stock."
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2537,10 +2429,7 @@
                       "format": "date"
                     },
                     "requestedDate": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": ["string", "null"],
                       "format": "date"
                     },
                     "availableDates": {
@@ -2614,22 +2503,13 @@
                                 "type": "number"
                               },
                               "amount_ratio": {
-                                "type": [
-                                  "number",
-                                  "null"
-                                ]
+                                "type": ["number", "null"]
                               },
                               "volume_ratio": {
-                                "type": [
-                                  "number",
-                                  "null"
-                                ]
+                                "type": ["number", "null"]
                               },
                               "amount_coverage_rate": {
-                                "type": [
-                                  "number",
-                                  "null"
-                                ]
+                                "type": ["number", "null"]
                               }
                             }
                           }
@@ -2639,7 +2519,7 @@
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -2662,9 +2542,7 @@
     },
     "/etf/events/stock-overview": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Daily ETF event overview grouped by stock",
         "description": "Returns one page of stocks grouped from ETF daily holding events. Use this endpoint to show which stocks were jointly bought or sold by tracked ETFs on a display date. When date is omitted, the latest available display date is selected.",
         "parameters": [
@@ -2701,11 +2579,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "buy",
-                "sell"
-              ],
+              "enum": ["all", "buy", "sell"],
               "default": "all"
             },
             "description": "Optional buy/sell grouping filter. buy includes first_buy and buy_increase; sell includes first_sell, sell_decrease and sell_out."
@@ -2716,11 +2590,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "active",
-                "passive"
-              ],
+              "enum": ["all", "active", "passive"],
               "default": "all"
             }
           },
@@ -2786,10 +2656,10 @@
             "description": "Maximum number of nested ETF event rows returned for each stock."
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -2805,10 +2675,7 @@
                       "format": "date"
                     },
                     "requestedDate": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": ["string", "null"],
                       "format": "date"
                     },
                     "availableDates": {
@@ -2828,28 +2695,16 @@
                       "type": "string"
                     },
                     "stockCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": ["string", "null"]
                     },
                     "industry": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
+                      "type": ["object", "null"],
                       "properties": {
                         "code": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         },
                         "name": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         }
                       }
                     },
@@ -2872,10 +2727,7 @@
                       "type": "boolean"
                     },
                     "nextPage": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
+                      "type": ["integer", "null"]
                     },
                     "coverage": {
                       "type": "object"
@@ -2958,23 +2810,14 @@
                             "type": "integer"
                           },
                           "amount_coverage_rate": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
+                            "type": ["number", "null"]
                           },
                           "amount_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ],
+                            "type": ["number", "null"],
                             "description": "(estimated_buy_amount + estimated_sell_amount) / reference_turnover."
                           },
                           "volume_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ],
+                            "type": ["number", "null"],
                             "description": "(buy_shares + sell_shares) / reference_volume."
                           }
                         }
@@ -2997,10 +2840,7 @@
                           "type": "integer"
                         },
                         "coverageRate": {
-                          "type": [
-                            "number",
-                            "null"
-                          ]
+                          "type": ["number", "null"]
                         }
                       },
                       "additionalProperties": true
@@ -3008,7 +2848,7 @@
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -3031,9 +2871,7 @@
     },
     "/etf/holdings/overview": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "All ETF top holdings overview",
         "description": "Returns one page of tracked ETFs and each ETF's top holdings. When date is omitted, the latest available display date is selected. ETFs without data for an explicitly requested date remain in the response with an empty holdings array and an explicit status.",
         "parameters": [
@@ -3081,10 +2919,10 @@
             }
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -3100,10 +2938,7 @@
                       "format": "date"
                     },
                     "requestedDate": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": ["string", "null"],
                       "format": "date"
                     },
                     "availableDates": {
@@ -3129,10 +2964,7 @@
                       "type": "boolean"
                     },
                     "nextPage": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
+                      "type": ["integer", "null"]
                     },
                     "coverage": {
                       "type": "object",
@@ -3154,22 +2986,14 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "updated",
-                              "not_updated",
-                              "not_started",
-                              "fetch_failed"
-                            ]
+                            "enum": ["updated", "not_updated", "not_started", "fetch_failed"]
                           },
                           "display_date": {
                             "type": "string",
                             "format": "date"
                           },
                           "latest_available_date": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
+                            "type": ["string", "null"],
                             "format": "date"
                           },
                           "holdings": {
@@ -3199,18 +3023,13 @@
                             }
                           }
                         },
-                        "required": [
-                          "etf_code",
-                          "status",
-                          "display_date",
-                          "holdings"
-                        ]
+                        "required": ["etf_code", "status", "display_date", "holdings"]
                       }
                     },
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -3244,9 +3063,7 @@
     },
     "/etf/list": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "取得已設定可觀測 ETF 清單",
         "description": "回傳 `etf_configs`，代表目前系統已設定 crawler 的 ETF 清單。",
         "x-frontend-purpose": "前台 ETF selector 與 API 文件頁的主要清單來源。",
@@ -3311,9 +3128,7 @@
     },
     "/etf/source-configs": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "取得已設定可觀測 ETF 清單",
         "description": "`/etf/list` 的同義路由，回傳相同資料。路由名稱保留舊語意，但後端實際讀取的是 `etf_configs`。",
         "x-frontend-purpose": "保留相容舊呼叫；前端建議優先使用 `/etf/list`。",
@@ -3356,9 +3171,7 @@
     },
     "/etf/stocks": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Get stock catalog",
         "description": "Returns a paginated stock list aggregated from current ETF holdings.",
         "x-frontend-purpose": "Stock observation list page.",
@@ -3394,10 +3207,10 @@
             }
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -3419,9 +3232,7 @@
     },
     "/etf/stocks/{stockCode}": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Get stock observation detail",
         "description": "Returns current ETF holders and summary for one stock.",
         "x-frontend-purpose": "Stock observation detail page.",
@@ -3449,9 +3260,7 @@
     },
     "/etf/stocks/{stockCode}/series": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Get stock observation series",
         "description": "Returns multi-ETF trend series for a stock.",
         "x-frontend-purpose": "Stock observation chart data.",
@@ -3465,13 +3274,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "1w",
-                "1m",
-                "6m",
-                "1y",
-                "max"
-              ],
+              "enum": ["1w", "1m", "6m", "1y", "max"],
               "default": "1m"
             }
           },
@@ -3505,9 +3308,7 @@
     },
     "/etf/{etfCode}/{stockCode}": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Get ETF stock relationship summary",
         "description": "Returns the latest summary for a specific ETF and stock pair.",
         "x-frontend-purpose": "ETF detail page summary for one stock.",
@@ -3541,9 +3342,7 @@
     },
     "/etf/{etfCode}/{stockCode}/series": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Get ETF stock relationship series",
         "description": "Returns the historical series for a specific ETF and stock pair.",
         "x-frontend-purpose": "ETF detail page trend data for one stock.",
@@ -3560,13 +3359,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "1w",
-                "1m",
-                "6m",
-                "1y",
-                "max"
-              ],
+              "enum": ["1w", "1m", "6m", "1y", "max"],
               "default": "1m"
             }
           },
@@ -3603,11 +3396,9 @@
     },
     "/price": {
       "get": {
-        "tags": [
-          "Stock"
-        ],
+        "tags": ["Stock"],
         "summary": "取得或更新股價資料",
-        "description": "帶 `stockId` 時取得單一股票價格；帶 `mode=all` 時觸發全市場股價更新。",
+        "description": "帶 stockId 時取得單一股票價格；帶 mode=all 時觸發全市場股價更新。Maintenance token is required only when mode=all triggers the price batch update; stockId lookup remains public.",
         "x-frontend-purpose": "前台股票詳情可查單一股票價格；`mode=all` 為外部排程或後端維護使用。",
         "parameters": [
           {
@@ -3626,9 +3417,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all"
-              ]
+              "enum": ["all"]
             },
             "description": "使用 `all` 觸發批次更新"
           }
@@ -3639,10 +3428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": [
-                    "object",
-                    "array"
-                  ],
+                  "type": ["object", "array"],
                   "additionalProperties": true
                 }
               }
@@ -3650,15 +3436,25 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ]
       }
     },
     "/website/health": {
       "get": {
-        "tags": [
-          "Website"
-        ],
+        "tags": ["Website"],
         "summary": "網站健康檢查",
         "description": "確認後端服務是否可用。",
         "x-frontend-purpose": "前台可用於 API 狀態燈或除錯頁。",
@@ -3685,9 +3481,7 @@
     },
     "/website/info": {
       "get": {
-        "tags": [
-          "Website"
-        ],
+        "tags": ["Website"],
         "summary": "取得網站版本資訊",
         "description": "從 Firebase 讀取網站版本資料。",
         "x-frontend-purpose": "前台可用於顯示版本、公告或更新資訊。",
@@ -3709,9 +3503,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Website"
-        ],
+        "tags": ["Website"],
         "summary": "更新網站版本資訊",
         "description": "更新 Firebase 內的網站版本資料。",
         "x-frontend-purpose": "管理端或測試工具使用，一般使用者頁面不需要串接。",
@@ -3721,9 +3513,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "product"
-                ],
+                "required": ["product"],
                 "properties": {
                   "product": {
                     "type": "string",
@@ -3761,9 +3551,7 @@
     },
     "/etf/yuanta": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Fetch Yuanta ETF holdings",
         "description": "Manual backend fetch/test endpoint for Yuanta ETF sources. 0050 uses etf_type=passive and snapshot/backup policy composition_changed, so repeated same-composition fetches create fetch logs but do not save duplicate holdings snapshots or Drive files.",
         "parameters": [
@@ -3801,10 +3589,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                1
-              ],
+              "enum": [0, 1],
               "default": 1
             },
             "description": "Use save=0 to parse only without DB/Drive writes."
@@ -3836,9 +3621,7 @@
     },
     "/etf/events/industry-chain-overview": {
       "get": {
-        "tags": [
-          "ETF"
-        ],
+        "tags": ["ETF"],
         "summary": "Daily ETF event overview grouped by industry chain",
         "description": "Returns ETF daily event direction aggregated by TPEx industry-chain root nodes. Amounts use fractional attribution when one stock belongs to multiple root chains.",
         "parameters": [
@@ -3875,11 +3658,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "buy",
-                "sell"
-              ],
+              "enum": ["all", "buy", "sell"],
               "default": "all"
             },
             "description": "Optional buy/sell grouping filter. buy includes first_buy and buy_increase; sell includes first_sell, sell_decrease and sell_out."
@@ -3890,11 +3669,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "active",
-                "passive"
-              ],
+              "enum": ["all", "active", "passive"],
               "default": "all"
             }
           },
@@ -3959,10 +3734,10 @@
             }
           },
           {
-            "": "#/components/parameters/IndustryChainCode"
+            "$ref": "#/components/parameters/IndustryChainCode"
           },
           {
-            "": "#/components/parameters/IncludeChildren"
+            "$ref": "#/components/parameters/IncludeChildren"
           }
         ],
         "responses": {
@@ -3994,22 +3769,13 @@
                       "type": "string"
                     },
                     "industry": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
+                      "type": ["object", "null"],
                       "properties": {
                         "code": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         },
                         "name": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                          "type": ["string", "null"]
                         }
                       }
                     },
@@ -4079,16 +3845,10 @@
                             "type": "number"
                           },
                           "amount_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
+                            "type": ["number", "null"]
                           },
                           "volume_ratio": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
+                            "type": ["number", "null"]
                           },
                           "amount_coverage_rate": {
                             "type": "number"
@@ -4133,7 +3893,7 @@
                             "type": "integer"
                           },
                           "industryChain": {
-                            "": "#/components/schemas/IndustryChainIdentity"
+                            "$ref": "#/components/schemas/IndustryChainIdentity"
                           },
                           "topSegments": {
                             "type": "array",
@@ -4141,7 +3901,7 @@
                               "type": "object",
                               "properties": {
                                 "industryChain": {
-                                  "": "#/components/schemas/IndustryChainIdentity"
+                                  "$ref": "#/components/schemas/IndustryChainIdentity"
                                 },
                                 "estimated_amount": {
                                   "type": "number"
@@ -4167,7 +3927,7 @@
                     "industryChain": {
                       "oneOf": [
                         {
-                          "": "#/components/schemas/IndustryChainIdentity"
+                          "$ref": "#/components/schemas/IndustryChainIdentity"
                         },
                         {
                           "type": "null"
@@ -4175,7 +3935,7 @@
                       ]
                     },
                     "attribution": {
-                      "": "#/components/schemas/IndustryChainAttribution"
+                      "$ref": "#/components/schemas/IndustryChainAttribution"
                     }
                   }
                 }
@@ -4187,6 +3947,337 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/etf/events/daily-report.png": {
+      "get": {
+        "tags": ["Internal"],
+        "summary": "Render ETF daily report PNG",
+        "description": "Renders a deterministic PNG daily report for ETF event direction. This endpoint returns image/png and does not send Telegram. Use summary-notify with section=report to preview or send the Telegram photo.",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-07-15"
+            },
+            "description": "ETF event display date. If omitted, backend resolves the latest available event date."
+          },
+          {
+            "name": "etfType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "active", "passive"],
+              "default": "all"
+            }
+          },
+          {
+            "name": "topN",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 5
+            }
+          },
+          {
+            "name": "fake",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "default": "0"
+            },
+            "description": "Local preview helper. fake=1 renders built-in fixture data."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG report image.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/ohlc/fetch": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Manually fetch OHLC history for selected stocks",
+        "description": "Maintenance endpoint for manual OHLC fetch/backfill. Requires maintenance bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stockCodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["2330"]
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OHLC fetch result."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/ohlc/backup-drive": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Export OHLC SQLite snapshot and upload to Google Drive",
+        "description": "Maintenance endpoint for OHLC backup. Requires maintenance bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "snapshotDate": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Drive backup result."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/industry-chains/tpex-sync": {
+      "post": {
+        "tags": ["Industry Chain", "Internal"],
+        "summary": "Sync TPEx industry-chain data",
+        "description": "Maintenance endpoint for syncing TPEx industry-chain data into Supabase. Requires maintenance bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "all": {
+                    "type": "boolean"
+                  },
+                  "save": {
+                    "type": "boolean"
+                  },
+                  "chainCode": {
+                    "type": "string",
+                    "example": "D000"
+                  },
+                  "replaceStockCodes": {
+                    "type": "boolean"
+                  },
+                  "writeAudit": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Industry-chain sync result."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/tools/ohlc-batch-monitor/package-build": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Start local OHLC historical package build",
+        "description": "Local maintenance tool endpoint. Requires maintenance bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "enum": ["all", "selected"]
+                  },
+                  "stockCodes": {
+                    "type": "string",
+                    "example": "2330,2317"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "force": {
+                    "type": "boolean"
+                  },
+                  "tursoTarget": {
+                    "type": "string",
+                    "default": "backup"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Batch package build started."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/tools/ohlc-batch-monitor/package-control": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Control local OHLC historical package build",
+        "description": "Pause, resume, or stop a local OHLC historical package build. Requires maintenance bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["jobId", "action"],
+                "properties": {
+                  "jobId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": ["pause", "resume", "stop"]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Batch control accepted."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         }
       }
@@ -4268,10 +4359,7 @@
         "required": false,
         "schema": {
           "type": "integer",
-          "enum": [
-            0,
-            1
-          ],
+          "enum": [0, 1],
           "default": 1
         },
         "description": "When industryChainCode is provided, 1 includes descendant nodes; 0 matches the exact chain code only."
@@ -4297,6 +4385,26 @@
             }
           }
         }
+      },
+      "Unauthorized": {
+        "description": "Missing maintenance token or maintenance token is not configured.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Invalid maintenance token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -4304,38 +4412,23 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "2330"
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "台積電"
           },
           "full_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "台灣積體電路製造股份有限公司"
           },
           "market": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "listed"
           },
           "industry_code": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Official Taiwan stock industry code from stock master.",
             "example": "24"
           },
@@ -4345,9 +4438,7 @@
             "items": {
               "type": "string"
             },
-            "example": [
-              "D300"
-            ]
+            "example": ["D300"]
           },
           "industry_chains": {
             "type": "array",
@@ -4359,34 +4450,17 @@
                   "type": "string"
                 },
                 "name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "parent_code": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "level": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
+                  "type": ["integer", "null"]
                 },
                 "stage": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "upstream",
-                    "midstream",
-                    "downstream",
-                    null
-                  ]
+                  "type": ["string", "null"],
+                  "enum": ["upstream", "midstream", "downstream", null]
                 }
               },
               "additionalProperties": false
@@ -4438,9 +4512,7 @@
       },
       "HealthResponse": {
         "type": "object",
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "properties": {
           "status": {
             "type": "string",
@@ -4535,39 +4607,22 @@
             "type": "boolean"
           },
           "last_run_at": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "last_success_at": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "last_status": {
             "type": "string",
-            "enum": [
-              "idle",
-              "running",
-              "success",
-              "failed"
-            ]
+            "enum": ["idle", "running", "success", "failed"]
           },
           "last_error": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "next_run_at": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "metadata": {
@@ -4584,31 +4639,19 @@
           },
           "etf_type": {
             "type": "string",
-            "enum": [
-              "active",
-              "passive"
-            ],
+            "enum": ["active", "passive"],
             "description": "ETF behavior type. passive ETFs are fetched daily but may not save daily holdings snapshots.",
             "example": "passive"
           },
           "snapshot_policy": {
             "type": "string",
-            "enum": [
-              "daily",
-              "composition_changed",
-              "holdings_changed"
-            ],
+            "enum": ["daily", "composition_changed", "holdings_changed"],
             "description": "Controls when holdings snapshots are saved.",
             "example": "composition_changed"
           },
           "backup_policy": {
             "type": "string",
-            "enum": [
-              "always",
-              "composition_changed",
-              "holdings_changed",
-              "never"
-            ],
+            "enum": ["always", "composition_changed", "holdings_changed", "never"],
             "description": "Controls when xlsx backups are uploaded to Google Drive.",
             "example": "composition_changed"
           }
@@ -4636,10 +4679,7 @@
             "format": "date"
           },
           "last_snapshot_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "is_active": {
@@ -4650,10 +4690,7 @@
       },
       "ActiveEtfImportRequest": {
         "type": "object",
-        "required": [
-          "snapshotDate",
-          "items"
-        ],
+        "required": ["snapshotDate", "items"],
         "properties": {
           "snapshotDate": {
             "type": "string",
@@ -4671,10 +4708,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": [
-                "etfCode",
-                "etfName"
-              ],
+              "required": ["etfCode", "etfName"],
               "properties": {
                 "etfCode": {
                   "type": "string",
@@ -4743,9 +4777,7 @@
       },
       "EtfHoldingInput": {
         "type": "object",
-        "required": [
-          "stockCode"
-        ],
+        "required": ["stockCode"],
         "properties": {
           "stockCode": {
             "type": "string",
@@ -4759,16 +4791,10 @@
             "type": "number"
           },
           "holdingValue": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "holdingRatio": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           }
         }
       },
@@ -4792,31 +4818,19 @@
             "type": "number"
           },
           "holding_value": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "source_stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
           },
           "etf_type": {
             "type": "string",
-            "enum": [
-              "active",
-              "passive"
-            ],
+            "enum": ["active", "passive"],
             "description": "ETF behavior type from source config.",
             "example": "passive"
           },
@@ -4846,29 +4860,20 @@
             "type": "number"
           },
           "holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "snapshot_date": {
             "type": "string",
             "format": "date"
           },
           "source_stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
           },
           "etf_type": {
             "type": "string",
-            "enum": [
-              "active",
-              "passive"
-            ],
+            "enum": ["active", "passive"],
             "description": "ETF behavior type from source config.",
             "example": "passive"
           },
@@ -4905,26 +4910,17 @@
             "type": "number"
           },
           "previous_holding_shares": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "share_change": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "event_type": {
             "type": "string",
             "description": "可能值依資料庫 view 設計，例如 first_buy、increase、decrease、sold_out"
           },
           "source_stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
           },
@@ -4932,31 +4928,19 @@
             "$ref": "#/components/schemas/EtfEventOhlcRef"
           },
           "buy_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Positive bought shares for buy-side events. Returns 0 for sell-side events."
           },
           "sell_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Positive sold shares for sell-side events. Returns 0 for buy-side events."
           },
           "change_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Signed share change. Positive means buy/increase; negative means sell/decrease/sell_out."
           },
           "delta_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Alias for signed share change when available."
           }
         },
@@ -5027,46 +5011,28 @@
             "example": "success"
           },
           "lastRunAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "lastFinishedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "lastSuccessAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "lastError": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "最近一次執行結束後的錯誤；本次成功、正常略過或正常等待時為 null。"
           },
           "lastDataDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date",
             "description": "實際處理的資料日，例如 ETF display date 或 OHLC trade date。"
           },
           "lastSourceDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date",
             "description": "來源資料日，例如 ETF source snapshot date。"
           },
@@ -5114,10 +5080,7 @@
             "example": 2300
           },
           "official_row_count": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "example": 2400
           },
           "written_count": {
@@ -5133,10 +5096,7 @@
             "example": false
           },
           "skip_reason": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "existing_daily_rows"
           },
           "counts": {
@@ -5184,11 +5144,7 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": [
-                    "waiting",
-                    "success",
-                    "failed"
-                  ]
+                  "enum": ["waiting", "success", "failed"]
                 },
                 "releaseAt": {
                   "type": "string",
@@ -5211,17 +5167,11 @@
             "type": "string"
           },
           "firstSeenDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "lastSnapshotDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "availableDates": {
@@ -5232,10 +5182,7 @@
             }
           },
           "config": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": true
           }
         }
@@ -5247,10 +5194,7 @@
             "type": "string"
           },
           "etf_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "stock": {
             "$ref": "#/components/schemas/StockIdentity"
@@ -5260,10 +5204,7 @@
             "additionalProperties": true
           },
           "current": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": true
           },
           "series": {
@@ -5289,17 +5230,11 @@
             "type": "string"
           },
           "start_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "end_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "summary": {
@@ -5314,10 +5249,7 @@
           },
           "etf_type": {
             "type": "string",
-            "enum": [
-              "active",
-              "passive"
-            ]
+            "enum": ["active", "passive"]
           }
         },
         "additionalProperties": true
@@ -5351,10 +5283,7 @@
             "$ref": "#/components/schemas/StockIdentity"
           },
           "latest_snapshot_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "summary": {
@@ -5381,17 +5310,11 @@
             "type": "string"
           },
           "start_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "end_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "holders": {
@@ -5402,10 +5325,7 @@
               "properties": {
                 "etf_type": {
                   "type": "string",
-                  "enum": [
-                    "active",
-                    "passive"
-                  ]
+                  "enum": ["active", "passive"]
                 },
                 "series": {
                   "type": "array",
@@ -5439,10 +5359,7 @@
             "format": "date"
           },
           "sourceSnapshotDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "rows": {
@@ -5498,13 +5415,7 @@
         "properties": {
           "event_type": {
             "type": "string",
-            "enum": [
-              "first_buy",
-              "buy_increase",
-              "first_sell",
-              "sell_decrease",
-              "sell_out"
-            ],
+            "enum": ["first_buy", "buy_increase", "first_sell", "sell_decrease", "sell_out"],
             "description": "Event type requested by /etf/events?type=..."
           },
           "stock": {
@@ -5515,49 +5426,31 @@
             "example": "00992A"
           },
           "etf_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "example": "主動群益科技創新"
           },
           "buy_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": 300000,
             "description": "Positive bought shares for first_buy or buy_increase. Returns 0 for sell events."
           },
           "sell_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": 120000,
             "description": "Positive sold shares for first_sell, sell_decrease, or sell_out. Returns 0 for buy events."
           },
           "change_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": -120000,
             "description": "Signed share change. Positive means buy/increase; negative means sell/decrease/sell_out."
           },
           "delta_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": -120000,
             "description": "Backward-compatible alias for change_shares when available."
           },
           "current_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": 300000,
             "description": "Latest current holding shares for the same ETF-stock pair. Returns 0 when the ETF no longer currently holds the stock."
           },
@@ -5568,63 +5461,39 @@
             "description": "First-buy event date."
           },
           "previous_snapshot_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "previous_shares": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "example": 0.54,
             "description": "Backward-compatible alias for event_holding_ratio."
           },
           "source_rank": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "example": 35
           },
           "event_shares": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "ETF holding shares on the first-buy event date.",
             "example": 300000
           },
           "current_snapshot_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date",
             "description": "Latest current holding date for the same ETF-stock pair.",
             "example": "2026-06-10"
           },
           "event_holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Holding ratio on the first-buy event date.",
             "example": 0.54
           },
           "current_holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Latest current holding ratio for the same ETF-stock pair.",
             "example": 0.5
           },
@@ -5634,10 +5503,7 @@
             "example": true
           },
           "source_stock_name": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Original stock name from the ETF source file/API. Use for audit/debug only, not product display.",
             "example": "國巨*"
           },
@@ -5648,29 +5514,14 @@
       },
       "FirstBuyEventsResponse": {
         "type": "object",
-        "required": [
-          "type",
-          "page",
-          "pageSize",
-          "totalCount",
-          "items"
-        ],
+        "required": ["type", "page", "pageSize", "totalCount", "items"],
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "first_buy",
-              "buy_increase",
-              "first_sell",
-              "sell_decrease",
-              "sell_out"
-            ]
+            "enum": ["first_buy", "buy_increase", "first_sell", "sell_decrease", "sell_out"]
           },
           "snapshot_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "page": {
@@ -5704,22 +5555,13 @@
             "type": "number"
           },
           "previous_shares": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "delta_shares": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "holding_ratio": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "is_carried_forward": {
             "type": "boolean",
@@ -5816,22 +5658,12 @@
         "properties": {
           "code": {
             "type": "integer",
-            "enum": [
-              0,
-              1,
-              2,
-              3
-            ],
+            "enum": [0, 1, 2, 3],
             "example": 1
           },
           "label": {
             "type": "string",
-            "enum": [
-              "pending",
-              "success",
-              "missing",
-              "failed"
-            ],
+            "enum": ["pending", "success", "missing", "failed"],
             "example": "success"
           }
         },
@@ -5842,26 +5674,17 @@
         "description": "OHLC-derived reference data for one ETF-stock event. Estimated amounts are calculated by the API view layer and are not stored in Supabase.",
         "properties": {
           "reference_price": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Average reference price calculated as reference_turnover / reference_volume for the event display date.",
             "example": 178.58149
           },
           "reference_volume": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Total market traded shares for the stock on the event display date.",
             "example": 397685486
           },
           "reference_turnover": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "Total market turnover for the stock on the event display date.",
             "example": 71019266736
           },
@@ -5869,34 +5692,22 @@
             "$ref": "#/components/schemas/EtfEventOhlcEnrichStatus"
           },
           "estimated_amount": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "abs(delta_shares) * reference_price.",
             "example": 71432596.09529728
           },
           "estimated_net_amount": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "delta_shares * reference_price. Positive means buy/increase; negative means sell/decrease.",
             "example": 71432596.09529728
           },
           "volume_ratio": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "abs(delta_shares) / reference_volume.",
             "example": 0.00100581996
           },
           "amount_ratio": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "description": "estimated_amount / reference_turnover.",
             "example": 0.00100581996
           }
@@ -5926,10 +5737,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "missing",
-              "all"
-            ],
+            "enum": ["missing", "all"],
             "default": "missing",
             "description": "missing only processes non-success rows; all processes every matching event row."
           },
@@ -5954,10 +5762,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "missing",
-              "all"
-            ]
+            "enum": ["missing", "all"]
           },
           "force": {
             "type": "boolean"
@@ -6008,10 +5813,7 @@
                   "type": "integer"
                 },
                 "error": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 }
               },
               "additionalProperties": true
@@ -6024,34 +5826,19 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "parent_code": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "level": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": ["integer", "null"]
           },
           "stage": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -6060,20 +5847,24 @@
         "properties": {
           "method": {
             "type": "string",
-            "enum": [
-              "fractional"
-            ]
+            "enum": ["fractional"]
           },
           "groupLevel": {
             "type": "string",
-            "enum": [
-              "root"
-            ]
+            "enum": ["root"]
           },
           "includesUnclassified": {
             "type": "boolean"
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "maintenance-token",
+        "description": "Maintenance API token. Send as Authorization: Bearer <token>. Public read APIs do not require this."
       }
     }
   }

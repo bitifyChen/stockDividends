@@ -10,9 +10,10 @@ instance.interceptors.response.use((res) => {
   return res.data
 })
 
-const request = async (method, url, data, queryParams) => {
+const request = async (method, url, data, queryParams, options = {}) => {
   try {
     const response = await instance({
+      ...options,
       method,
       url: url,
       data: data,
