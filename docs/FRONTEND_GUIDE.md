@@ -1,3 +1,71 @@
+# 2026-07-22
+
+## 主旨
+
+Desktop Fundamentals daily release 與 private installer manifest 已建立
+
+## 填寫人
+
+Backend / Desktop
+
+## 影響 API
+
+- 新增 `POST /desktop/fundamentals/daily-release`
+- 既有 `POST /desktop/ohlc/daily-release` 不變
+
+## 改動內容
+
+- 兩支 `/desktop/*/daily-release` 都是維護排程 API，必須使用 maintenance bearer token。
+- Web 前端不得直接呼叫，也不得把 maintenance token 放入 `VITE_*` 或瀏覽器 bundle。
+- Desktop Renderer 不直接呼叫 Render；一般使用者經 Electron Main / Python worker 讀取 Apps Script manifest 與 Google Drive Base/Delta。
+- Desktop 的策略頁第一次開啟時會在本機同步 Fundamentals，Web ETF 頁面本次不需改動。
+
+## 對應角色處理
+
+- 現有 Web 前端無需改接 API。
+- 若未來在管理後台加入 Desktop 發布按鈕，必須先完成 Firebase superuser 到後端短效授權，不可直接暴露 maintenance token。
+
+## 其他必要補充
+
+- 邀請制 installer 採 signed manifest 驗證，但不是完整登入授權。
+- OpenAPI 已加入 `/desktop/fundamentals/daily-release`，並標示為 Internal。
+
+# 2026-07-17
+
+## 主旨
+
+新增 Desktop 專用每日 OHLC Delta 維護 API
+
+### 填寫人
+
+Backend
+
+### 影響 API
+
+- 新增 `POST /desktop/ohlc/daily-release`
+- 此 API 需要 maintenance Bearer token
+- 此 API 不取代網站 K 線使用的 `GET /ohlc/stocks/{stockCode}/candles`
+
+### 改動內容
+
+- API 未指定日期時，會從 Desktop manifest 的最後日期補到最近官方交易日，逐日建立可套用的 SQLite Delta；指定 `tradeDate` 時只補該日。
+- 相同交易日與內容會直接 skipped；官方資料修正才建立新的 revision。
+- 週末與休市日會標記 `no_official_data` 後略過，不視為批次失敗。
+- Delta 經 Apps Script 發布到 Google Drive 並更新 Desktop manifest。
+- 這條流程不讀取 Turso 全表，也不寫入網站前端狀態。
+
+### 對應角色處理
+
+- 現有網站前端不需修改，也不可從瀏覽器呼叫此維護 API。
+- Desktop 應用程式透過公開 manifest 下載 Base / Delta，不持有 maintenance token 或 Google 寫入 token。
+- 若未來後台要顯示 Desktop 發布狀態，需另行設計公開唯讀 status API，不可將維護 token 放入瀏覽器。
+
+### 其他必要補充
+
+- Render/Postman 排程建議於交易日台北時間 `18:10` 用 `Authorization: Bearer <token>` 呼叫。
+- Apps Script 必須先部署支援 manifest/revision 的新版程式。
+- OpenAPI 已加入此端點，標記為 Internal。
+
 # 2026-07-17
 
 ## 主旨

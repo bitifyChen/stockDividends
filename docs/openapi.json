@@ -1622,6 +1622,68 @@
         }
       }
     },
+    "/desktop/ohlc/daily-release": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Publish a StockDividends Desktop daily OHLC Delta",
+        "description": "Builds TWSE/TPEx SQLite.zst Deltas, uploads them through Apps Script, and atomically updates the public desktop manifest. Without tradeDate it catches up every missing calendar date after manifest.latestTradeDate and skips non-trading days. With tradeDate it handles only that date. This flow is independent from Turso daily-fetch.",
+        "x-frontend-purpose": "Maintainer scheduling only. Web frontend must not call this endpoint.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tradeDate": { "type": "string", "format": "date", "description": "Optional official trade date. When omitted, fills the manifest gap through the latest available TWSE/TPEx date." }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Catch-up or single-date result. Each date is published, skipped as identical, or skipped because no official data exists." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/desktop/fundamentals/daily-release": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Publish a StockDividends Desktop Fundamentals Delta",
+        "description": "Fetches official TWSE/TPEx valuation, monthly revenue and financial-statement updates, builds an idempotent SQLite.zst package, uploads it through Apps Script and updates the Desktop Fundamentals manifest. Identical content is skipped; corrected content creates a new revision.",
+        "x-frontend-purpose": "Maintainer scheduling only. Web frontend and Desktop Renderer must not call this endpoint.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tradeDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Optional official data date. When omitted, the backend resolves the latest common TWSE/TPEx date."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Published, revised or identical-content skipped result." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
     "/ohlc/daily-fetch": {
       "get": {
         "tags": ["Internal"],
