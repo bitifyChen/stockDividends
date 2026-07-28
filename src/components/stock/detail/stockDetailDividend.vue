@@ -3,7 +3,7 @@ import { useStockStore } from '@/stores/useStock.js'
 import { computed } from 'vue'
 import Chart from 'chart.js/auto'
 import 'chartjs-adapter-moment'
-import { multiply, round } from '@/composables/useMath.js'
+import { round } from '@/composables/useMath.js'
 const piniaStock = useStockStore()
 const props = defineProps({
   data: {
@@ -15,9 +15,9 @@ const stockId = computed(() => props.data.id)
 const dividendChartHook = ref(null)
 const dividendDataList = computed(() => {
   return piniaStock?.dividendList
-    .filter((e) => e.stockId === stockId.value)
+    .filter((e) => e.stockId === stockId.value && e.tradingDate && e.cashIncome > 0)
     .sort((a, b) => new Date(a.tradingDate) - new Date(b.tradingDate))
-    .map((e) => ({ x: e.tradingDate, y: round(multiply(e?.stockNum ?? 0, e?.earn ?? 0)) }))
+    .map((e) => ({ x: e.tradingDate, y: round(e.cashIncome) }))
 })
 
 onMounted(() => {

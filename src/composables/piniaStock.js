@@ -1,5 +1,10 @@
 import { add, subtract, multiply, round } from '@/composables/useMath.js'
 import stockName from '@/data/stockName.json'
+import {
+  buildStockDividendBenefits,
+  isDividendEligibleLot,
+  normalizeDividendEvents
+} from '@/utils/stockDividend.js'
 export const getStockList = (state, config = null) => {
   const _data = {}
   //如果夾帶搜尋條件
@@ -20,6 +25,24 @@ export const getStockList = (state, config = null) => {
           )
         : state.orgData.filter((f) => f.stockId === e)
     const _stockDateListById = _stockListById.map((e) => new Date(e?.buyDate)) //此支股票所有日期
+    const normalizedDividendEvents = normalizeDividendEvents(state.orgDividendData[e], e)
+    const dividendBenefits = buildStockDividendBenefits({
+      lots: _stockListById,
+      events: normalizedDividendEvents,
+      currentPrice: state.orgPriceData[e],
+      stockCode: e,
+      stockName: stockName[e] ?? '-'
+    })
+    const buyNum = _stockListById
+      .filter((f) => !f.sellDate)
+      .reduce((total, item) => add(total, item.buyNum), 0)
+    const buyPrice = _stockListById
+      .filter((f) => !f.sellDate)
+      .reduce((total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))), 0)
+    const realHoldingMarketValue = state.orgPriceData[e]
+      ? multiply(state.orgPriceData[e], buyNum)
+      : 0
+
     _data[e] = {
       data: _stockListById
         .map((x) => {
@@ -31,13 +54,13 @@ export const getStockList = (state, config = null) => {
               )
             : null
           //股利相關
-          const _dividendList = state.orgDividendData[e]
-            ? state.orgDividendData[e].filter((date) => date.CashExDividendTradingDate > x.buyDate)
-            : null
+          const _dividendList = normalizedDividendEvents.filter(
+            (event) => event.cash.totalPerShare > 0 && isDividendEligibleLot(x, event.cash.exDate)
+          )
           //計算此張股票股利
           const earnDividend = _dividendList
             ? _dividendList.reduce((total, dividend) => {
-                const dividendEarned = multiply(dividend.CashEarningsDistribution, x.buyNum)
+                const dividendEarned = multiply(dividend.cash.totalPerShare, x.buyNum)
                 return add(total, dividendEarned)
               }, 0)
             : null
@@ -57,20 +80,21 @@ export const getStockList = (state, config = null) => {
         ? new Date(Math.max(..._stockDateListById))?.toISOString()
         : null,
       name: stockName[e] ?? '-',
-      buyNum: _stockListById
-        .filter((f) => !f.sellDate)
-        .reduce((total, item) => add(total, item.buyNum), 0),
-      buyPrice: _stockListById
-        .filter((f) => !f.sellDate)
-        .reduce((total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))), 0)
+      buyNum,
+      buyPrice,
+      realHoldingMarketValue,
+      stockDividendRights: dividendBenefits.summary,
+      stockRightsMarketValue: dividendBenefits.summary.stockRightsMarketValue,
+      totalReferenceMarketValue:
+        realHoldingMarketValue + dividendBenefits.summary.stockRightsMarketValue
     }
   })
   return _data
 }
 
 export const getDividendList = (state) => {
-  const _stockList = state.stockList ?? [] //擁有的所有股票資料
-  const _stockDividendList = state.orgDividendData ?? [] //所有股票股利資料
+  const _stockList = state.stockList ?? {} //擁有的所有股票資料
+  const _stockDividendList = state.orgDividendData ?? {} //所有股票股利資料
   const _totalDividendList = []
 
   // Check if _stockList and _stockDividendList are objects
@@ -80,60 +104,24 @@ export const getDividendList = (state) => {
   }
 
   for (const [stockId, item] of Object.entries(_stockList)) {
-    if (!_stockDividendList[stockId]) {
-      console.warn(`No dividend data for stock ID: ${stockId}`)
-      continue // Skip to the next stock if no dividend data is found
-    }
-
-    // Check if item is an object and has the necessary properties
-    if (typeof item !== 'object' || !item.inStockStart || !Array.isArray(item.data)) {
+    if (typeof item !== 'object' || !Array.isArray(item.data)) {
       console.error(`Invalid stock item data for stock ID: ${stockId}`)
       continue // Skip invalid stock items
     }
 
-    const _dividendList = _stockDividendList[stockId]?.filter(
-      (e) => e.CashExDividendTradingDate >= item.inStockStart
-    )
-
-    if (_dividendList?.length) {
-      _dividendList.forEach((i) => {
-        // Check if the necessary properties are present in each dividend item
-        if (
-          !i.CashExDividendTradingDate ||
-          !i.CashDividendPaymentDate ||
-          !i.CashEarningsDistribution
-        ) {
-          console.error(`Invalid dividend data for stock ID: ${stockId}`)
-          return // Skip invalid dividend items
-        }
-
-        const stockNum = item.data
-          .filter(
-            (x) =>
-              x.buyDate < i.CashExDividendTradingDate &&
-              (!x.sellDate || x.sellDate > i.CashExDividendTradingDate)
-          )
-          .reduce((total, stock) => {
-            return add(total, stock.buyNum)
-          }, 0)
-
-        if (stockNum <= 0) return
-
-        const _data = {
-          year: new Date(i.CashDividendPaymentDate).getFullYear(),
-          month: new Date(i.CashDividendPaymentDate).getMonth() + 1,
-          stockId: stockId,
-          stockNum: stockNum,
-          stockName: item?.name,
-          payDate: i.CashDividendPaymentDate,
-          tradingDate: i.CashExDividendTradingDate,
-          earn: i.CashEarningsDistribution
-        }
-
-        _totalDividendList.push(_data)
-      })
-    }
+    const dividendBenefits = buildStockDividendBenefits({
+      lots: item.data,
+      events: _stockDividendList[stockId],
+      currentPrice: item.price,
+      stockCode: stockId,
+      stockName: item.name
+    })
+    _totalDividendList.push(...dividendBenefits.rows)
   }
 
-  return _totalDividendList.sort((a, b) => new Date(b.payDate) - new Date(a.payDate)) //日期：近=>遠
+  return _totalDividendList.sort((a, b) => {
+    if (!a.displayDate) return 1
+    if (!b.displayDate) return -1
+    return b.displayDate.localeCompare(a.displayDate) || b.eventId.localeCompare(a.eventId)
+  }) //日期：近=>遠
 }

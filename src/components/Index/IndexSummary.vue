@@ -33,12 +33,24 @@ const totalCost = computed(() =>
 //整理資料
 const thisYearData = computed(
   () =>
-    props?.data.map((e) => ({ ...e, total: round(multiply(e?.stockNum ?? 0, e?.earn ?? 0)) })) ?? []
+    props?.data.map((event) => ({
+      ...event,
+      total: round(event?.cashIncome ?? multiply(event?.stockNum ?? 0, event?.earn ?? 0))
+    })) ?? []
+)
+
+const estimatedStockShares = computed(() =>
+  thisYearData.value.reduce((total, event) => add(total, event?.estimatedStockShares ?? 0), 0)
+)
+const stockRightsMarketValue = computed(() =>
+  thisYearData.value.reduce((total, event) => add(total, event?.stockRightsMarketValue ?? 0), 0)
 )
 
 //該年起訖
 const thisYearRange = computed(() => {
-  const dates = thisYearData.value.map((item) => new Date(item?.payDate))
+  const dates = thisYearData.value
+    .map((item) => new Date(item?.displayDate))
+    .filter((date) => !Number.isNaN(date.valueOf()))
   if (!dates.length) return [null, null]
   return [
     dayjs(Math.min(...dates)).format('YYYY/MM/DD'),
@@ -61,6 +73,7 @@ const thisYearTotal = computed(() => {
     thisYearData.value && thisYearData.value.reduce((total, item) => add(total, item?.total), 0)
   )
 })
+const totalBenefitValue = computed(() => add(thisYearTotal.value, stockRightsMarketValue.value))
 </script>
 
 <template>
@@ -83,6 +96,13 @@ const thisYearTotal = computed(() => {
         <span class="text-[var(--main-sub-color)] text-[24px] font-black"
           >$ {{ thisYearTotal.toLocaleString() }}元</span
         >
+      </div>
+      <div v-if="estimatedStockShares > 0" class="text-[var(--text-secondary-color)] text-[14px]">
+        預估獲配
+        {{ estimatedStockShares.toLocaleString(undefined, { maximumFractionDigits: 4 }) }}
+        股，股票權益參考市值 $
+        {{ stockRightsMarketValue.toLocaleString() }} 元；現金加股票權益總價值 $
+        {{ totalBenefitValue.toLocaleString() }} 元。
       </div>
       <div class="text-[var(--text-secondary-color)]" v-if="easyMode">
         來自 {{ thisYearStockNum }} 支股票，計算期間為 {{ thisYearRange[0] ?? '' }}~{{

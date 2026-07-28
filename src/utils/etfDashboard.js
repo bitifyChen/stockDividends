@@ -44,6 +44,14 @@ export const formatShare = (value, unit = 'share') => {
   })
 }
 
+export const formatFractionalShare = (value, unit = 'share') => {
+  if (value === null || value === undefined || value === '') return '-'
+  const converted = toShareUnitValue(value, unit)
+  return converted.toLocaleString(undefined, {
+    maximumFractionDigits: unit === 'lot' ? 6 : 4
+  })
+}
+
 export const formatRatio = (value) => {
   if (value === null || value === undefined || value === '') return '-'
   const numberValue = Number(value)

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import dayjs from 'dayjs'
 const props = defineProps({
   data: {
     type: Array,
@@ -21,17 +22,19 @@ const tabs = computed(() => [
 ])
 
 const futureData = computed(() => {
+  const today = dayjs().format('YYYY-MM-DD')
   return props.data
     .filter((item) => {
-      return new Date(item.payDate) >= new Date()
+      return item.displayDate && item.displayDate >= today
     })
-    .sort((a, b) => new Date(a.payDate) - new Date(b.payDate))
+    .sort((a, b) => new Date(a.displayDate) - new Date(b.displayDate))
 })
 
 const earnedData = computed(() => {
+  const today = dayjs().format('YYYY-MM-DD')
   return props.data
     .filter((item) => {
-      return new Date(item.payDate) < new Date()
+      return !item.displayDate || item.displayDate < today
     })
     .slice(0, 10)
 })
@@ -40,7 +43,7 @@ const earnedData = computed(() => {
 <template>
   <van-tabs v-model:active="activeTab" animated>
     <van-tab :title="item.title" v-for="item in tabs" :key="item.key" :name="item.key">
-      <dividendCard v-for="(item, index) in item.data" :key="index" :data="item" class="my-[10px]"
+      <dividendCard v-for="event in item.data" :key="event.eventId" :data="event" class="my-[10px]"
     /></van-tab>
   </van-tabs>
 </template>

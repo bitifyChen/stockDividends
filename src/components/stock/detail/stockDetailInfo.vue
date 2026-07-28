@@ -12,6 +12,11 @@ const buyPrice = computed(() => props.data?.buyPrice ?? 0)
 const buyPriceAve = computed(() => round(divide(props.data?.buyPrice, props.data?.buyNum), 2) ?? 0)
 const nowPrice = computed(() => multiply(props.data?.buyNum, nowPriceAve.value) ?? 0)
 const nowPriceAve = computed(() => props.data?.price ?? 0)
+const stockRights = computed(() => props.data?.stockDividendRights ?? {})
+const stockRightsMarketValue = computed(() => props.data?.stockRightsMarketValue ?? 0)
+const totalReferenceMarketValue = computed(
+  () => props.data?.totalReferenceMarketValue ?? add(nowPrice.value, stockRightsMarketValue.value)
+)
 const totalDividend = computed(
   () => props?.data?.data?.reduce((acc, current) => add(acc, current?.earnDividend ?? 0), 0) ?? 0
 )
@@ -49,12 +54,28 @@ const totalUnrealized = computed(() => subtract(nowPrice.value, buyPrice.value) 
         </div>
       </div>
       <div
+        v-if="stockRights.estimatedStockShares > 0"
         class="flex justify-between border-dashed border-b-2 border-[var(--text-secondary-color)s]"
       >
-        <div>總買價<br />總市值</div>
+        <div>預估獲配股數<br />股票權益參考市值</div>
+        <div class="text-[var(--main-primary-color)] font-black text-end">
+          {{
+            stockRights.estimatedStockShares.toLocaleString(undefined, {
+              maximumFractionDigits: 4
+            })
+          }}
+          股<br />
+          $ {{ stockRightsMarketValue.toLocaleString() }}
+        </div>
+      </div>
+      <div
+        class="flex justify-between border-dashed border-b-2 border-[var(--text-secondary-color)s]"
+      >
+        <div>總買價<br />真實持股市值<br />總參考市值</div>
         <div class="text-[var(--main-primary-color)] font-black text-end">
           {{ buyPrice.toLocaleString() }} <br />
           {{ nowPrice.toLocaleString() }} <br />
+          {{ totalReferenceMarketValue.toLocaleString() }} <br />
           <span
             class="text-[18px]"
             :class="{

@@ -3,7 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { Calendar, ChevronLeft, ChevronRight, Coins, RefreshCw, TrendingUp } from 'lucide-vue-next'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { useStockStore } from '@/stores/useStock.js'
-import { formatShare, shareColumnLabel, toNumber } from '@/utils/etfDashboard.js'
+import {
+  formatFractionalShare,
+  formatShare,
+  shareColumnLabel,
+  toNumber
+} from '@/utils/etfDashboard.js'
 
 const stockStore = useStockStore()
 const dashboardSettingStore = useDashboardSettingStore()
@@ -21,21 +26,18 @@ const filteredDividends = computed(() =>
   dividendList.value.filter((item) => item.year === selectedYear.value)
 )
 const yearTotal = computed(() =>
-  filteredDividends.value.reduce(
-    (total, item) => total + toNumber(item.earn) * toNumber(item.stockNum),
-    0
-  )
+  filteredDividends.value.reduce((total, item) => total + toNumber(item.cashIncome), 0)
 )
-const allTimeTotal = computed(() =>
-  dividendList.value.reduce(
-    (total, item) => total + toNumber(item.earn) * toNumber(item.stockNum),
-    0
-  )
+const yearEstimatedStockShares = computed(() =>
+  filteredDividends.value.reduce((total, item) => total + toNumber(item.estimatedStockShares), 0)
 )
-const yearStockCount = computed(
-  () => new Set(filteredDividends.value.map((item) => item.stockId)).size
+const yearStockRightsMarketValue = computed(() =>
+  filteredDividends.value.reduce((total, item) => total + toNumber(item.stockRightsMarketValue), 0)
 )
-
+const yearTotalBenefitValue = computed(() => yearTotal.value + yearStockRightsMarketValue.value)
+const hasStockDividend = computed(() =>
+  filteredDividends.value.some((item) => toNumber(item.estimatedStockShares) > 0)
+)
 const stats = computed(() => [
   {
     label: `${selectedYear.value} 年股利收入`,
@@ -43,13 +45,21 @@ const stats = computed(() => [
     icon: Coins
   },
   {
-    label: '累計股利收入',
-    value: formatCurrency(allTimeTotal.value),
+    label: `${selectedYear.value} 年預估獲配`,
+    value: `${formatFractionalShare(
+      yearEstimatedStockShares.value,
+      dashboardSettingStore.shareUnit
+    )} ${dashboardSettingStore.shareUnit === 'lot' ? '張' : '股'}`,
     icon: TrendingUp
   },
   {
-    label: `${selectedYear.value} 年發放檔數`,
-    value: `${yearStockCount.value} 檔`,
+    label: '股票權益參考市值',
+    value: formatCurrency(yearStockRightsMarketValue.value),
+    icon: Calendar
+  },
+  {
+    label: '現金加股票權益總價值',
+    value: formatCurrency(yearTotalBenefitValue.value),
     icon: Calendar
   }
 ])
@@ -110,16 +120,25 @@ onMounted(() => {
       </article>
     </section>
 
+    <p v-if="hasStockDividend" class="rights-notice">
+      預估獲配股數可能包含小數，實際零股分配與入帳股數以公司及集保結果為準。
+    </p>
+
     <section class="terminal-panel" v-loading="loading">
       <div class="panel-head">
         <h2>年度股利明細</h2>
         <span>{{ filteredDividends.length }} 筆</span>
       </div>
 
-      <el-table :data="filteredDividends" style="width: 100%" class="terminal-el-table">
+      <el-table
+        :data="filteredDividends"
+        row-key="eventId"
+        style="width: 100%"
+        class="terminal-el-table"
+      >
         <el-table-column label="發放日" prop="payDate" width="140">
           <template #default="{ row }">
-            <span class="date-text">{{ row.payDate }}</span>
+            <span class="date-text">{{ row.payDate || '待公告' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="除息日" prop="tradingDate" width="140" />
@@ -132,12 +151,12 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column
-          :label="shareColumnLabel(dashboardSettingStore.shareUnit, '持有')"
+          :label="shareColumnLabel(dashboardSettingStore.shareUnit, '現金資格')"
           align="right"
           width="130"
         >
           <template #default="{ row }">
-            {{ formatShare(row.stockNum, dashboardSettingStore.shareUnit) }}
+            {{ formatShare(row.cashEligibleShares, dashboardSettingStore.shareUnit) }}
           </template>
         </el-table-column>
         <el-table-column label="每股股利" align="right" width="140">
@@ -146,8 +165,40 @@ onMounted(() => {
         <el-table-column label="股利收入" align="right" min-width="150">
           <template #default="{ row }">
             <strong class="value-up">
-              {{ formatCurrency(toNumber(row.earn) * toNumber(row.stockNum)) }}
+              {{ formatCurrency(row.cashIncome) }}
             </strong>
+          </template>
+        </el-table-column>
+        <el-table-column label="股票股利權益" align="right" min-width="190">
+          <template #default="{ row }">
+            <div v-if="row.estimatedStockShares > 0" class="stock-rights-cell">
+              <strong>
+                {{
+                  formatFractionalShare(row.estimatedStockShares, dashboardSettingStore.shareUnit)
+                }}
+                {{ dashboardSettingStore.shareUnit === 'lot' ? '張' : '股' }}
+              </strong>
+              <span>{{ row.stockExDate || '除權日待公告' }}</span>
+              <el-tag
+                :type="row.isStockRightRecognized ? 'success' : 'warning'"
+                round
+                effect="plain"
+                size="small"
+              >
+                {{ row.isStockRightRecognized ? '已納入估值' : '尚未除權' }}
+              </el-tag>
+            </div>
+            <span v-else class="date-text">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="股票權益市值" align="right" min-width="150">
+          <template #default="{ row }">
+            {{ row.stockRightsMarketValue > 0 ? formatCurrency(row.stockRightsMarketValue) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="總價值" align="right" min-width="150">
+          <template #default="{ row }">
+            <strong>{{ formatCurrency(row.totalBenefitValue) }}</strong>
           </template>
         </el-table-column>
         <template #empty>
@@ -261,7 +312,7 @@ h2 {
 
 .market-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -306,6 +357,24 @@ h2 {
   gap: 3px;
 }
 
+.stock-rights-cell {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.stock-rights-cell span,
+.rights-notice {
+  color: var(--dashboard-text-muted, #94a3b8);
+  font-size: 12px;
+}
+
+.rights-notice {
+  margin: 0;
+  padding: 0 4px;
+  line-height: 1.6;
+}
+
 .stock-cell strong {
   color: var(--dashboard-text-primary, #f7fafc);
 }
@@ -328,7 +397,7 @@ h2 {
 }
 
 :deep(.terminal-el-table) {
-  min-width: 860px;
+  min-width: 1320px;
 }
 
 .value-up {

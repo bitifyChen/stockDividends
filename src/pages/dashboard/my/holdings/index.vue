@@ -16,7 +16,12 @@ import DashboardStockTradeDrawer from '@/components/dashboard/DashboardStockTrad
 import { deleteStock } from '@/firebase/stock.js'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { useStockStore } from '@/stores/useStock.js'
-import { formatShare, shareColumnLabel, toNumber } from '@/utils/etfDashboard.js'
+import {
+  formatFractionalShare,
+  formatShare,
+  shareColumnLabel,
+  toNumber
+} from '@/utils/etfDashboard.js'
 
 const router = useRouter()
 const stockStore = useStockStore()
@@ -36,9 +41,13 @@ const holdingRows = computed(() => {
       const shares = toNumber(item.buyNum)
       const totalCost = toNumber(item.buyPrice)
       const currentPrice = toNumber(item.price)
-      const marketValue = currentPrice ? currentPrice * shares : 0
+      const marketValue = toNumber(item.realHoldingMarketValue) || currentPrice * shares
+      const stockRightsMarketValue = toNumber(item.stockRightsMarketValue)
+      const estimatedStockShares = toNumber(item.stockDividendRights?.estimatedStockShares)
+      const totalReferenceMarketValue = marketValue + stockRightsMarketValue
       const profit = currentPrice ? marketValue - totalCost : 0
-      const profitRate = totalCost > 0 ? (profit / totalCost) * 100 : 0
+      const totalReferenceProfit = profit + stockRightsMarketValue
+      const profitRate = totalCost > 0 ? (totalReferenceProfit / totalCost) * 100 : 0
       const lots = Array.isArray(item.data) ? item.data : []
 
       return {
@@ -49,7 +58,11 @@ const holdingRows = computed(() => {
         totalCost,
         currentPrice,
         marketValue,
+        estimatedStockShares,
+        stockRightsMarketValue,
+        totalReferenceMarketValue,
         profit,
+        totalReferenceProfit,
         profitRate,
         lots,
         openLots: lots.filter((lot) => !lot.sellDate).length,
@@ -66,11 +79,20 @@ const portfolioSummary = computed(() =>
     (summary, item) => {
       summary.totalCost += item.totalCost
       summary.marketValue += item.marketValue
+      summary.stockRightsMarketValue += item.stockRightsMarketValue
+      summary.totalReferenceMarketValue += item.totalReferenceMarketValue
       summary.profit += item.profit
       summary.shares += item.shares
       return summary
     },
-    { totalCost: 0, marketValue: 0, profit: 0, shares: 0 }
+    {
+      totalCost: 0,
+      marketValue: 0,
+      stockRightsMarketValue: 0,
+      totalReferenceMarketValue: 0,
+      profit: 0,
+      shares: 0
+    }
   )
 )
 
@@ -152,21 +174,23 @@ onMounted(() => {
         <strong>{{ formatCurrency(portfolioSummary.totalCost) }}</strong>
       </article>
       <article class="ticker-card">
-        <span>目前市值</span>
+        <span>真實持股市值</span>
         <strong>{{ formatCurrency(portfolioSummary.marketValue) }}</strong>
       </article>
       <article class="ticker-card">
-        <span>未實現損益</span>
-        <strong :class="portfolioSummary.profit >= 0 ? 'value-up' : 'value-down'">
-          {{ formatSignedCurrency(portfolioSummary.profit) }}
-        </strong>
+        <span>股票權益參考市值</span>
+        <strong>{{ formatCurrency(portfolioSummary.stockRightsMarketValue) }}</strong>
+      </article>
+      <article class="ticker-card">
+        <span>總參考市值</span>
+        <strong>{{ formatCurrency(portfolioSummary.totalReferenceMarketValue) }}</strong>
       </article>
     </section>
 
     <section class="terminal-panel" v-loading="loading">
       <div class="panel-head">
         <h2>目前持股</h2>
-        <span>{{ holdingRows.length }} 檔股票</span>
+        <span>{{ holdingRows.length }} 檔股票 · 股票權益不計入可賣股數</span>
       </div>
 
       <el-table :data="holdingRows" style="width: 100%" class="terminal-el-table" row-key="id">
@@ -271,14 +295,39 @@ onMounted(() => {
         <el-table-column label="現價" align="right" width="120">
           <template #default="{ row }">$ {{ row.currentPrice?.toLocaleString() || '-' }}</template>
         </el-table-column>
-        <el-table-column label="市值" align="right" min-width="140">
+        <el-table-column label="真實持股市值" align="right" min-width="140">
           <template #default="{ row }">{{ formatCurrency(row.marketValue) }}</template>
         </el-table-column>
-        <el-table-column label="損益 / 報酬率" align="right" min-width="160" sortable prop="profit">
+        <el-table-column label="預估獲配" align="right" min-width="130">
+          <template #default="{ row }">
+            <span v-if="row.estimatedStockShares > 0">
+              {{ formatFractionalShare(row.estimatedStockShares, dashboardSettingStore.shareUnit) }}
+              {{ dashboardSettingStore.shareUnit === 'lot' ? '張' : '股' }}
+            </span>
+            <span v-else class="muted-text">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="股票權益" align="right" min-width="140">
+          <template #default="{ row }">
+            {{ row.stockRightsMarketValue > 0 ? formatCurrency(row.stockRightsMarketValue) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="總參考市值" align="right" min-width="150">
+          <template #default="{ row }">{{
+            formatCurrency(row.totalReferenceMarketValue)
+          }}</template>
+        </el-table-column>
+        <el-table-column
+          label="總參考損益 / 報酬率"
+          align="right"
+          min-width="180"
+          sortable
+          prop="totalReferenceProfit"
+        >
           <template #default="{ row }">
             <div class="profit-cell">
-              <strong :class="row.profit >= 0 ? 'value-up' : 'value-down'">
-                {{ formatSignedCurrency(row.profit) }}
+              <strong :class="row.totalReferenceProfit >= 0 ? 'value-up' : 'value-down'">
+                {{ formatSignedCurrency(row.totalReferenceProfit) }}
               </strong>
               <span :class="row.profitRate >= 0 ? 'value-up' : 'value-down'">
                 <TrendingUp v-if="row.profitRate >= 0" :size="12" />
@@ -434,7 +483,7 @@ h2 {
 
 .market-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -545,7 +594,7 @@ h2 {
 }
 
 :deep(.terminal-el-table) {
-  min-width: 1080px;
+  min-width: 1460px;
 
   .el-table__header th {
     font-size: 12px;
@@ -565,9 +614,9 @@ h2 {
   color: var(--stock-fall-color) !important;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .market-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -584,6 +633,12 @@ h2 {
     width: 100%;
   }
 
+  .market-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
   .market-strip {
     grid-template-columns: 1fr;
   }

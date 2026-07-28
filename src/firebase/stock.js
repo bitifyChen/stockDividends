@@ -89,9 +89,13 @@ export const getStockDividend = async (stockId) => {
       const dividendStockRef = collection(stockRef, 'dividend')
       const querySnapshot = await getDocs(dividendStockRef)
       // 使用 map 方法创建包含所有股票数据的数组
-      const data = querySnapshot.docs.map((doc) => ({
-        ...doc.data()
-      }))
+      const data = querySnapshot.docs.map((doc) => {
+        const event = doc.data()
+        return {
+          ...event,
+          eventId: event.eventId || doc.id
+        }
+      })
       resolve({ status: 200, data: data }) // 成功时返回包含所有股票数据的数组
     } catch (error) {
       reject(error) // 失败时返回错误

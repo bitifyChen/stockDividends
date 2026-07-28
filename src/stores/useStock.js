@@ -3,7 +3,10 @@ import { getPrice } from '@/api/price.js'
 import { getStockList, getDividendList } from '@/composables/piniaStock.js'
 import { getStock, getStockDividend } from '@/firebase/stock.js'
 import { add } from '@/composables/useMath.js'
+import { normalizeDividendEvents } from '@/utils/stockDividend.js'
 import dayjs from 'dayjs'
+
+const STOCK_DATA_SCHEMA_VERSION = 2
 
 export const useStockStore = defineStore('stock', {
   persist: true,
@@ -12,6 +15,7 @@ export const useStockStore = defineStore('stock', {
     orgData: [],
     orgPriceData: {},
     orgDividendData: {},
+    dataSchemaVersion: 0,
     update: {
       isNeedUpdate: false,
       date: null
@@ -42,6 +46,8 @@ export const useStockStore = defineStore('stock', {
   },
   actions: {
     async getData(isForce = false) {
+      if (this.dataSchemaVersion !== STOCK_DATA_SCHEMA_VERSION) isForce = true
+
       //非強制時或非必須更新，檢查是否需要更新
       if (!isForce && !this.update.isNeedUpdate) {
         if (this.update.date && dayjs(this.update.date).isSameOrAfter(dayjs(), 'day')) {
@@ -79,6 +85,7 @@ export const useStockStore = defineStore('stock', {
           // 等待所有的 promises 完成
           await Promise.all(promises)
           this.update.date = dayjs().format('YYYY-MM-DD')
+          this.dataSchemaVersion = STOCK_DATA_SCHEMA_VERSION
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -90,25 +97,9 @@ export const useStockStore = defineStore('stock', {
       if (!stockId) return []
       return getStockDividend(stockId).then((res) => {
         if (res.status === 200) {
-          return res.data
-            .map((e) => {
-              if (
-                e.CashExDividendTradingDate &&
-                e.CashDividendPaymentDate &&
-                e.CashEarningsDistribution
-              )
-                return {
-                  CashExDividendTradingDate: e.CashExDividendTradingDate, //除權息日
-                  CashDividendPaymentDate: e.CashDividendPaymentDate, //付款日期
-                  CashEarningsDistribution: e.CashEarningsDistribution //現金配息
-                }
-              else {
-                return null
-              }
-            })
-            .filter(Boolean)
+          return normalizeDividendEvents(res.data, stockId)
         } else {
-          return null
+          return []
         }
       })
     },
@@ -145,6 +136,7 @@ export const useStockStore = defineStore('stock', {
       this.orgData = []
       this.orgPriceData = {}
       this.orgDividendData = {}
+      this.dataSchemaVersion = 0
       this.update.isNeedUpdate = true
     }
   }

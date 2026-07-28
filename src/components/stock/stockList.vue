@@ -39,8 +39,12 @@ const earnDividend = computed(
 )
 //未實現價差
 const earnPrice = computed(() => stockHoldList.value?.reduce((a, b) => add(a, b.earnPrice), 0) ?? 0)
+//已除權股票股利的參考市值，不加入可賣庫存
+const stockRightsMarketValue = computed(() => props?.data?.stockRightsMarketValue ?? 0)
 //合計
-const earnTotal = computed(() => add(earnDividend.value, earnPrice.value))
+const earnTotal = computed(() =>
+  add(add(earnDividend.value, earnPrice.value), stockRightsMarketValue.value)
+)
 </script>
 
 <template>
@@ -58,6 +62,10 @@ const earnTotal = computed(() => add(earnDividend.value, earnPrice.value))
         <div class="flex justify-between items-center">
           <span>未實現價差</span>
           <span>{{ earnPrice }}</span>
+        </div>
+        <div v-if="stockRightsMarketValue > 0" class="flex justify-between items-center">
+          <span>股票權益參考市值</span>
+          <span>{{ stockRightsMarketValue.toLocaleString() }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span>合計</span>

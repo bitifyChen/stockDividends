@@ -4,7 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, CalendarDays, Layers3, WalletCards } from 'lucide-vue-next'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { useStockStore } from '@/stores/useStock.js'
-import { formatShare, shareColumnLabel, toNumber } from '@/utils/etfDashboard.js'
+import {
+  formatFractionalShare,
+  formatShare,
+  shareColumnLabel,
+  toNumber
+} from '@/utils/etfDashboard.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,16 +25,24 @@ const loading = computed(() => stockStore.loading)
 
 const totalShares = computed(() => toNumber(stock.value?.buyNum))
 const totalCost = computed(() => toNumber(stock.value?.buyPrice))
-const marketValue = computed(() => toNumber(stock.value?.price) * totalShares.value)
+const marketValue = computed(
+  () =>
+    toNumber(stock.value?.realHoldingMarketValue) ||
+    toNumber(stock.value?.price) * totalShares.value
+)
+const stockDividendRights = computed(() => stock.value?.stockDividendRights || {})
+const estimatedStockShares = computed(() =>
+  toNumber(stockDividendRights.value.estimatedStockShares)
+)
+const stockRightsMarketValue = computed(() => toNumber(stock.value?.stockRightsMarketValue))
+const totalReferenceMarketValue = computed(() => marketValue.value + stockRightsMarketValue.value)
 const avgCost = computed(() => (totalShares.value ? totalCost.value / totalShares.value : 0))
 const unrealizedProfit = computed(() => marketValue.value - totalCost.value)
-const totalDividend = computed(() =>
-  dividendRows.value.reduce(
-    (total, item) => total + toNumber(item.earn) * toNumber(item.stockNum),
-    0
-  )
+const totalDividend = computed(() => toNumber(stockDividendRights.value.cashIncome))
+const totalReturn = computed(
+  () => unrealizedProfit.value + totalDividend.value + stockRightsMarketValue.value
 )
-const totalReturn = computed(() => unrealizedProfit.value + totalDividend.value)
+const hasStockDividend = computed(() => estimatedStockShares.value > 0)
 
 const metrics = computed(() => [
   {
@@ -43,14 +56,29 @@ const metrics = computed(() => [
     icon: WalletCards
   },
   {
-    label: '目前市值',
+    label: '真實持股市值',
     value: formatCurrency(marketValue.value),
     icon: WalletCards
   },
   {
-    label: '累計股利',
+    label: '現金股利收入',
     value: formatCurrency(totalDividend.value),
     icon: CalendarDays
+  },
+  {
+    label: `預估獲配${dashboardSettingStore.shareUnit === 'lot' ? '張數' : '股數'}`,
+    value: formatFractionalShare(estimatedStockShares.value, dashboardSettingStore.shareUnit),
+    icon: Layers3
+  },
+  {
+    label: '股票權益參考市值',
+    value: formatCurrency(stockRightsMarketValue.value),
+    icon: WalletCards
+  },
+  {
+    label: '總參考市值',
+    value: formatCurrency(totalReferenceMarketValue.value),
+    icon: WalletCards
   }
 ])
 
@@ -96,6 +124,10 @@ onMounted(() => {
           <small>未實現 {{ formatSignedCurrency(unrealizedProfit) }}</small>
         </div>
       </div>
+
+      <p v-if="hasStockDividend" class="rights-notice">
+        預估獲配股數可能包含小數，實際零股分配與入帳股數以公司及集保結果為準。股票權益不計入目前可賣股數。
+      </p>
 
       <div class="metric-strip">
         <article v-for="item in metrics" :key="item.label" class="metric-box">
@@ -162,26 +194,62 @@ onMounted(() => {
         <strong>{{ dividendRows.length }} 筆</strong>
       </div>
 
-      <el-table :data="dividendRows" class="dashboard-table">
-        <el-table-column label="發放日" prop="payDate" width="130" />
-        <el-table-column label="除息日" prop="tradingDate" width="130" />
+      <el-table :data="dividendRows" row-key="eventId" class="dashboard-table dividend-table">
+        <el-table-column label="發放日" width="130">
+          <template #default="{ row }">{{ row.payDate || '待公告' }}</template>
+        </el-table-column>
+        <el-table-column label="除息日" width="130">
+          <template #default="{ row }">{{ row.tradingDate || '-' }}</template>
+        </el-table-column>
         <el-table-column
-          :label="shareColumnLabel(dashboardSettingStore.shareUnit, '持有')"
+          :label="shareColumnLabel(dashboardSettingStore.shareUnit, '現金資格')"
           align="right"
           width="130"
         >
           <template #default="{ row }">
-            {{ formatShare(row.stockNum, dashboardSettingStore.shareUnit) }}
+            {{ formatShare(row.cashEligibleShares, dashboardSettingStore.shareUnit) }}
           </template>
         </el-table-column>
         <el-table-column label="每股股利" align="right" width="130">
           <template #default="{ row }">$ {{ toNumber(row.earn).toLocaleString() }}</template>
         </el-table-column>
-        <el-table-column label="股利收入" align="right" min-width="140">
+        <el-table-column label="現金股利收入" align="right" min-width="150">
           <template #default="{ row }">
             <strong class="value-up">
-              {{ formatCurrency(toNumber(row.earn) * toNumber(row.stockNum)) }}
+              {{ formatCurrency(row.cashIncome) }}
             </strong>
+          </template>
+        </el-table-column>
+        <el-table-column label="股票股利權益" align="right" min-width="190">
+          <template #default="{ row }">
+            <div v-if="row.estimatedStockShares > 0" class="stock-rights-cell">
+              <strong>
+                {{
+                  formatFractionalShare(row.estimatedStockShares, dashboardSettingStore.shareUnit)
+                }}
+                {{ dashboardSettingStore.shareUnit === 'lot' ? '張' : '股' }}
+              </strong>
+              <span>{{ row.stockExDate || '除權日待公告' }}</span>
+              <el-tag
+                :type="row.isStockRightRecognized ? 'success' : 'warning'"
+                round
+                effect="plain"
+                size="small"
+              >
+                {{ row.isStockRightRecognized ? '已納入估值' : '尚未除權' }}
+              </el-tag>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="股票權益市值" align="right" min-width="150">
+          <template #default="{ row }">
+            {{ row.stockRightsMarketValue > 0 ? formatCurrency(row.stockRightsMarketValue) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="總價值" align="right" min-width="150">
+          <template #default="{ row }">
+            <strong>{{ formatCurrency(row.totalBenefitValue) }}</strong>
           </template>
         </el-table-column>
         <template #empty>
@@ -324,6 +392,27 @@ onMounted(() => {
 
 .dashboard-table {
   min-width: 760px;
+}
+
+.dividend-table {
+  min-width: 1180px;
+}
+
+.stock-rights-cell {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.stock-rights-cell span,
+.rights-notice {
+  color: var(--dashboard-text-muted);
+  font-size: 12px;
+}
+
+.rights-notice {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .empty-state {
