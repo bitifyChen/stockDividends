@@ -1,3 +1,104 @@
+# 2026-07-28
+
+## 主旨
+
+股價與股利改用官方來源，新增股票股利衍生權益顯示規則
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `GET /price?stockId={stockCode}`
+- `GET /price?mode=all`
+- `GET /dividend?stockId={stockCode}`
+- `GET /dividend?mode=all`
+
+## 改動內容
+
+- 每日股價以 TWSE、TPEx 官方交易日行情為主，FinMind 僅處理官方缺漏；`priceUpdateDate` 與批次 `sourceDate` 均代表實際交易日，不是 API 執行日。
+- 單股股利 API 改回傳標準化事件；過渡期間仍保留舊欄位，但新畫面只應使用：
+  - 現金股利每股合計：`cash.totalPerShare`
+  - 盈餘現金股利：`cash.earningsPerShare`
+  - 公積現金股利：`cash.reservePerShare`
+  - 股票股利配股率：`stock.ratio`
+  - 現金除息日：`cash.exDate`
+  - 現金發放日：`cash.paymentDate`
+  - 股票除權日：`stock.exDate`
+- `CashEarningsDistribution`、`CashStatutorySurplus`、`CashExDividendTradingDate`、`CashDividendPaymentDate`、`StockEarningsDistribution`、`StockStatutorySurplus`、`StockExDividendTradingDate` 已標記為過渡欄位，前端完成改接後再由後端移除。
+- 批次結果新增 `sourceDate`、`officialCount`、`fallbackCount`、`updatedCount`、`unchangedCount`、`failedItems`。
+
+## 股票股利權益規則
+
+- 符合資格的真實交易股數：`buyDate < stock.exDate`，且未賣出或 `sellDate >= stock.exDate`。
+- 除權日買入不具資格；除權日賣出仍具資格。
+- 預估獲配股數：`eligibleShares × stock.ratio`，計算時保留小數，不自行無條件捨去。
+- 已除權的前次衍生股數可納入後續股票股利的資格股數；未來取得實際撥券日後再調整成撥券日規則。
+- 股票權益從除權日起納入資產估值，但不可加入目前可賣股數，不可修改原始交易批次、買進成本或庫存。
+- 頁面需分別顯示：
+  - 現金股利收入
+  - 預估獲配股數
+  - 股票權益目前參考市值
+  - 現金加股票權益總價值
+- 需提示：「預估獲配股數可能包含小數，實際零股分配與入帳股數以公司及集保結果為準。」
+
+## 對應角色處理
+
+- 股利列表與詳情改讀 `cash`、`stock` object，不再以現金發放日作為事件唯一識別，請使用 `eventId`。
+- 持股資產總覽新增衍生股票權益估值，但交易／賣出流程仍只讀真實持股批次。
+- 若 `stock.ratio` 為 `null` 或 `0`，不顯示股票股利權益區塊。
+- 後台手動批次仍需 maintenance token；公開單股查詢不需 token。
+
+## 其他必要補充
+
+- 後端不刪除既有 Firebase 歷史文件，會漸進式寫入穩定事件鍵與 normalized payload。
+- 官方股利事件可能先有除權息日、稍後才補發放日；前端需允許 `paymentDate=null`。
+- 同年度可能有多次配息，列表不可再以年度或發放日自行去重。
+
+# 2026-07-23
+
+## 主旨
+
+後端新增本地每日維護 GUI 與跨 Render 任務鎖
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `GET /maintenance/batch-status` 新增：
+  - `items.priceFetchAll`
+  - `items.desktopOhlcDailyRelease`
+  - `items.desktopFundamentalsDailyRelease`
+- `GET /price?mode=all` 改回傳結構化批次結果
+- 維護 API 若同一任務正在 Render 或本地 GUI 執行，回 `409 maintenance task already running`
+
+## 改動內容
+
+- 後端可在 Render 停機時由維護者本機直接執行每日任務，前端公開資料 API URL 不變。
+- `/maintenance/batch-status` 的各項仍使用共同 maintenance status schema，新增任務可直接沿用既有卡片元件。
+- price 批次結果包含：
+  - `status`
+  - `totalCount`
+  - `successCount`
+  - `skippedCount`
+  - `failedCount`
+  - `failedStocks`
+- 維護按鈕收到 `409` 時，應顯示「相同任務正在其他執行來源運行」，不可立即自動重送。
+
+## 對應角色處理
+
+- 目前前端不需強制修改；公開資料頁與 ETF 畫面不受影響。
+- 若 `/dashboard/setting` 要顯示完整狀態，可補上三張新卡或合併至既有分組。
+- 本地維護 GUI 不會暴露給一般前端使用者，也不需要前端新增入口。
+
+## 其他必要補充
+
+- 本地 GUI 與 Render 共用 Firestore lease，避免 Postman 排程與本地補跑重複執行。
+- Telegram 失敗不會把主要資料寫入任務改標成失敗。
+
 # 2026-07-22
 
 ## 主旨

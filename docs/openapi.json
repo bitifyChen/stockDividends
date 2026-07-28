@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Stock Dividends Backend API",
-    "version": "2026-07-05",
+    "version": "2026-07-28",
     "description": "前台可串接的 stockDividendsPy API 規格。後端部署位置為 https://stockdividends.onrender.com。"
   },
   "servers": [
@@ -364,7 +364,7 @@
       "get": {
         "tags": ["Stock"],
         "summary": "取得或更新股利資料",
-        "description": "帶 `stockId` 時取得單一股票股利；帶 `mode=all` 時觸發全市場股利更新。 Maintenance token is required only when mode=all triggers the dividend batch update; stockId lookup remains public.",
+        "description": "帶 `stockId` 時取得官方來源優先的標準化股利事件；帶 `mode=all` 時觸發全市場股利更新。單股查詢公開，只有 mode=all 需要 maintenance token。",
         "x-frontend-purpose": "前台股票詳情可查單一股票股利；`mode=all` 為外部排程或後端維護使用。",
         "parameters": [
           {
@@ -386,6 +386,17 @@
               "enum": ["all"]
             },
             "description": "使用 `all` 觸發批次更新"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "default": "0"
+            },
+            "description": "僅 mode=all 使用。1 時忽略今日已完成判斷並重新更新。"
           }
         ],
         "responses": {
@@ -394,8 +405,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": ["object", "array"],
-                  "additionalProperties": true
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DividendEvent"
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/OfficialMarketBatchResponse"
+                    }
+                  ]
                 }
               }
             }
@@ -408,6 +428,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "相同維護任務已由 Render 或本地 GUI 執行中。"
           }
         },
         "security": [
@@ -1818,7 +1841,7 @@
       "get": {
         "tags": ["Internal"],
         "summary": "Get backend batch maintenance status",
-        "description": "Returns the latest known run and success status for backend maintenance jobs such as ETF fetch-all, dividend batch, ETF event summary notification, and OHLC daily fetch.",
+        "description": "Returns the latest known run and success status for price, dividend, ETF, website OHLC, Desktop OHLC and Desktop Fundamentals maintenance jobs.",
         "x-frontend-purpose": "後台維運頁使用，讓使用者在手動重跑前確認各功能最近成功時間。",
         "parameters": [
           {
@@ -1851,6 +1874,9 @@
                         "etfFetchAll": {
                           "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
+                        "priceFetchAll": {
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
+                        },
                         "dividendFetchAll": {
                           "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
@@ -1858,6 +1884,12 @@
                           "$ref": "#/components/schemas/MaintenanceJobStatus"
                         },
                         "ohlcDailyFetch": {
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
+                        },
+                        "desktopOhlcDailyRelease": {
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
+                        },
+                        "desktopFundamentalsDailyRelease": {
                           "$ref": "#/components/schemas/MaintenanceJobStatus"
                         }
                       }
@@ -3460,7 +3492,7 @@
       "get": {
         "tags": ["Stock"],
         "summary": "取得或更新股價資料",
-        "description": "帶 stockId 時取得單一股票價格；帶 mode=all 時觸發全市場股價更新。Maintenance token is required only when mode=all triggers the price batch update; stockId lookup remains public.",
+        "description": "帶 stockId 時取得最近官方交易日價格；帶 mode=all 時以 TWSE、TPEx 全市場行情更新 Firebase 追蹤股票，官方缺漏才使用 FinMind。單股查詢公開，只有 mode=all 需要 maintenance token。",
         "x-frontend-purpose": "前台股票詳情可查單一股票價格；`mode=all` 為外部排程或後端維護使用。",
         "parameters": [
           {
@@ -3482,6 +3514,17 @@
               "enum": ["all"]
             },
             "description": "使用 `all` 觸發批次更新"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "default": "0"
+            },
+            "description": "僅 mode=all 使用。1 時忽略今日已完成判斷並重新更新。"
           }
         ],
         "responses": {
@@ -3490,8 +3533,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": ["object", "array"],
-                  "additionalProperties": true
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/OfficialMarketBatchResponse"
+                    }
+                  ]
                 }
               }
             }
@@ -3504,6 +3557,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "相同維護任務已由 Render 或本地 GUI 執行中。"
           }
         },
         "security": [
@@ -5881,6 +5937,111 @@
               "additionalProperties": true
             }
           }
+        },
+        "additionalProperties": true
+      },
+      "OfficialMarketBatchResponse": {
+        "type": "object",
+        "required": ["status", "sourceDate", "officialCount", "fallbackCount", "updatedCount", "unchangedCount", "failedItems"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["success", "partial_success", "failed"]
+          },
+          "sourceDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "官方資料實際交易日或報表日，不是批次執行日。"
+          },
+          "officialCount": {
+            "type": "integer"
+          },
+          "fallbackCount": {
+            "type": "integer",
+            "description": "實際呼叫 FinMind fallback 的股票數。"
+          },
+          "updatedCount": {
+            "type": "integer"
+          },
+          "unchangedCount": {
+            "type": "integer"
+          },
+          "failedItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stockCode": {"type": "string"},
+                "error": {"type": "string"}
+              }
+            }
+          },
+          "sourceErrors": {
+            "type": "array",
+            "description": "TWSE 或 TPEx 整體來源錯誤；其他可用市場仍會繼續更新。",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {"type": "string"},
+                "error": {"type": "string"}
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "DividendCash": {
+        "type": "object",
+        "required": ["earningsPerShare", "reservePerShare", "totalPerShare"],
+        "properties": {
+          "earningsPerShare": {"type": "number"},
+          "legalReservePerShare": {"type": "number"},
+          "capitalReservePerShare": {"type": "number"},
+          "reservePerShare": {"type": "number"},
+          "totalPerShare": {"type": "number"},
+          "exDate": {"type": ["string", "null"], "format": "date"},
+          "paymentDate": {"type": ["string", "null"], "format": "date"}
+        }
+      },
+      "DividendStock": {
+        "type": "object",
+        "required": ["earningsPerShare", "reservePerShare", "totalPerShare", "ratio"],
+        "properties": {
+          "earningsPerShare": {"type": "number"},
+          "legalReservePerShare": {"type": "number"},
+          "capitalReservePerShare": {"type": "number"},
+          "reservePerShare": {"type": "number"},
+          "totalPerShare": {"type": "number"},
+          "ratio": {
+            "type": ["number", "null"],
+            "description": "每持有一股預估獲配股數；例如 0.1 表示 1,000 股預估獲配 100 股。"
+          },
+          "exDate": {"type": ["string", "null"], "format": "date"}
+        }
+      },
+      "DividendEvent": {
+        "type": "object",
+        "required": ["eventId", "stockCode", "cash", "stock", "source", "contentHash"],
+        "properties": {
+          "eventId": {"type": "string", "example": "2025-annual-1"},
+          "stockCode": {"type": "string", "example": "2330"},
+          "fiscalYear": {"type": ["integer", "null"], "example": 2025},
+          "period": {"type": ["string", "null"], "example": "annual"},
+          "sequence": {"type": ["string", "null"], "example": "1"},
+          "decisionStatus": {"type": ["string", "null"]},
+          "decisionDate": {"type": ["string", "null"], "format": "date"},
+          "cash": {"$ref": "#/components/schemas/DividendCash"},
+          "stock": {"$ref": "#/components/schemas/DividendStock"},
+          "source": {"type": "string", "enum": ["TWSE", "TPEx", "FinMind"]},
+          "updatedAt": {"type": "string", "format": "date-time"},
+          "contentHash": {"type": "string"},
+          "CashEarningsDistribution": {"type": "number", "deprecated": true},
+          "CashStatutorySurplus": {"type": "number", "deprecated": true},
+          "CashExDividendTradingDate": {"type": ["string", "null"], "deprecated": true},
+          "CashDividendPaymentDate": {"type": ["string", "null"], "deprecated": true},
+          "StockEarningsDistribution": {"type": "number", "deprecated": true},
+          "StockStatutorySurplus": {"type": "number", "deprecated": true},
+          "StockExDividendTradingDate": {"type": ["string", "null"], "deprecated": true}
         },
         "additionalProperties": true
       },
