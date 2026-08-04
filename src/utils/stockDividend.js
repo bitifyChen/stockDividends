@@ -78,10 +78,107 @@ export const normalizeDividendEvent = (event, stockCode = '') => {
   }
 }
 
-export const normalizeDividendEvents = (events, stockCode = '') =>
-  (Array.isArray(events) ? events : [])
-    .map((event) => normalizeDividendEvent(event, stockCode))
+const hasObjectValue = (value) => value && typeof value === 'object' && !Array.isArray(value)
+
+const normalizeNumber = (value) => {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? String(numberValue) : ''
+}
+
+const getEventSignature = (event) => {
+  const dateAnchor =
+    event.cash.exDate || event.cash.paymentDate || event.stock.exDate || event.decisionDate
+  if (!dateAnchor) return null
+
+  return [
+    event.stockCode,
+    event.cash.exDate || '',
+    event.cash.paymentDate || '',
+    normalizeNumber(event.cash.totalPerShare),
+    event.stock.exDate || '',
+    event.stock.ratio === null || event.stock.ratio === 0 ? '' : normalizeNumber(event.stock.ratio),
+    event.decisionDate && !event.cash.exDate && !event.cash.paymentDate && !event.stock.exDate
+      ? event.decisionDate
+      : ''
+  ].join('|')
+}
+
+const getEventIdentity = (event, rawEvent) => ({
+  eventId: rawEvent?.eventId || rawEvent?.id || null,
+  contentHash: rawEvent?.contentHash || null,
+  signature: getEventSignature(event)
+})
+
+const hasMatchingIdentity = (left, right) =>
+  (left.eventId && left.eventId === right.eventId) ||
+  (left.contentHash && left.contentHash === right.contentHash) ||
+  (left.signature && left.signature === right.signature)
+
+const getEventQuality = (rawEvent) => {
+  let quality = 0
+  if (hasObjectValue(rawEvent?.cash)) quality += 4
+  if (hasObjectValue(rawEvent?.stock)) quality += 4
+  if (rawEvent?.contentHash) quality += 2
+  if (rawEvent?.source === 'TWSE' || rawEvent?.source === 'TPEx') quality += 2
+  if (rawEvent?.eventId) quality += 1
+  if (rawEvent?.updatedAt) quality += 1
+  return quality
+}
+
+export const normalizeDividendEvents = (events, stockCode = '') => {
+  const candidates = (Array.isArray(events) ? events : [])
+    .map((rawEvent) => {
+      const event = normalizeDividendEvent(rawEvent, stockCode)
+      if (!event) return null
+      return {
+        event,
+        identity: getEventIdentity(event, rawEvent),
+        quality: getEventQuality(rawEvent)
+      }
+    })
     .filter(Boolean)
+
+  const uniqueCandidates = []
+  candidates.forEach((candidate) => {
+    const duplicateIndex = uniqueCandidates.findIndex((existing) =>
+      hasMatchingIdentity(existing.identity, candidate.identity)
+    )
+
+    if (duplicateIndex === -1) {
+      uniqueCandidates.push(candidate)
+      return
+    }
+
+    if (candidate.quality > uniqueCandidates[duplicateIndex].quality) {
+      uniqueCandidates[duplicateIndex] = candidate
+    }
+  })
+
+  return uniqueCandidates.map(({ event }) => event)
+}
+
+export const getDividendAnnualTotals = (rows) => {
+  const totalsByStock = new Map()
+
+  ;(Array.isArray(rows) ? rows : []).forEach((row) => {
+    const stockId = String(row?.stockId || '')
+    const cashIncome = toNumber(row?.cashIncome ?? row?.total)
+    if (!stockId || cashIncome <= 0) return
+
+    const current = totalsByStock.get(stockId)
+    if (current) {
+      current.yearTotal += cashIncome
+    } else {
+      totalsByStock.set(stockId, {
+        stockId,
+        stockName: row?.stockName || '-',
+        yearTotal: cashIncome
+      })
+    }
+  })
+
+  return Array.from(totalsByStock.values()).sort((a, b) => b.yearTotal - a.yearTotal)
+}
 
 export const isDividendEligibleLot = (lot, exDate) => {
   const normalizedExDate = toDividendDate(exDate)

@@ -1,8 +1,8 @@
 <script setup>
 import Chart from 'chart.js/auto'
-import { ref, computed, onMounted } from 'vue'
-import { add, multiply, round } from '@/composables/useMath.js'
-import dayjs from 'dayjs'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { add } from '@/composables/useMath.js'
+import { getDividendAnnualTotals } from '@/utils/stockDividend.js'
 const props = defineProps({
   data: {
     type: Array,
@@ -10,26 +10,10 @@ const props = defineProps({
   }
 })
 const chartHook = ref(null)
-const stockData = computed(() => {
-  const _data = {}
-  props.data.forEach((item) => {
-    if (_data[item.stockId]) {
-      _data[item.stockId].yearTotal = add(_data[item.stockId].yearTotal, item.total)
-    } else {
-      _data[item.stockId] = {
-        stockName: item.stockName,
-        stockId: item.stockId,
-        yearTotal: item.total
-      }
-    }
-  })
-
-  const sortedData = Object.keys(_data)
-    .map((e) => _data[e])
-    .sort((a, b) => b.yearTotal - a.yearTotal)
-
-  const topFour = sortedData.slice(0, 4)
-  const remainingTotal = sortedData.slice(4).reduce((acc, item) => add(acc, item.yearTotal), 0)
+const stockData = computed(() => getDividendAnnualTotals(props.data))
+const chartData = computed(() => {
+  const topFour = stockData.value.slice(0, 4)
+  const remainingTotal = stockData.value.slice(4).reduce((acc, item) => add(acc, item.yearTotal), 0)
 
   if (remainingTotal > 0) {
     topFour.push({
@@ -41,15 +25,18 @@ const stockData = computed(() => {
 
   return topFour
 })
+const chartInstance = ref(null)
+const formatCurrency = (value) => Math.round(Number(value) || 0).toLocaleString()
 onMounted(() => {
   const ctx = chartHook.value
-  new Chart(ctx, {
+  if (!ctx || !chartData.value.length) return
+  chartInstance.value = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: stockData.value.map((item) => item.stockName),
+      labels: chartData.value.map((item) => item.stockName),
       datasets: [
         {
-          data: stockData.value.map((item) => item.yearTotal),
+          data: chartData.value.map((item) => item.yearTotal),
           borderWidth: 1,
           backgroundColor: [
             'rgb(255, 99, 132)',
@@ -63,12 +50,34 @@ onMounted(() => {
     }
   })
 })
+onBeforeUnmount(() => chartInstance.value?.destroy())
 </script>
 
 <template>
-  <div>
-    <div>前五名股票是</div>
-    <canvas ref="chartHook"></canvas>
+  <div class="space-y-[12px]">
+    <div class="font-black text-[var(--text-main-color)]">個股年度股利合計</div>
+    <div v-if="stockData.length" class="space-y-[8px]">
+      <div
+        v-for="item in stockData"
+        :key="item.stockId"
+        class="flex items-center justify-between gap-[12px] rounded-lg border border-[var(--main-gray-color)] px-[10px] py-[8px]"
+      >
+        <div class="min-w-0">
+          <div class="truncate font-black text-[var(--main-primary-color)]">
+            {{ item.stockId }} {{ item.stockName }}
+          </div>
+          <div class="text-[12px] text-[var(--text-secondary-color)]">現金股利</div>
+        </div>
+        <div class="shrink-0 text-right font-black text-[var(--main-primary-color)]">
+          {{ formatCurrency(item.yearTotal) }} 元
+        </div>
+      </div>
+    </div>
+    <div v-else class="text-[var(--text-secondary-color)]">本年度沒有個股股利資料</div>
+    <div v-if="chartData.length" class="border-t border-[var(--main-gray-color)] pt-[12px]">
+      <div class="mb-[8px] text-[12px] text-[var(--text-secondary-color)]">年度分布</div>
+      <canvas ref="chartHook"></canvas>
+    </div>
   </div>
 </template>
 
