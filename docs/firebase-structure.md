@@ -92,6 +92,76 @@
 - 若是部分賣出，會再新增一筆剩餘持股紀錄
 - 若全數賣出，則只保留原紀錄的賣出狀態
 
+### `users/{uid}/settings/portfolioImport`
+
+用途：
+
+- 儲存本機匯入對帳用的隨機 salt
+- salt 只用來將券商帳號轉成不可逆的識別碼，不保存帳號明文
+
+### `users/{uid}/portfolioImportBatches`
+
+用途：
+
+- 儲存每次匯入的來源、資料日期、解析統計與匯入指紋
+- 保存對帳結果的數量摘要，不保存完整流水列
+- 不保存原始 PDF、PDF 密碼或流水全文
+- 匯入指紋作為文件 ID，讓相同檔案重跑時維持冪等
+
+摘要欄位：
+
+- `sourceId`：canonical result 的統一來源識別碼；`adapterId` 供相容既有 adapter 命名
+- `reconciliationSummary`：已核對、可補入、待確認、未涵蓋與選取數量等統計
+
+### `users/{uid}/portfolioReconciliationAdjustments`
+
+用途：
+
+- 儲存使用者確認後的持股數量差額
+- 目前僅允許正向差額，以「成本待補」的方式加入持股計算
+- 不會自動建立買進交易，也不會因負向差額自動賣出或刪除既有交易
+
+目前欄位：
+
+- `stockId`
+- `shares`
+- `baselineAppShares`：建立這筆差額時 App 已有的有效股數，用於重跑冪等與保留後續人工交易差額
+- `direction`：目前為 `add`
+- `recordType`：`reconciliation-adjustment`
+- `costBasisStatus`：目前為 `unknown`
+- `effectiveDate`
+- `sourceId`、`sourceFingerprints`、`accountFingerprints`
+- `importBatchId`
+- `status`：目前為 `confirmed`
+
+### `users/{uid}/portfolioImportSources`
+
+用途：
+
+- 儲存已辨識匯入來源的非敏感摘要
+- 目前來源為集保流水 PDF；未來可新增台新手機截圖等獨立 adapter
+- `accountFingerprint` 由本機 salt 與帳戶識別資訊雜湊而成，不保存帳號明文
+
+### `users/{uid}/portfolioImportHoldings`
+
+用途：
+
+- 儲存每個來源帳戶／券商對每支股票的最新觀測股數，供後台依券商瀏覽
+- 文件 ID 由 `accountFingerprint` 與 `stockId` 組成，同一帳戶的同一股票維持單一快照
+- 快照只保存來源識別、股票代號、觀測股數與資料日期，不保存原始 PDF、密碼或完整帳號
+
+目前欄位：
+
+- `stockId`
+- `observedShares`
+- `sourceAsOfDate`
+- `accountFingerprint`
+- `sourceFingerprint`
+- `sourceId`
+- `brokerName`
+- `brokerBranchCode`
+- `importFingerprint`
+
 ---
 
 ### `stocks`
@@ -259,4 +329,3 @@ URL 格式：
 - `src/composables/piniaStock.js`
 - `src/stores/useStock.js`
 - `src/router/index.js`
-

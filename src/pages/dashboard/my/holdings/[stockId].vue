@@ -25,6 +25,8 @@ const loading = computed(() => stockStore.loading)
 
 const totalShares = computed(() => toNumber(stock.value?.buyNum))
 const totalCost = computed(() => toNumber(stock.value?.buyPrice))
+const unknownCostShares = computed(() => toNumber(stock.value?.unknownCostShares))
+const knownCostShares = computed(() => Math.max(0, totalShares.value - unknownCostShares.value))
 const marketValue = computed(
   () =>
     toNumber(stock.value?.realHoldingMarketValue) ||
@@ -36,13 +38,25 @@ const estimatedStockShares = computed(() =>
 )
 const stockRightsMarketValue = computed(() => toNumber(stock.value?.stockRightsMarketValue))
 const totalReferenceMarketValue = computed(() => marketValue.value + stockRightsMarketValue.value)
-const avgCost = computed(() => (totalShares.value ? totalCost.value / totalShares.value : 0))
-const unrealizedProfit = computed(() => marketValue.value - totalCost.value)
+const avgCost = computed(() =>
+  knownCostShares.value ? totalCost.value / knownCostShares.value : 0
+)
+const unrealizedProfit = computed(() =>
+  unknownCostShares.value > 0 ? null : marketValue.value - totalCost.value
+)
 const totalDividend = computed(() => toNumber(stockDividendRights.value.cashIncome))
-const totalReturn = computed(
-  () => unrealizedProfit.value + totalDividend.value + stockRightsMarketValue.value
+const totalReturn = computed(() =>
+  unrealizedProfit.value === null
+    ? null
+    : unrealizedProfit.value + totalDividend.value + stockRightsMarketValue.value
 )
 const hasStockDividend = computed(() => estimatedStockShares.value > 0)
+
+const costCoverageLabel = computed(() =>
+  unknownCostShares.value > 0
+    ? `待補 ${formatShare(unknownCostShares.value, dashboardSettingStore.shareUnit)}`
+    : '完整'
+)
 
 const metrics = computed(() => [
   {
@@ -79,12 +93,19 @@ const metrics = computed(() => [
     label: '總參考市值',
     value: formatCurrency(totalReferenceMarketValue.value),
     icon: WalletCards
+  },
+  {
+    label: '成本覆蓋',
+    value: costCoverageLabel.value,
+    icon: WalletCards
   }
 ])
 
 const formatCurrency = (value) => `$ ${Math.round(toNumber(value)).toLocaleString()}`
 const formatSignedCurrency = (value) =>
-  `${toNumber(value) >= 0 ? '+' : '-'}${formatCurrency(Math.abs(toNumber(value)))}`
+  value === null || value === undefined
+    ? '-'
+    : `${toNumber(value) >= 0 ? '+' : '-'}${formatCurrency(Math.abs(toNumber(value)))}`
 const lotStatus = (lot) => (lot.sellDate ? '已賣出' : '持有中')
 const lotProfit = (lot) => {
   const exitPrice = lot.sellDate ? toNumber(lot.sellPrice) : toNumber(stock.value?.price)
@@ -118,10 +139,13 @@ onMounted(() => {
 
         <div class="return-card">
           <span>總損益</span>
-          <strong :class="totalReturn >= 0 ? 'value-up' : 'value-down'">
-            {{ formatSignedCurrency(totalReturn) }}
-          </strong>
-          <small>未實現 {{ formatSignedCurrency(unrealizedProfit) }}</small>
+          <template v-if="totalReturn !== null">
+            <strong :class="totalReturn >= 0 ? 'value-up' : 'value-down'">
+              {{ formatSignedCurrency(totalReturn) }}
+            </strong>
+            <small>未實現 {{ formatSignedCurrency(unrealizedProfit) }}</small>
+          </template>
+          <el-tag v-else type="warning" round effect="plain">成本待補</el-tag>
         </div>
       </div>
 

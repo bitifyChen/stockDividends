@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   BarChart3,
   CircleDollarSign,
@@ -10,9 +11,12 @@ import {
   Search,
   Trash2,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
+  Upload
 } from 'lucide-vue-next'
 import DashboardStockTradeDrawer from '@/components/dashboard/DashboardStockTradeDrawer.vue'
+import DashboardPortfolioImportDialog from '@/components/dashboard/DashboardPortfolioImportDialog.vue'
+import stockName from '@/data/stockName.json'
 import { deleteStock } from '@/firebase/stock.js'
 import { useDashboardSettingStore } from '@/stores/useDashboardSetting.js'
 import { useStockStore } from '@/stores/useStock.js'
@@ -28,11 +32,13 @@ const stockStore = useStockStore()
 const dashboardSettingStore = useDashboardSettingStore()
 const loading = computed(() => stockStore.loading)
 const searchQuery = ref('')
+const selectedBrokerId = ref('all')
 const tradeDrawerRef = ref(null)
+const importDialogRef = ref(null)
 
 const getStockMethod = (force = false) => stockStore.getData(force)
 
-const holdingRows = computed(() => {
+const allHoldingRows = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase()
 
   return Object.keys(stockStore.stockList)
@@ -44,18 +50,26 @@ const holdingRows = computed(() => {
       const marketValue = toNumber(item.realHoldingMarketValue) || currentPrice * shares
       const stockRightsMarketValue = toNumber(item.stockRightsMarketValue)
       const estimatedStockShares = toNumber(item.stockDividendRights?.estimatedStockShares)
+      const unknownCostShares = toNumber(item.unknownCostShares)
+      const knownCostShares = Math.max(0, shares - unknownCostShares)
       const totalReferenceMarketValue = marketValue + stockRightsMarketValue
-      const profit = currentPrice ? marketValue - totalCost : 0
-      const totalReferenceProfit = profit + stockRightsMarketValue
-      const profitRate = totalCost > 0 ? (totalReferenceProfit / totalCost) * 100 : 0
+      const profit = unknownCostShares > 0 ? null : currentPrice ? marketValue - totalCost : 0
+      const totalReferenceProfit = profit === null ? null : profit + stockRightsMarketValue
+      const profitRate =
+        totalReferenceProfit === null || totalCost <= 0
+          ? null
+          : (totalReferenceProfit / totalCost) * 100
       const lots = Array.isArray(item.data) ? item.data : []
 
       return {
         id,
         name: item.name,
         shares,
-        avgCost: shares > 0 ? totalCost / shares : 0,
+        avgCost: knownCostShares > 0 ? totalCost / knownCostShares : 0,
         totalCost,
+        unknownCostShares,
+        knownCostShares,
+        costCoverageStatus: unknownCostShares > 0 ? 'incomplete' : 'complete',
         currentPrice,
         marketValue,
         estimatedStockShares,
@@ -74,6 +88,105 @@ const holdingRows = computed(() => {
     )
 })
 
+const brokerOptions = computed(() => {
+  const names = new Map()
+  const sources = Array.isArray(stockStore.orgImportSources) ? stockStore.orgImportSources : []
+  sources.forEach((source) => {
+    const brokerName = String(source.brokerName || '').trim()
+    if (brokerName) names.set(brokerName, brokerName)
+  })
+
+  return [
+    { value: 'all', label: '全部' },
+    ...Array.from(names, ([value, label]) => ({ value, label }))
+  ]
+})
+
+const brokerHoldingRows = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase()
+  const holdingsByStock = new Map()
+
+  const holdings = Array.isArray(stockStore.orgImportHoldings) ? stockStore.orgImportHoldings : []
+  holdings
+    .filter((snapshot) => snapshot.brokerName === selectedBrokerId.value)
+    .forEach((snapshot) => {
+      const stockId = String(snapshot.stockId || '')
+      if (!stockId) return
+
+      const current = holdingsByStock.get(stockId) || {
+        id: stockId,
+        shares: 0,
+        sourceAsOfDate: null
+      }
+      current.shares += toNumber(snapshot.observedShares)
+      if (
+        !current.sourceAsOfDate ||
+        String(snapshot.sourceAsOfDate || '') > current.sourceAsOfDate
+      ) {
+        current.sourceAsOfDate = snapshot.sourceAsOfDate || null
+      }
+      holdingsByStock.set(stockId, current)
+    })
+
+  return Array.from(holdingsByStock.values())
+    .filter((item) => item.shares > 0)
+    .map((item) => {
+      const currentPrice = toNumber(stockStore.orgPriceData[item.id])
+      const marketValue = currentPrice * item.shares
+
+      return {
+        ...item,
+        name: stockName[item.id] || '-',
+        avgCost: null,
+        totalCost: null,
+        unknownCostShares: item.shares,
+        knownCostShares: 0,
+        costCoverageStatus: 'unknown',
+        isBrokerSnapshot: true,
+        currentPrice,
+        marketValue,
+        estimatedStockShares: 0,
+        stockRightsMarketValue: 0,
+        totalReferenceMarketValue: marketValue,
+        totalReferenceProfit: null,
+        profit: null,
+        profitRate: null,
+        lots: [],
+        openLots: 0,
+        closedLots: 0
+      }
+    })
+    .filter(
+      (item) => !keyword || item.name?.toLowerCase().includes(keyword) || item.id.includes(keyword)
+    )
+})
+
+const holdingRows = computed(() =>
+  selectedBrokerId.value === 'all' ? allHoldingRows.value : brokerHoldingRows.value
+)
+
+const brokerLatestDate = computed(() =>
+  brokerHoldingRows.value
+    .map((item) => item.sourceAsOfDate)
+    .filter(Boolean)
+    .sort()
+    .at(-1)
+)
+
+const selectedBroker = computed(() =>
+  brokerOptions.value.find((option) => option.value === selectedBrokerId.value)
+)
+
+watch(
+  brokerOptions,
+  (options) => {
+    if (!options.some((option) => option.value === selectedBrokerId.value)) {
+      selectedBrokerId.value = 'all'
+    }
+  },
+  { immediate: true }
+)
+
 const portfolioSummary = computed(() =>
   holdingRows.value.reduce(
     (summary, item) => {
@@ -83,6 +196,7 @@ const portfolioSummary = computed(() =>
       summary.totalReferenceMarketValue += item.totalReferenceMarketValue
       summary.profit += item.profit
       summary.shares += item.shares
+      summary.unknownCostShares += item.unknownCostShares
       return summary
     },
     {
@@ -91,7 +205,8 @@ const portfolioSummary = computed(() =>
       stockRightsMarketValue: 0,
       totalReferenceMarketValue: 0,
       profit: 0,
-      shares: 0
+      shares: 0,
+      unknownCostShares: 0
     }
   )
 )
@@ -99,7 +214,9 @@ const portfolioSummary = computed(() =>
 const formatCurrency = (value) => `$ ${Math.round(toNumber(value)).toLocaleString()}`
 const formatPercent = (value) => `${Math.abs(toNumber(value)).toFixed(2)}%`
 const formatSignedCurrency = (value) =>
-  `${toNumber(value) >= 0 ? '+' : '-'}${formatCurrency(Math.abs(toNumber(value)))}`
+  value === null || value === undefined
+    ? '-'
+    : `${toNumber(value) >= 0 ? '+' : '-'}${formatCurrency(Math.abs(toNumber(value)))}`
 const lotStatus = (lot) => (lot.sellDate ? '已賣出' : '持有中')
 const lotProfit = (lot, stockPrice) => {
   const exitPrice = lot.sellDate ? toNumber(lot.sellPrice) : toNumber(stockPrice)
@@ -109,6 +226,10 @@ const lotProfit = (lot, stockPrice) => {
 
 const openBuyDrawer = (stockId = '') => {
   tradeDrawerRef.value?.open({ type: 'buy', stockId })
+}
+
+const openImportDialog = () => {
+  importDialogRef.value?.open()
 }
 
 const openEditDrawer = (item) => {
@@ -158,6 +279,15 @@ onMounted(() => {
           <Plus :size="16" />
           新增買進
         </button>
+        <button
+          class="action-button secondary-action"
+          type="button"
+          :disabled="loading"
+          @click="openImportDialog"
+        >
+          <Upload :size="16" />
+          自動匯入
+        </button>
         <button class="icon-button" type="button" :disabled="loading" @click="getStockMethod(true)">
           <RefreshCw :size="16" />
         </button>
@@ -171,7 +301,9 @@ onMounted(() => {
       </article>
       <article class="ticker-card">
         <span>投入成本</span>
-        <strong>{{ formatCurrency(portfolioSummary.totalCost) }}</strong>
+        <strong>{{
+          selectedBrokerId === 'all' ? formatCurrency(portfolioSummary.totalCost) : '未提供'
+        }}</strong>
       </article>
       <article class="ticker-card">
         <span>真實持股市值</span>
@@ -179,7 +311,11 @@ onMounted(() => {
       </article>
       <article class="ticker-card">
         <span>股票權益參考市值</span>
-        <strong>{{ formatCurrency(portfolioSummary.stockRightsMarketValue) }}</strong>
+        <strong>{{
+          selectedBrokerId === 'all'
+            ? formatCurrency(portfolioSummary.stockRightsMarketValue)
+            : '未計算'
+        }}</strong>
       </article>
       <article class="ticker-card">
         <span>總參考市值</span>
@@ -189,12 +325,33 @@ onMounted(() => {
 
     <section class="terminal-panel" v-loading="loading">
       <div class="panel-head">
-        <h2>目前持股</h2>
-        <span>{{ holdingRows.length }} 檔股票 · 股票權益不計入可賣股數</span>
+        <div>
+          <h2>目前持股</h2>
+          <span v-if="selectedBrokerId === 'all'">
+            {{ holdingRows.length }} 檔股票 · 股票權益不計入可賣股數
+          </span>
+          <span v-else>
+            {{ selectedBroker?.label || '券商' }} · {{ holdingRows.length }} 檔股票 · 資料日
+            {{ brokerLatestDate || '未知' }}
+          </span>
+        </div>
+        <el-select
+          v-model="selectedBrokerId"
+          class="broker-select"
+          aria-label="持股來源"
+          placeholder="選擇持股來源"
+        >
+          <el-option
+            v-for="option in brokerOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
       </div>
 
       <el-table :data="holdingRows" style="width: 100%" class="terminal-el-table" row-key="id">
-        <el-table-column type="expand">
+        <el-table-column v-if="selectedBrokerId === 'all'" type="expand">
           <template #default="{ row }">
             <div class="lot-panel">
               <div class="lot-panel-head">
@@ -277,6 +434,15 @@ onMounted(() => {
             <div class="stock-cell">
               <strong>{{ row.name }}</strong>
               <span>{{ row.id }}</span>
+              <el-tag
+                v-if="row.unknownCostShares > 0"
+                type="warning"
+                size="small"
+                round
+                effect="plain"
+              >
+                成本待補 {{ formatShare(row.unknownCostShares, dashboardSettingStore.shareUnit) }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -290,7 +456,10 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column label="平均成本" align="right" width="120">
-          <template #default="{ row }">$ {{ row.avgCost.toFixed(2) }}</template>
+          <template #default="{ row }">
+            <span v-if="row.isBrokerSnapshot" class="muted-text">未提供</span>
+            <span v-else>$ {{ row.avgCost.toFixed(2) }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="現價" align="right" width="120">
           <template #default="{ row }">$ {{ row.currentPrice?.toLocaleString() || '-' }}</template>
@@ -326,20 +495,28 @@ onMounted(() => {
         >
           <template #default="{ row }">
             <div class="profit-cell">
-              <strong :class="row.totalReferenceProfit >= 0 ? 'value-up' : 'value-down'">
-                {{ formatSignedCurrency(row.totalReferenceProfit) }}
-              </strong>
-              <span :class="row.profitRate >= 0 ? 'value-up' : 'value-down'">
-                <TrendingUp v-if="row.profitRate >= 0" :size="12" />
-                <TrendingDown v-else :size="12" />
-                {{ formatPercent(row.profitRate) }}
-              </span>
+              <template v-if="row.costCoverageStatus === 'complete'">
+                <strong :class="row.totalReferenceProfit >= 0 ? 'value-up' : 'value-down'">
+                  {{ formatSignedCurrency(row.totalReferenceProfit) }}
+                </strong>
+                <span :class="row.profitRate >= 0 ? 'value-up' : 'value-down'">
+                  <TrendingUp v-if="row.profitRate >= 0" :size="12" />
+                  <TrendingDown v-else :size="12" />
+                  {{ formatPercent(row.profitRate) }}
+                </span>
+              </template>
+              <el-tag v-else type="warning" size="small" round effect="plain">
+                {{ row.isBrokerSnapshot ? '成本未知' : '成本待補' }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="批次" align="center" width="110">
           <template #default="{ row }">
-            <span class="muted-text">{{ row.openLots }} 持有 / {{ row.closedLots }} 已賣</span>
+            <span v-if="row.isBrokerSnapshot" class="muted-text">來源快照</span>
+            <span v-else class="muted-text"
+              >{{ row.openLots }} 持有 / {{ row.closedLots }} 已賣</span
+            >
           </template>
         </el-table-column>
         <el-table-column label="操作" align="right" width="180">
@@ -357,12 +534,15 @@ onMounted(() => {
           </template>
         </el-table-column>
         <template #empty>
-          <div class="terminal-empty">目前沒有持股資料</div>
+          <div class="terminal-empty">
+            {{ selectedBrokerId === 'all' ? '目前沒有持股資料' : '此券商目前沒有可用持股快照' }}
+          </div>
         </template>
       </el-table>
     </section>
 
     <DashboardStockTradeDrawer ref="tradeDrawerRef" @finish="getStockMethod(true)" />
+    <DashboardPortfolioImportDialog ref="importDialogRef" @finish="getStockMethod(true)" />
   </div>
 </template>
 
@@ -424,8 +604,15 @@ h2 {
 
 .titlebar-actions {
   display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.terminal-titlebar > :first-child {
+  min-width: 0;
 }
 
 .terminal-search {
@@ -470,14 +657,23 @@ h2 {
 .action-button {
   height: 38px;
   padding: 0 12px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .icon-button {
   width: 38px;
   height: 38px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .icon-button:disabled {
+  opacity: 0.5;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
   opacity: 0.5;
 }
 
@@ -516,6 +712,11 @@ h2 {
 .panel-head {
   padding: 15px 16px;
   border-bottom: 1px solid var(--main-border-color);
+}
+
+.broker-select {
+  width: 180px;
+  flex: 0 0 auto;
 }
 
 .panel-head span,
@@ -630,6 +831,15 @@ h2 {
   .terminal-search,
   .action-button,
   .icon-button {
+    width: 100%;
+  }
+
+  .panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .broker-select {
     width: 100%;
   }
 

@@ -194,11 +194,30 @@ export const getEligibleShares = (lots, exDate) =>
     .filter((lot) => isDividendEligibleLot(lot, exDate))
     .reduce((total, lot) => total + toNumber(lot.buyNum), 0)
 
+export const isQuantityAdjustmentEligible = (adjustment, exDate) => {
+  const normalizedExDate = toDividendDate(exDate)
+  const effectiveDate = toDividendDate(adjustment?.effectiveDate)
+  return (
+    adjustment?.status === 'confirmed' &&
+    adjustment?.direction === 'add' &&
+    normalizedExDate &&
+    effectiveDate &&
+    effectiveDate < normalizedExDate
+  )
+}
+
+export const getEligibleSharesWithAdjustments = (lots, quantityAdjustments, exDate) =>
+  getEligibleShares(lots, exDate) +
+  (Array.isArray(quantityAdjustments) ? quantityAdjustments : [])
+    .filter((adjustment) => isQuantityAdjustmentEligible(adjustment, exDate))
+    .reduce((total, adjustment) => total + toNumber(adjustment.shares), 0)
+
 const getEventDisplayDate = (event) =>
   event.cash.paymentDate || event.cash.exDate || event.stock.exDate || event.decisionDate
 
 export const buildStockDividendBenefits = ({
   lots = [],
+  quantityAdjustments = [],
   events = [],
   currentPrice = 0,
   stockCode = '',
@@ -215,7 +234,11 @@ export const buildStockDividendBenefits = ({
       (a, b) => a.stock.exDate.localeCompare(b.stock.exDate) || a.eventId.localeCompare(b.eventId)
     )
     .forEach((event) => {
-      const transactionShares = getEligibleShares(lots, event.stock.exDate)
+      const transactionShares = getEligibleSharesWithAdjustments(
+        lots,
+        quantityAdjustments,
+        event.stock.exDate
+      )
       const eligibleShares = transactionShares + recognizedDerivedShares
       const estimatedShares = eligibleShares * event.stock.ratio
       const isRecognized = event.stock.exDate <= today
@@ -233,7 +256,9 @@ export const buildStockDividendBenefits = ({
   const rows = normalizedEvents
     .map((event) => {
       const cashEligibleShares =
-        event.cash.totalPerShare > 0 ? getEligibleShares(lots, event.cash.exDate) : 0
+        event.cash.totalPerShare > 0
+          ? getEligibleSharesWithAdjustments(lots, quantityAdjustments, event.cash.exDate)
+          : 0
       const cashIncome = cashEligibleShares * event.cash.totalPerShare
       const stockBenefit = stockBenefits.get(event.eventId) || {
         transactionShares: 0,

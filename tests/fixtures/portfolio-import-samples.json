@@ -1,0 +1,112 @@
+{
+  "samples": [
+    {
+      "id": "broker-a-original",
+      "sourceGeneratedAt": "2026-08-10T08:00:00+08:00",
+      "accountFingerprint": "fixture-account-broker-a",
+      "sourceType": "fixture-broker-a",
+      "sourceMedia": "pdf",
+      "brokerName": "測試券商甲",
+      "brokerBranchCode": "A001",
+      "queryStart": "2026-01-01",
+      "queryEnd": "2026-08-10",
+      "sourceAsOfDate": "2026-08-10",
+      "rows": [
+        {
+          "sourceRecordId": "a-2330-transfer-out",
+          "stockId": "2330",
+          "stockName": "測試股票甲",
+          "tradeDate": "2026-08-10",
+          "summary": "合併轉出",
+          "operationType": "transfer",
+          "withdrawal": 100,
+          "deposit": null,
+          "balance": 0
+        },
+        {
+          "sourceRecordId": "a-0050-buy",
+          "stockId": "0050",
+          "stockName": "測試 ETF",
+          "tradeDate": "2026-08-08",
+          "summary": "買進",
+          "operationType": "buy",
+          "withdrawal": null,
+          "deposit": 100,
+          "balance": 100
+        }
+      ]
+    },
+    {
+      "id": "broker-a-reissued",
+      "sourceGeneratedAt": "2026-08-10T12:00:00+08:00",
+      "accountFingerprint": "fixture-account-broker-a",
+      "sourceType": "fixture-broker-a",
+      "sourceMedia": "pdf",
+      "brokerName": "測試券商甲",
+      "brokerBranchCode": "A001",
+      "queryStart": "2026-01-01",
+      "queryEnd": "2026-08-10",
+      "sourceAsOfDate": "2026-08-10",
+      "rows": [
+        {
+          "sourceRecordId": "a-2330-transfer-out",
+          "stockId": "2330",
+          "stockName": "測試股票甲",
+          "tradeDate": "2026-08-10",
+          "summary": "合併轉出",
+          "operationType": "transfer",
+          "withdrawal": 100,
+          "deposit": null,
+          "balance": 0
+        },
+        {
+          "sourceRecordId": "a-0050-buy",
+          "stockId": "0050",
+          "stockName": "測試 ETF",
+          "tradeDate": "2026-08-08",
+          "summary": "買進",
+          "operationType": "buy",
+          "withdrawal": null,
+          "deposit": 100,
+          "balance": 100
+        }
+      ]
+    },
+    {
+      "id": "broker-b-merged-account",
+      "sourceGeneratedAt": "2026-08-10T13:00:00+08:00",
+      "accountFingerprint": "fixture-account-broker-b",
+      "sourceType": "fixture-broker-b",
+      "sourceMedia": "pdf",
+      "brokerName": "測試券商乙",
+      "brokerBranchCode": "B002",
+      "queryStart": "2026-01-01",
+      "queryEnd": "2026-08-10",
+      "sourceAsOfDate": "2026-08-10",
+      "rows": [
+        {
+          "sourceRecordId": "b-2330-transfer-in",
+          "stockId": "2330",
+          "stockName": "測試股票甲",
+          "tradeDate": "2026-08-10",
+          "summary": "合併轉入",
+          "operationType": "transfer",
+          "withdrawal": null,
+          "deposit": 100,
+          "balance": 100
+        },
+        {
+          "sourceRecordId": "b-0050-buy",
+          "stockId": "0050",
+          "stockName": "測試 ETF",
+          "tradeDate": "2026-08-07",
+          "summary": "買進",
+          "operationType": "buy",
+          "withdrawal": null,
+          "deposit": 50,
+          "balance": 50
+        }
+      ]
+    }
+  ]
+}

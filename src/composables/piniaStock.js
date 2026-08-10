@@ -25,9 +25,17 @@ export const getStockList = (state, config = null) => {
           )
         : state.orgData.filter((f) => f.stockId === e)
     const _stockDateListById = _stockListById.map((e) => new Date(e?.buyDate)) //此支股票所有日期
+    const _reconciliationAdjustments = (state.orgReconciliationData || []).filter(
+      (adjustment) =>
+        adjustment.stockId === e &&
+        adjustment.status === 'confirmed' &&
+        adjustment.direction === 'add' &&
+        (!rangeEnd || new Date(adjustment.effectiveDate) < rangeEnd)
+    )
     const normalizedDividendEvents = normalizeDividendEvents(state.orgDividendData[e], e)
     const dividendBenefits = buildStockDividendBenefits({
       lots: _stockListById,
+      quantityAdjustments: _reconciliationAdjustments,
       events: normalizedDividendEvents,
       currentPrice: state.orgPriceData[e],
       stockCode: e,
@@ -39,8 +47,13 @@ export const getStockList = (state, config = null) => {
     const buyPrice = _stockListById
       .filter((f) => !f.sellDate)
       .reduce((total, item) => add(total, round(multiply(item.buyPrice, item.buyNum))), 0)
+    const reconciliationShares = _reconciliationAdjustments.reduce(
+      (total, item) => add(total, item.shares),
+      0
+    )
+    const buyNumWithReconciliation = add(buyNum, reconciliationShares)
     const realHoldingMarketValue = state.orgPriceData[e]
-      ? multiply(state.orgPriceData[e], buyNum)
+      ? multiply(state.orgPriceData[e], buyNumWithReconciliation)
       : 0
 
     _data[e] = {
@@ -80,8 +93,11 @@ export const getStockList = (state, config = null) => {
         ? new Date(Math.max(..._stockDateListById))?.toISOString()
         : null,
       name: stockName[e] ?? '-',
-      buyNum,
+      buyNum: buyNumWithReconciliation,
       buyPrice,
+      reconciliationAdjustments: _reconciliationAdjustments,
+      reconciliationShares,
+      unknownCostShares: reconciliationShares,
       realHoldingMarketValue,
       stockDividendRights: dividendBenefits.summary,
       stockRightsMarketValue: dividendBenefits.summary.stockRightsMarketValue,
@@ -111,6 +127,7 @@ export const getDividendList = (state) => {
 
     const dividendBenefits = buildStockDividendBenefits({
       lots: item.data,
+      quantityAdjustments: item.reconciliationAdjustments,
       events: _stockDividendList[stockId],
       currentPrice: item.price,
       stockCode: stockId,
