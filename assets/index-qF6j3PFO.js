@@ -1,1 +1,0 @@
-import{_ as t,q as s,o as r,e as c,f as n,al as e}from"./index-s3kWSrxa.js";const _={class:"dashboard-redirect","aria-live":"polite"},a={__name:"index",setup(i){const o=s();return r(()=>{o.replace({name:"Dashboard_Etf_Events_Overview"})}),(d,p)=>(c(),n("div",_,"正在前往當日進出總覽..."))}};typeof e=="function"&&e(a);const f=t(a,[["__scopeId","data-v-a15819e0"]]);export{f as default};
