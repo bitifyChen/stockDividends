@@ -1648,8 +1648,8 @@
     "/desktop/ohlc/daily-release": {
       "post": {
         "tags": ["Internal"],
-        "summary": "Publish a StockDividends Desktop daily OHLC Delta",
-        "description": "Builds TWSE/TPEx SQLite.zst Deltas, uploads them through Apps Script, and atomically updates the public desktop manifest. Without tradeDate it catches up every missing calendar date after manifest.latestTradeDate and skips non-trading days. With tradeDate it handles only that date. This flow is independent from Turso daily-fetch.",
+        "summary": "Publish a QuantWeave Desktop daily market Delta",
+        "description": "Builds component-aware SQLite.zst Deltas, uploads them to R2, and atomically updates the public desktop manifest. The ohlc component contains official TWSE/TPEx daily prices. The reference component contains corporate actions, listing periods, broad market benchmarks, TWSE daily industry indexes, and the latest published TPEx monthly industry indexes. With components=all, OHLC and reference are executed independently within one request and each component keeps its own cursor, idempotency check, and failure result. A one-sided failure returns partial_success while preserving the successful component. Without tradeDate it catches up missing dates from each component cursor and skips non-trading days. This flow is independent from Turso daily-fetch.",
         "x-frontend-purpose": "Maintainer scheduling only. Web frontend must not call this endpoint.",
         "requestBody": {
           "required": false,
@@ -1658,7 +1658,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "tradeDate": { "type": "string", "format": "date", "description": "Optional official trade date. When omitted, fills the manifest gap through the latest available TWSE/TPEx date." }
+                  "tradeDate": { "type": "string", "format": "date", "description": "Optional official trade date. When omitted, fills the selected component gap through the latest available TWSE/TPEx date." },
+                  "components": {
+                    "type": "string",
+                    "enum": ["all", "ohlc", "reference"],
+                    "default": "all",
+                    "description": "Selects the package component. all runs OHLC and market-reference publishing independently in one request; the response contains componentResults. reference can catch up reference data even when the OHLC component was already applied."
+                  }
                 },
                 "additionalProperties": false
               }
@@ -1666,9 +1672,12 @@
           }
         },
         "responses": {
-          "200": { "description": "Catch-up or single-date result. Each date is published, skipped as identical, or skipped because no official data exists." },
+          "200": { "description": "Catch-up or single-date result with overall status success, skipped, or partial_success. Each component reports published, skipped, or failed dates; partial_success preserves successful component results and identifies retryable failures." },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "description": "Manifest changed repeatedly while publishing. The operation remains safe to retry. Response includes stage, retryable, and attempts." },
+          "502": { "description": "Apps Script rejected the payload or returned an invalid response. Response includes the failing stage." },
+          "503": { "description": "Both components failed, a confirmed trading date was missing TWSE or TPEx data, or another transient source/network failure remained after bounded retries. The structured response preserves componentResults, failedComponents, stage, and retryable details. The operation remains safe to retry." },
           "500": { "$ref": "#/components/responses/ServerError" }
         },
         "security": [{ "bearerAuth": [] }]

@@ -1,3 +1,123 @@
+# 2026-08-11
+
+## 主旨
+
+Desktop OHLC `components=all` 回應語意與失敗狀態修正
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `POST /desktop/ohlc/daily-release`
+  - `success`、`skipped`、`partial_success` 維持 HTTP `200`。
+  - OHLC 與 reference 都失敗時改回 HTTP `503`，body 仍保留 `componentResults`、`failedComponents`、`stage` 與 `retryable`。
+  - 已確認交易日若 TWSE 或 TPEx 任一來源缺漏，OHLC 會回可重試失敗，不再誤判為 `skipped`。
+
+## 改動內容
+
+- Web 會員前台不使用此維護 API，無需修改畫面。
+- 維護後台若有呼叫此 API，不可只依 HTTP `200` 判斷各 component 是否完整；HTTP `200` 的 `partial_success` 仍需顯示缺漏 component。
+- HTTP `503` 可安全重跑相同 request；已成功且內容相同的 component 會維持 `skipped / same_content`，不建立重複 Delta。
+
+## 對應角色處理
+
+- Web 前端：無需調整。
+- Desktop／維護工具：保留 `componentResults` 顯示，並將 `partial_success` 視為尚未完整成功。
+- 排程：仍只呼叫一支 `components=all`，不需拆成兩支排程。
+
+## 其他必要補充
+
+- API URL、Bearer token 與 request body 不變。
+- 本次只修正後端發布一致性與錯誤語意，不調整公開會員資料 API。
+
+# 2026-07-30
+
+## 主旨
+
+QuantWeave Desktop 新增市場還原資料與 AI 研究助理；Web 前端 API 不需改接
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `POST /desktop/ohlc/daily-release`
+  - 新增 `components=all|ohlc|reference`，預設 `all`。
+  - `ohlc` 僅發布每日 OHLC。
+  - `reference` 僅發布公司行動、上市期間、市場與產業 benchmark、資料品質。
+  - `all` 在同一支請求中分別執行兩個 component；每個 component 獨立建立 Delta、更新 cursor、判斷 skipped 與重試。
+  - `all` 回傳 `componentResults.ohlc` 與 `componentResults.reference`；一邊失敗、另一邊成功時回傳 `partial_success`，不會因單一 component 失敗而丟失另一邊成果。
+
+## 改動內容
+
+- 本次功能屬於 QuantWeave Desktop，不新增 Web 前台畫面。
+- Web 前端不得直接呼叫此維護 API，也不得把 maintenance token 放入瀏覽器。
+- Desktop 個股頁可查歷史配息、配股、減資、分割與原始／還原 K 線。
+- AI 研究助理只可建立 sandbox 策略草稿；正式策略仍需使用者確認。
+
+## 對應角色處理
+
+- Web 前端：無需調整。
+- Desktop：依 component 狀態套用 Delta；舊版已套過 OHLC 時，新版仍可補套 `reference`。
+- Backend：每日維護預設維持 `components=all`，Postman 不需要拆成兩支排程。若回傳 `partial_success`，只需下次重跑同一支 `all`，已成功且內容相同的 component 會 `skipped`。
+
+## 其他必要補充
+
+- TWSE 產業 benchmark 使用官方日資料。
+- TPEx 產業 benchmark 使用官方月資料；畫面與研究結果不得誤標為每日更新。
+- 技術訊號使用還原價，成交與資金模擬仍使用原始價格。
+
+# 2026-07-28
+
+## 主旨
+
+釐清股價／股利維護 API 與會員前端資料來源分工
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `GET /price?stockId={stockCode}`
+- `GET /price?mode=all`
+- `GET /dividend?stockId={stockCode}`
+- `GET /dividend?mode=all`
+
+## 改動內容
+
+- 上述四種呼叫皆屬後端維護、排程或缺漏補抓用途，不是會員畫面的日常讀取 API。
+- `GET /price?stockId=` 用於手動補抓／更新單一股票價格，可能回傳更新結果或 `not need update`，不可當成穩定的最新股價查詢 API。
+- `GET /dividend?stockId=` 用於手動補抓／更新單一股票股利，執行時可能抓取官方來源並寫入 Firebase，不應由會員進入頁面時呼叫。
+- `mode=all` 僅供每日批次與維護人員使用，維持 maintenance bearer token 保護。
+- 會員前端的股價與股利資料取得方式維持既有設計：
+  - 股價仍使用原本的 Google Apps Script／既有前端資料來源。
+  - 股利仍讀取既有 Firebase `stocks/{stockId}/dividend` 資料。
+- 本次前端只需調整股利資料的欄位解析與權益呈現，不需改接 `/price` 或 `/dividend` API。
+
+## 對應角色處理
+
+- 保留現有會員股價取得流程，不要改成呼叫 `GET /price?stockId=`。
+- 保留現有 Firebase 股利讀取流程，不要改成呼叫 `GET /dividend?stockId=`。
+- Firebase 股利文件逐步正規化後，優先使用：
+  - 事件識別：`eventId`
+  - 現金股利：`cash.totalPerShare`
+  - 股票股利配股率：`stock.ratio`
+  - 現金除息日：`cash.exDate`
+  - 現金發放日：`cash.paymentDate`
+  - 股票除權日：`stock.exDate`
+- 過渡期間若既有文件尚未包含 `cash`／`stock` object，可暫時 fallback 至 legacy 欄位；不可因單筆舊資料缺少新 object 造成整頁錯誤。
+- 股票股利權益仍依前一則 GUIDE 計算，但只能加入資產權益估值，不得加入可賣股數或修改原始交易批次。
+
+## 其他必要補充
+
+- 後台維護頁若需要手動補抓，可使用維護 API，但 token 不可放入公開會員頁面或一般瀏覽器 bundle。
+- Render 暫停期間，由本地維護 GUI 執行批次；會員前端不應因 Render 暫停而影響既有股價與股利閱讀功能。
+- 未來若需要統一會員讀取來源，應另設計純 read-only API，不應重用目前兼具抓取與寫入行為的維護 API。
+
 # 2026-07-28
 
 ## 主旨
