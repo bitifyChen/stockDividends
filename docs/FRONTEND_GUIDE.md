@@ -2,6 +2,33 @@
 
 ## 主旨
 
+每日維護稽核增加官方交易日來源降級與診斷欄位。
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- `POST /maintenance/daily-audit`
+
+## 改動內容
+
+- 回應新增 `tradeDateSources: string[]` 與 `warnings: string[]`。
+- `expectedTradeDate` 在 TWSE、TPEx 都無法讀取時可能為 `null`。
+- 單一官方來源失敗不再造成 HTTP `500`；另一來源成功即可完成稽核。
+- 雙來源都失敗時，交易日型工作回 `status=status_unavailable`、`action=inspect`。
+
+## 對應角色處理
+
+- 一般會員前台不使用此 API，無需調整。
+- 維護畫面若顯示稽核結果，應將 `warnings` 視為診斷資訊，不可直接當成資料更新失敗。
+- 只有 item 的 `action=rerun` 才顯示重跑操作；`action=inspect` 應提示檢查官方來源。
+
+# 2026-08-11
+
+## 主旨
+
 新增每日維護狀態稽核 API，並統一每日批次名稱與精簡 Telegram 通知。
 
 ## 填寫人

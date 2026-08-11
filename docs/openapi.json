@@ -1973,8 +1973,16 @@
                       "format": "date"
                     },
                     "expectedTradeDate": {
-                      "type": "string",
+                      "type": ["string", "null"],
                       "format": "date"
+                    },
+                    "tradeDateSources": {
+                      "type": "array",
+                      "items": {"type": "string", "enum": ["TWSE", "TPEx"]}
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {"type": "string"}
                     },
                     "issueCount": {
                       "type": "integer"
