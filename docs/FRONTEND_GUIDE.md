@@ -2,6 +2,53 @@
 
 ## 主旨
 
+新增每日維護狀態稽核 API，並統一每日批次名稱與精簡 Telegram 通知。
+
+## 填寫人
+
+Backend
+
+## 影響 API
+
+- 新增 `POST /maintenance/daily-audit`
+- `GET /maintenance/batch-status` 新增 `items.dailyMaintenanceAudit`
+- 既有更新 API URL 不變：
+  - `GET /price?mode=all`
+  - `GET /dividend?mode=all`
+  - `GET /etf/fetch-all?save=1`
+  - `POST /desktop/ohlc/daily-release`
+  - `POST /desktop/fundamentals/daily-release`
+
+## 改動內容
+
+- 六項顯示名稱統一為：
+  - `【線上】持股價格更新`
+  - `【線上】股利政策更新`
+  - `【線上】ETF 持股與OHLC 更新`
+  - `【策流】OHLC與市場資料更新`
+  - `【策流】財務與估值資料更新`
+  - `每日維護狀態稽核`
+- 稽核回傳每項工作的 `status`、`action`、應有資料日、目前資料日與原因。
+- `action=wait` 代表工作仍在執行，前端不得提供重跑提示。
+- `action=rerun` 才代表可依 `method + path` 重跑；`action=inspect` 代表狀態來源無法確認。
+- `send=false` 僅預覽，不發 Telegram，也不寫 Firebase 稽核狀態。
+
+## 對應角色處理
+
+- Postman 於每日 `19:00` 呼叫 `POST /maintenance/daily-audit`，使用 maintenance Bearer token，request body 可留空。
+- 前端若要顯示稽核結果，只能透過後端安全代理；不可將 maintenance token 或 `VITE_MAINTENANCE_API_TOKEN` 放進公開瀏覽器 bundle。
+- 一般前台頁面不需要呼叫此 API。
+
+## 其他必要補充
+
+- 稽核只讀 Firebase 維護狀態、R2 manifest 與官方交易日，不會自動執行任何更新 API。
+- 全部正常時不發稽核通知；相同異常 fingerprint 不重複發送，狀態改變或異常恢復時才再通知。
+- 建議 Postman body：`{}`。測試預覽可用 `{"send": false}`；強制驗證通知可用 `{"forceNotify": true}`。
+
+# 2026-08-11
+
+## 主旨
+
 Desktop OHLC `components=all` 回應語意與失敗狀態修正
 
 ## 填寫人

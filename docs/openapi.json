@@ -1900,6 +1900,9 @@
                         },
                         "desktopFundamentalsDailyRelease": {
                           "$ref": "#/components/schemas/MaintenanceJobStatus"
+                        },
+                        "dailyMaintenanceAudit": {
+                          "$ref": "#/components/schemas/MaintenanceJobStatus"
                         }
                       }
                     }
@@ -1911,6 +1914,116 @@
           "500": {
             "$ref": "#/components/responses/ServerError"
           }
+        }
+      }
+    },
+    "/maintenance/daily-audit": {
+      "post": {
+        "tags": ["Internal"],
+        "summary": "Audit all daily maintenance jobs",
+        "description": "Reads Firebase maintenance status, R2 manifests and the latest official trade date. It never reruns update APIs. Healthy audits stay silent; anomalies, running jobs, changed fingerprints and recoveries can be sent to Telegram.",
+        "x-frontend-purpose": "維運排程專用。前端可閱讀回應，但不可把 maintenance token 放進瀏覽器。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Audit date in Asia/Taipei. Defaults to today."
+                  },
+                  "send": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "false previews the audit without Telegram or Firebase writes."
+                  },
+                  "forceNotify": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Send even when the current fingerprint was already notified or all jobs are healthy."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audit completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status", "auditDate", "items", "notification"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["healthy", "running", "attention_required"]
+                    },
+                    "auditDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "expectedTradeDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "issueCount": {
+                      "type": "integer"
+                    },
+                    "waitingCount": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {"type": "string"},
+                          "name": {"type": "string"},
+                          "status": {
+                            "type": "string",
+                            "enum": ["success", "skipped", "running", "missing", "partial_success", "failed", "status_unavailable"]
+                          },
+                          "action": {
+                            "type": "string",
+                            "enum": ["none", "wait", "rerun", "inspect"]
+                          },
+                          "expectedDate": {"type": ["string", "null"], "format": "date"},
+                          "actualDate": {"type": ["string", "null"], "format": "date"},
+                          "reason": {"type": "string"}
+                        }
+                      }
+                    },
+                    "notification": {
+                      "type": "object",
+                      "properties": {
+                        "requested": {"type": "boolean"},
+                        "type": {"type": "string", "enum": ["healthy", "anomaly", "waiting", "recovery"]},
+                        "sent": {"type": "boolean"},
+                        "suppressed": {"type": "boolean"},
+                        "message": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"$ref": "#/components/responses/Unauthorized"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "409": {"$ref": "#/components/responses/ServerError"},
+          "500": {"$ref": "#/components/responses/ServerError"},
+          "502": {"$ref": "#/components/responses/ServerError"}
         }
       }
     },
