@@ -1,1 +1,0 @@
-import{bf as t}from"./index-Cpcxl-6R.js";const r=t("dashboardSetting",{persist:!0,state:()=>({shareUnit:"share",themeMode:"dark"}),actions:{setShareUnit(e){this.shareUnit=e==="lot"?"lot":"share"},setThemeMode(e){this.themeMode=["light","dark","system"].includes(e)?e:"dark"}}});export{r as u};
