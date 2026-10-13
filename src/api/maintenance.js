@@ -1,6 +1,6 @@
 import request from './useAxios.js'
 
-const apiBaseUrl = 'https://stockdividends.onrender.com'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://stockdividends.onrender.com'
 
 const cleanParams = (params = {}) => {
   if (!params) return {}
@@ -26,6 +26,8 @@ const get = (path, params = null, options = {}) =>
   request('get', `${apiBaseUrl}${path}`, null, cleanParams(params), options)
 
 export const getBatchStatus = (params = {}) => get('/maintenance/batch-status', params)
+
+export const getDataStatus = (params = {}) => get('/maintenance/data-status', params)
 
 export const runEtfFetchAll = ({ force = false } = {}) =>
   get('/etf/fetch-all', { save: 1, force: force ? 1 : null }, maintenanceRequestOptions())
